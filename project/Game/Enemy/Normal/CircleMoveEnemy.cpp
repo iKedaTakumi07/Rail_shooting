@@ -43,8 +43,14 @@ void CircleMoveEnemy::Update()
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
 
-    if (camera_->GetTranslate().z >= transform_.translate.z) {
-        isDead_ = true;
+    if (transform_.translate.z - RanAwayOffset_ <= camera_->GetTranslate().z) {
+        // カメラに近いので逃走を開始する
+        isRanAway_ = true;
+    }
+
+    if (isRanAway_) {
+        withdrawalUpdate();
+        return;
     }
 
     angle_ += speed_ * deltaTime;
@@ -141,4 +147,27 @@ void CircleMoveEnemy::BulletUpdate()
     std::erase_if(enemyBullet_, [](const std::unique_ptr<baseEnemyBullet>& bullet) {
         return bullet->GetIsDead(); // GetIsDead が true なら削除
     });
+}
+
+void CircleMoveEnemy::withdrawalUpdate()
+{
+    float DeltaTime = SceneManager::GetInstance()->GetDeltaTime();
+    // 逃げる
+    const float AwaySpeedX = 15.0f;
+    const float AwaySpeedY = 30.0f;
+
+    if (transform_.translate.x <= 0.0f) {
+        transform_.translate.x -= AwaySpeedX * DeltaTime;
+    } else {
+        transform_.translate.x += AwaySpeedX * DeltaTime;
+    }
+    transform_.translate.y += AwaySpeedY * DeltaTime;
+
+    if (transform_.translate.y >= 40.0f) {
+        isAvile_ = false;
+    }
+
+    object3d->SetTranslate(transform_.translate);
+    object3d->SetRotate(transform_.rotate);
+    object3d->Update();
 }

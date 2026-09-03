@@ -2,6 +2,7 @@
 #include "Normal/CircleMoveEnemy.h"
 #include "Normal/FixedEnemy.h"
 #include "Normal/NormalMoveEnemy.h"
+#include "Normal/threeShotsEnemy.h"
 #include "base/baseEnemy.h"
 #include "boss/FourEyesBoss.h"
 
@@ -151,6 +152,8 @@ void EnemyManager::PopEnemyCheck(const EnemyPopData& data)
         newEnemy = std::make_unique<NormalMoveEnemy>();
     } else if (data.enemyPopType == "CircleMoveEnemy") {
         newEnemy = std::make_unique<CircleMoveEnemy>();
+    } else if (data.enemyPopType == "threeShotsEnemy") {
+        newEnemy = std::make_unique<threeShotsEnemy>();
     } else if (data.enemyPopType == "FourEyesBoss") {
         newEnemy = std::make_unique<FourEyesBoss>();
     } else {

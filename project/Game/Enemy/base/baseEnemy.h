@@ -18,6 +18,8 @@ public:
 
     virtual void SpriteDraw() { }; // (ほぼ)ボス専用
 
+    virtual void withdrawalUpdate() { };
+
     /* Set関数 */
     virtual void SetTargetPlayer(Player* target) { }; // 対象に向かわせる
     virtual void SetHp(int num) { };

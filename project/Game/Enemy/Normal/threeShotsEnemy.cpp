@@ -1,20 +1,19 @@
-#include "NormalMoveEnemy.h"
-
+#include "threeShotsEnemy.h"
 #include "../../../Engine/3d/CameraManager.h"
 #include "../../../Engine/3d/Model.h"
 #include "../../../Engine/3d/ModelManager.h"
 
 #include "../../../Engine/base/TextureManager.h"
-#include "../../Player/Player.h"
 
 #include "../../../Engine/scene/SceneManager.h"
+
 #include "../Bullet/EnemyHomingBullet.h"
 #include "../Bullet/TargetBullet.h"
 
-void NormalMoveEnemy::Initialize(Vector3 pos)
+void threeShotsEnemy::Initialize(Vector3 pos)
 {
-    TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
-    ModelManager::GetInstance()->LoadModel("test/test.obj");
+    TextureManager::getInstance()->LoadTexture("resources/baseEnemy/uvChecker.png");
+    ModelManager::GetInstance()->LoadModel("baseEnemy/enemy.obj");
 
     object3d = std::make_unique<Object3d>();
     object3d->Initialize();
@@ -29,15 +28,11 @@ void NormalMoveEnemy::Initialize(Vector3 pos)
 
     transform_.scale = { 1.0f, 1.0f, 1.0f };
     transform_.rotate = { 0.0f, 0.0f, 0.0f };
-    transform_.translate = pos;
 }
 
-void NormalMoveEnemy::Update()
+void threeShotsEnemy::Update()
 {
-
-    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
-    Vector3 velocity = { move.x * deltaTime, move.y * deltaTime, move.z * deltaTime };
 
     if (transform_.translate.z - RanAwayOffset_ <= camera_->GetTranslate().z) {
         // カメラに近いので逃走を開始する
@@ -49,20 +44,6 @@ void NormalMoveEnemy::Update()
         return;
     }
 
-    transform_.translate.x += velocity.x;
-    transform_.translate.y += velocity.y;
-    transform_.translate.z += velocity.z;
-
-    if (transform_.translate.x + velocity.x >= basePos.x + maxBaseMove || transform_.translate.x + velocity.x <= basePos.x - maxBaseMove) {
-        move.x = -move.x;
-    }
-    if (transform_.translate.y + velocity.y >= basePos.y + maxBaseMove || transform_.translate.y + velocity.y <= basePos.y - maxBaseMove) {
-        move.y = -move.y;
-    }
-    if (transform_.translate.z + velocity.z >= basePos.z + maxBaseMove || transform_.translate.z + velocity.z <= basePos.z - maxBaseMove) {
-        move.z = -move.z;
-    }
-
     BulletUpdate();
 
     object3d->SetTranslate(transform_.translate);
@@ -70,7 +51,7 @@ void NormalMoveEnemy::Update()
     object3d->Update();
 }
 
-void NormalMoveEnemy::Draw()
+void threeShotsEnemy::Draw()
 {
     object3d->Draw();
 
@@ -79,7 +60,7 @@ void NormalMoveEnemy::Draw()
     }
 }
 
-AllAABB NormalMoveEnemy::GetAllAABB() const
+AllAABB threeShotsEnemy::GetAllAABB() const
 {
     AABB aabb;
     aabb.min = { transform_.translate.x - size, transform_.translate.y - size, transform_.translate.z - size };
@@ -91,12 +72,11 @@ AllAABB NormalMoveEnemy::GetAllAABB() const
     return compound;
 }
 
-void NormalMoveEnemy::OnCollision(Collider* other)
+void threeShotsEnemy::OnCollision(Collider* other)
 {
     // 当たったもの次第で分岐
     if (other->GetCollisionGroup() == CollisionGroup::kPlayerBullet) {
         // ダメージ処理
-
         health_ -= other->GetDamage();
 
         if (health_ <= 0) {
@@ -105,36 +85,37 @@ void NormalMoveEnemy::OnCollision(Collider* other)
         }
     } else if (other->GetCollisionGroup() == CollisionGroup::kPlayer) {
         // お互いダメージ処理
-        health_ -= 1;
-
-        if (health_ <= 0) {
-            isAvile_ = false; // 死亡演出作ったならそっちに移行
-            isDead_ = true; // 死亡演出トリガー用
-        }
     }
 }
 
-void NormalMoveEnemy::BulletUpdate()
+void threeShotsEnemy::BulletUpdate()
 {
     interval -= SceneManager::GetInstance()->GetDeltaTime();
 
     if (interval <= 0.0f) {
         // 弾の生成
-        if (useBullet == 0) {
-            std::unique_ptr<TargetBullet> newBulletEnemy = std::make_unique<TargetBullet>();
-            newBulletEnemy->Initialize(transform_.translate, transform_.rotate);
-            newBulletEnemy->SetTargetPosition(player_->GetTranslate());
+        for (int i = 0; i < 3; i++) {
+            Vector3 pos = {
+                transform_.translate.x + muzzleOffsets_[i].x,
+                transform_.translate.y + muzzleOffsets_[i].y,
+                transform_.translate.z + muzzleOffsets_[i].z
+            };
+            if (useBullet == 1) {
+                std::unique_ptr<EnemyHomingBullet> newBulletEnemy = std::make_unique<EnemyHomingBullet>();
 
-            enemyBullet_.push_back(std::move(newBulletEnemy));
-            interval = maxInterval;
-        } else if (useBullet == 1) {
-            std::unique_ptr<EnemyHomingBullet> newBulletEnemy = std::make_unique<EnemyHomingBullet>();
-            newBulletEnemy->Initialize(transform_.translate, transform_.rotate);
-            newBulletEnemy->SetTargetPosition(player_->GetTranslate());
+                newBulletEnemy->Initialize(pos, transform_.rotate);
+                newBulletEnemy->SetTargetPosition(player_->GetTranslate());
 
-            enemyBullet_.push_back(std::move(newBulletEnemy));
-            interval = maxInterval;
+                enemyBullet_.push_back(std::move(newBulletEnemy));
+            } else if (useBullet == 0) {
+                std::unique_ptr<TargetBullet> newBulletEnemy = std::make_unique<TargetBullet>();
+                newBulletEnemy->Initialize(pos, transform_.rotate);
+                newBulletEnemy->SetTargetPosition(player_->GetTranslate());
+
+                enemyBullet_.push_back(std::move(newBulletEnemy));
+            }
         }
+        interval = maxInterval;
     }
 
     float currentDeltaTime = SceneManager::GetInstance()->GetDeltaTime();
@@ -150,7 +131,7 @@ void NormalMoveEnemy::BulletUpdate()
     });
 }
 
-void NormalMoveEnemy::withdrawalUpdate()
+void threeShotsEnemy::withdrawalUpdate()
 {
     float DeltaTime = SceneManager::GetInstance()->GetDeltaTime();
     // 逃げる
@@ -164,7 +145,7 @@ void NormalMoveEnemy::withdrawalUpdate()
     }
     transform_.translate.y += AwaySpeedY * DeltaTime;
 
-      if (transform_.translate.y >= 40.0f) {
+    if (transform_.translate.y >= 40.0f) {
         isAvile_ = false;
     }
 

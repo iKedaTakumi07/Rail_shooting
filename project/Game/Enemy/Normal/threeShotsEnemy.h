@@ -9,9 +9,9 @@
 #include "../../Player/Player.h"
 
 class Model;
+class Camera;
 
-class FixedEnemy : public baseEnemy {
-public:
+class threeShotsEnemy : public baseEnemy {
     void Initialize(Vector3 pos) override;
 
     void Update() override;
@@ -36,6 +36,7 @@ public:
 
 private:
     void BulletUpdate();
+
     void withdrawalUpdate() override;
 
 private:
@@ -67,4 +68,10 @@ private:
     bool isDead_ = false; // 死んでいるか
     bool isRanAway_ = false;
     float RanAwayOffset_ = 20.0f;
+
+    std::array<Vector3, 3> muzzleOffsets_ = {
+        Vector3 { 1.0f, 0.0f, 0.0f },
+        Vector3 { 0.0f, 0.0f, 0.0f },
+        Vector3 { -1.0f, 0.0f, 0.0f }
+    };
 };
