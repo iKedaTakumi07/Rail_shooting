@@ -12,8 +12,8 @@
 
 void threeShotsEnemy::Initialize(Vector3 pos)
 {
-    TextureManager::getInstance()->LoadTexture("resources/baseEnemy/uvChecker.png");
-    ModelManager::GetInstance()->LoadModel("baseEnemy/enemy.obj");
+    TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
+    ModelManager::GetInstance()->LoadModel("test/test.obj");
 
     object3d = std::make_unique<Object3d>();
     object3d->Initialize();
