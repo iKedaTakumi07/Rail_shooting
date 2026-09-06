@@ -67,5 +67,5 @@ private:
     bool isAvile_ = true; // 存在しているか
     bool isDead_ = false; // 死んでいるか
     bool isRanAway_ = false;
-    float RanAwayOffset_ = 20.0f;
+    float RanAwayOffset_ = 30.0f;
 };

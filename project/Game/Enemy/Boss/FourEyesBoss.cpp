@@ -1,4 +1,7 @@
+#define NOMINMAX
+
 #include "FourEyesBoss.h"
+#include <algorithm>
 #include <numbers>
 
 #include "../../../Engine/3d/CameraManager.h"
@@ -51,6 +54,11 @@ void FourEyesBoss::Initialize(Vector3 pos)
     BossWarning = std::make_unique<Sprite>();
     BossWarning->Initialize("resources/EnemyUI/WARNING.png");
     BossWarning->SetPosition(Vector2(0.0f, 0.0f));
+
+    parts_[0] = { { 0.0f, -6.0f, 3.0f }, { -1.5f, -7.5f, -3.0f }, { +1.5f, -4.5f, +1.5f }, 200 }; // 下 (Bottom)
+    parts_[1] = { { 0.0f, 6.0f, 3.0f }, { -1.5f, +4.5f, -3.0f }, { +1.5f, +7.5f, +1.5f }, 200 }; // 上 (Top)
+    parts_[2] = { { -6.0f, 0.0f, -3.0f }, { -7.5f, -1.5f, -3.0f }, { -4.5f, +1.5f, +1.5f }, 200 }; // 右 (Right)
+    parts_[3] = { { 6.0f, 0.0f, -3.0f }, { +4.5f, -1.5f, -3.0f }, { +7.5f, +1.5f, +1.5f }, 200 }; // 左 (Left)
 }
 
 void FourEyesBoss::Update()
@@ -96,35 +104,38 @@ void FourEyesBoss::SpriteDraw()
     }
 }
 
+void FourEyesBoss::SetHp(int num)
+{
+    currentHp_ = num;
+    maxHp_ = currentHp_;
+    int partsHp = currentHp_ / 4;
+    for (auto& part : parts_) {
+        part.hp = partsHp;
+    }
+}
+
 AllAABB FourEyesBoss::GetAllAABB() const
 {
-    AABB aabb;
     AllAABB compound;
 
-    // 早期リターン回避用に上下左右の全体を入れる
-    aabb.min = { transform_.translate.x - 7.5f, transform_.translate.y - 7.5f, transform_.translate.z - 3.0f };
-    aabb.max = { transform_.translate.x + 7.5f, transform_.translate.y + 7.5f, transform_.translate.z + 1.5f };
-    compound.wholeBox = aabb;
+    AABB whole;
+    whole.min = { transform_.translate.x - 7.5f, transform_.translate.y - 7.5f, transform_.translate.z - 3.0f };
+    whole.max = { transform_.translate.x + 7.5f, transform_.translate.y + 7.5f, transform_.translate.z + 1.5f };
+    compound.wholeBox = whole;
 
-    AABB leftEyes; // 左
-    leftEyes.min = { transform_.translate.x + 4.5f, transform_.translate.y - 1.5f, transform_.translate.z - 3.0f };
-    leftEyes.max = { transform_.translate.x + 7.5f, transform_.translate.y + 1.5f, transform_.translate.z + 1.5f };
-    compound.dividBoxes.push_back(leftEyes);
-
-    AABB rightEyes; // 右
-    rightEyes.min = { transform_.translate.x - 7.5f, transform_.translate.y - 1.5f, transform_.translate.z - 3.0f };
-    rightEyes.max = { transform_.translate.x - 4.5f, transform_.translate.y + 1.5f, transform_.translate.z + 1.5f };
-    compound.dividBoxes.push_back(rightEyes);
-
-    AABB TopEyes; // 上
-    TopEyes.min = { transform_.translate.x - 1.5f, transform_.translate.y + 4.5f, transform_.translate.z - 3.0f };
-    TopEyes.max = { transform_.translate.x + 1.5f, transform_.translate.y + 7.5f, transform_.translate.z + 1.5f };
-    compound.dividBoxes.push_back(TopEyes);
-
-    AABB BottomEyes; // 下
-    BottomEyes.min = { transform_.translate.x - 1.5f, transform_.translate.y - 7.5f, transform_.translate.z - 3.0f };
-    BottomEyes.max = { transform_.translate.x + 1.5f, transform_.translate.y - 4.5f, transform_.translate.z + 1.5f };
-    compound.dividBoxes.push_back(BottomEyes);
+    // ===== 変更: 生存している部位(HP > 0)のAABBのみ登録 =====
+    for (const auto& part : parts_) {
+        if (part.hp > 0) {
+            AABB box;
+            box.min = { transform_.translate.x + part.aabbMinOffset.x,
+                transform_.translate.y + part.aabbMinOffset.y,
+                transform_.translate.z + part.aabbMinOffset.z };
+            box.max = { transform_.translate.x + part.aabbMaxOffset.x,
+                transform_.translate.y + part.aabbMaxOffset.y,
+                transform_.translate.z + part.aabbMaxOffset.z };
+            compound.dividBoxes.push_back(box);
+        }
+    }
 
     return compound;
 }
@@ -133,11 +144,13 @@ std::vector<Vector3> FourEyesBoss::GetTargetPositions()
 {
     std::vector<Vector3> positions;
 
-    // 各目の位置を座標に登録
-    for (const auto& offset : muzzleOffsets_) {
-        positions.push_back({ transform_.translate.x + offset.x,
-            transform_.translate.y + offset.y,
-            transform_.translate.z + offset.z });
+    // 生きている発射位置のみロック対象
+    for (const auto& part : parts_) {
+        if (part.hp > 0) {
+            positions.push_back({ transform_.translate.x + part.muzzleOffset.x,
+                transform_.translate.y + part.muzzleOffset.y,
+                transform_.translate.z + part.muzzleOffset.z });
+        }
     }
     return positions;
 }
@@ -148,6 +161,8 @@ void FourEyesBoss::OnCollision(Collider* other)
     if (other->GetCollisionGroup() == CollisionGroup::kPlayerBullet) {
         // ダメージ処理
         currentHp_ -= other->GetDamage();
+
+        partsDamage(other);
 
         if (currentHp_ <= 0) {
             isAvile_ = false; // 死亡演出作ったならそっちに移行
@@ -212,12 +227,16 @@ void FourEyesBoss::FireFourWayBullets()
 
     if (interval <= 0.0f) {
         // 弾の生成
-        for (int i = 0; i < 4; i++) {
+        for (const auto& part : parts_) {
+            if (part.hp <= 0) {
+                continue;
+            }
+
             std::unique_ptr<EnemyHomingBullet> newBulletEnemy = std::make_unique<EnemyHomingBullet>();
             Vector3 pos = {
-                transform_.translate.x + muzzleOffsets_[i].x,
-                transform_.translate.y + muzzleOffsets_[i].y,
-                transform_.translate.z + muzzleOffsets_[i].z
+                transform_.translate.x + part.muzzleOffset.x,
+                transform_.translate.y + part.muzzleOffset.y,
+                transform_.translate.z + part.muzzleOffset.z
             };
             newBulletEnemy->Initialize(pos, transform_.rotate);
             newBulletEnemy->SetTargetPosition(player_->GetTranslate());
@@ -241,6 +260,13 @@ void FourEyesBoss::FireFourWayBullets()
 
 void FourEyesBoss::MoveUpdate()
 {
+    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+
+    moveTimer_ += deltaTime * kMoveSpeed;
+
+    transform_.translate.x = centerPos_.x + kAmplitudeX * std::sin(moveTimer_);
+    transform_.translate.y = centerPos_.y + kAmplitudeY * std::sin(moveTimer_ * 2.0f);
+
     Vector3 pos = CameraManager::GetInstance()->GetActiveCamera()->GetTranslate();
     pos.z = pos.z + offsetPosZ;
     transform_.translate.z = pos.z;
@@ -259,4 +285,33 @@ void FourEyesBoss::UIUpdate()
     BossMaxHpUI->Update();
     BossHpUI->Update();
     BossWarning->Update();
+}
+
+void FourEyesBoss::partsDamage(Collider* other)
+{
+    AllAABB otherAllAABB = other->GetAllAABB();
+    int damage = other->GetDamage();
+
+    for (auto& part : parts_) {
+        if (part.hp <= 0) {
+            continue;
+        }
+
+        AABB partBox;
+        partBox.min = { transform_.translate.x + part.aabbMinOffset.x,
+            transform_.translate.y + part.aabbMinOffset.y,
+            transform_.translate.z + part.aabbMinOffset.z };
+        partBox.max = { transform_.translate.x + part.aabbMaxOffset.x,
+            transform_.translate.y + part.aabbMaxOffset.y,
+            transform_.translate.z + part.aabbMaxOffset.z };
+
+        for (const auto& otherBox : otherAllAABB.dividBoxes) {
+            bool isHit = (partBox.min.x < otherBox.max.x && partBox.max.x > otherBox.min.x) && (partBox.min.y < otherBox.max.y && partBox.max.y > otherBox.min.y) && (partBox.min.z < otherBox.max.z && partBox.max.z > otherBox.min.z);
+
+            if (isHit) {
+                part.hp = std::max(0, part.hp - damage);
+                break; // 同一フレームでの多重ヒット防止
+            }
+        }
+    }
 }

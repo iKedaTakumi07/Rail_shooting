@@ -67,7 +67,7 @@ private:
     bool isAvile_ = true; // 存在しているか
     bool isDead_ = false; // 死んでいるか
     bool isRanAway_ = false;
-    float RanAwayOffset_ = 20.0f;
+    float RanAwayOffset_ = 30.0f;
 
     std::array<Vector3, 3> muzzleOffsets_ = {
         Vector3 { 1.0f, 0.0f, 0.0f },

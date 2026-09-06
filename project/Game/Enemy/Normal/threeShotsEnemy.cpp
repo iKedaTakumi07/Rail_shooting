@@ -26,6 +26,7 @@ void threeShotsEnemy::Initialize(Vector3 pos)
     // model->SetEvnTexturefilePath(skydox->GetTextureFilePath()); // 反射が必要なら
     object3d->SetModel(model.get());
 
+    transform_.translate = pos;
     transform_.scale = { 1.0f, 1.0f, 1.0f };
     transform_.rotate = { 0.0f, 0.0f, 0.0f };
 }
