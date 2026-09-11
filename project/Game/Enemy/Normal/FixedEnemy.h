@@ -5,8 +5,8 @@
 #include "../../../Engine/3d/Object3d.h"
 #include "../../../Engine/base/Math.h"
 
-#include "../../Player/Player.h"
 #include "../../OnCollison/Collider.h"
+#include "../../Player/Player.h"
 
 class Model;
 
@@ -36,6 +36,7 @@ public:
 
 private:
     void BulletUpdate();
+    void withdrawalUpdate() override;
 
 private:
     Camera* camera_ = nullptr; // カメラ(ポインタ)
@@ -64,4 +65,6 @@ private:
 
     bool isAvile_ = true; // 存在しているか
     bool isDead_ = false; // 死んでいるか
+    bool isRanAway_ = false;
+    float RanAwayOffset_ = 30.0f;
 };

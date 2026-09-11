@@ -4,15 +4,18 @@
 
 #include "../../../Engine/3d/Object3d.h"
 #include "../../../Engine/base/Math.h"
+
 #include "../../OnCollison/Collider.h"
+#include "../../Player/Player.h"
 
-class Player;
 class Model;
+class Camera;
 
-class CircleMoveEnemy : public baseEnemy {
-public:
+class threeShotsEnemy : public baseEnemy {
     void Initialize(Vector3 pos) override;
+
     void Update() override;
+
     void Draw() override;
 
 public:
@@ -27,15 +30,13 @@ public:
     // set関数
     void SetTargetPlayer(Player* target) override { player_ = target; }
     void SetIsDead(bool num) { isDead_ = num; }
-    void SetMove(Vector3 num) override { num; }
-    void SetbasePos(Vector3 num) override { centerPos_ = num; } // 中心位置
-
     void SetUseBullet(int num) override { useBullet = num; }
     void SetHomingPower(float num) override { homingPower = num; }
     void SetHp(int num) override { health_ = num; }
 
 private:
     void BulletUpdate();
+
     void withdrawalUpdate() override;
 
 private:
@@ -54,18 +55,23 @@ private:
     Transform transform_ = { 0.0f }; // 座標系
 
     int health_ = 5; // 体力(jsonで設定予定)
-    int dameg_ = 3;
+    int dameg_ = 5;
 
-    float interval = 3.0f; // 弾を発射する間隔
-    static inline const float maxInterval = 3.0f; // 間隔
+    float interval = 2.0f; // 弾を発射する間隔
+    static inline const float maxInterval = 2.0f; // 間隔
 
-    Vector3 centerPos_ = { 0.0f }; // 中心位置
-    float radius_ = 5.0f; // 回転半径
-    float speed_ = 1.0f; // 回転速度 (ラジアン/秒)
-    float angle_ = 0.0f; // 現在の角度 (ラジアン)
+    // 削除予定 //
+    Vector3 move = { 0.0f };
+    // 移動地点はjson形式予定。 //
 
     bool isAvile_ = true; // 存在しているか
     bool isDead_ = false; // 死んでいるか
     bool isRanAway_ = false;
     float RanAwayOffset_ = 30.0f;
+
+    std::array<Vector3, 3> muzzleOffsets_ = {
+        Vector3 { 1.0f, 0.0f, 0.0f },
+        Vector3 { 0.0f, 0.0f, 0.0f },
+        Vector3 { -1.0f, 0.0f, 0.0f }
+    };
 };

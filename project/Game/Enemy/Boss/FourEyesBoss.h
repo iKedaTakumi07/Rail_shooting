@@ -9,6 +9,13 @@ class Model;
 class Object3d;
 class Sprite;
 
+struct BossPart {
+    Vector3 muzzleOffset; // 弾発射位置オフセット
+    Vector3 aabbMinOffset; // 当たり判定 (AABB min) オフセット
+    Vector3 aabbMaxOffset; // 当たり判定 (AABB max) オフセット
+    int hp = 200; // 部位耐久力
+};
+
 class FourEyesBoss : public baseBossEnemy {
 public:
     void Initialize(Vector3 pos) override;
@@ -21,11 +28,7 @@ public:
     void SetIsDead(bool num) { isDead_ = num; }
     void SetMove(Vector3 num) override { num; }
     void SetbasePos(Vector3 num) override { centerPos_ = num; } // 中心位置
-    void SetHp(int num) override
-    {
-        currentHp_ = num;
-        maxHp_ = currentHp_;
-    }
+    void SetHp(int num) override;
 
     float GetHpRate() const override { return static_cast<float>(currentHp_) / maxHp_; }
     int GetCurrentPhase() const override { return currentPhase_; }
@@ -47,6 +50,7 @@ private:
     void FireFourWayBullets();
     void MoveUpdate();
     void UIUpdate();
+    void partsDamage(Collider* other);
 
 private:
     Camera* camera_ = nullptr; // カメラ(ポインタ)
@@ -77,11 +81,11 @@ private:
     static inline const float maxInterval = 3.0f; // 間隔
     const float offsetPosZ = 50.0f; // カメラと離す距離
 
-    // 発射位置(各頂点の中心位置)
-    std::array<Vector3, 4> muzzleOffsets_ = {
-        Vector3 { 0.0f, -6.0f, 3.0f },
-        Vector3 { 0.0f, 6.0f, 3.0f },
-        Vector3 { -6.0f, 0.0f, -3.0f },
-        Vector3 { 6.0f, 0.0f, -3.0f }
-    };
+    float moveTimer_ = 0.0f; // 移動計算用タイマー
+    const float kMoveSpeed = 0.5f; // 8の字周回スピード
+    const float kAmplitudeX = 10.0f; // 横幅（X軸方向の振幅）
+    const float kAmplitudeY = 5.0f; // 縦幅（Y軸方向の振幅）
+
+    // 発射位置,耐久力、当たり判定offset(各頂点の中心位置)
+    std::array<BossPart, 4> parts_;
 };

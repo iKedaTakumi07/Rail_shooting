@@ -36,6 +36,7 @@ public:
 
 private:
     void BulletUpdate();
+    void withdrawalUpdate() override;
 
 private:
     Camera* camera_ = nullptr; // カメラ(ポインタ)
@@ -64,4 +65,6 @@ private:
 
     bool isAvile_ = true; // 存在しているか
     bool isDead_ = false; // 死んでいるか
+    bool isRanAway_ = false;
+    float RanAwayOffset_ = 30.0f;
 };
