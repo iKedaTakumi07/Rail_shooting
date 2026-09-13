@@ -63,48 +63,51 @@ void PlayerBullet::Update(float deltaTime)
 
     if (target && target->GetIsAvile_()) { // ターゲットが存在し、生きている場合
         std::vector<Vector3> targetPositions = target->GetTargetPositions();
-        Vector3 targetPos = targetPositions[0];
+        
+        if (!targetPositions.empty()) {
+            Vector3 targetPos = targetPositions[0];
 
-        // 指定された番号の座標を取得
-        if (targetIndex_ >= 0 && targetIndex_ < targetPositions.size()) {
-            targetPos = targetPositions[targetIndex_];
-        }
+            // 指定された番号の座標を取得
+            if (targetIndex_ >= 0 && targetIndex_ < targetPositions.size()) {
+                targetPos = targetPositions[targetIndex_];
+            }
 
-        // ベクトル計算
-        Vector3 toTarget = {
-            targetPos.x - transform_.translate.x,
-            targetPos.y - transform_.translate.y,
-            targetPos.z - transform_.translate.z
-        };
+            // ベクトル計算
+            Vector3 toTarget = {
+                targetPos.x - transform_.translate.x,
+                targetPos.y - transform_.translate.y,
+                targetPos.z - transform_.translate.z
+            };
 
-        // 正規化
-        float dist = std::sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y + toTarget.z * toTarget.z);
-        if (dist > 0.0f) {
-            toTarget.x /= dist;
-            toTarget.y /= dist;
-            toTarget.z /= dist;
-        }
+            // 正規化
+            float dist = std::sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y + toTarget.z * toTarget.z);
+            if (dist > 0.0f) {
+                toTarget.x /= dist;
+                toTarget.y /= dist;
+                toTarget.z /= dist;
+            }
 
-        // 速度ベクトルを正規化
-        Vector3 currentDir = velocity_;
-        float currentSpeed = std::sqrt(currentDir.x * currentDir.x + currentDir.y * currentDir.y + currentDir.z * currentDir.z);
-        if (currentSpeed > 0.0f) {
-            currentDir.x /= currentSpeed;
-            currentDir.y /= currentSpeed;
-            currentDir.z /= currentSpeed;
-        }
+            // 速度ベクトルを正規化
+            Vector3 currentDir = velocity_;
+            float currentSpeed = std::sqrt(currentDir.x * currentDir.x + currentDir.y * currentDir.y + currentDir.z * currentDir.z);
+            if (currentSpeed > 0.0f) {
+                currentDir.x /= currentSpeed;
+                currentDir.y /= currentSpeed;
+                currentDir.z /= currentSpeed;
+            }
 
-        // 現在の進行方向とターゲット方向を線形補間(Lerp)して曲げる
-        currentDir.x = std::lerp(currentDir.x, toTarget.x, homingStrength_);
-        currentDir.y = std::lerp(currentDir.y, toTarget.y, homingStrength_);
-        currentDir.z = std::lerp(currentDir.z, toTarget.z, homingStrength_);
+            // 現在の進行方向とターゲット方向を線形補間(Lerp)して曲げる
+            currentDir.x = std::lerp(currentDir.x, toTarget.x, homingStrength_);
+            currentDir.y = std::lerp(currentDir.y, toTarget.y, homingStrength_);
+            currentDir.z = std::lerp(currentDir.z, toTarget.z, homingStrength_);
 
-        // 再度正規化して速度を掛け直す
-        float newDirLen = std::sqrt(currentDir.x * currentDir.x + currentDir.y * currentDir.y + currentDir.z * currentDir.z);
-        if (newDirLen > 0.0f) {
-            velocity_.x = (currentDir.x / newDirLen) * speed_;
-            velocity_.y = (currentDir.y / newDirLen) * speed_;
-            velocity_.z = (currentDir.z / newDirLen) * speed_;
+            // 再度正規化して速度を掛け直す
+            float newDirLen = std::sqrt(currentDir.x * currentDir.x + currentDir.y * currentDir.y + currentDir.z * currentDir.z);
+            if (newDirLen > 0.0f) {
+                velocity_.x = (currentDir.x / newDirLen) * speed_;
+                velocity_.y = (currentDir.y / newDirLen) * speed_;
+                velocity_.z = (currentDir.z / newDirLen) * speed_;
+            }
         }
     }
 

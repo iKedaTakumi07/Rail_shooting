@@ -52,6 +52,7 @@ private:
 
     // 体力UIの制御
     void UIUpdate();
+    Vector2 WorldToScreen(const Vector3& worldPos, Camera* camera);
 
     // 押し出し処理
     void ColliderUpdate(Collider* other);
@@ -129,8 +130,7 @@ private:
     std::unique_ptr<Model> LongReticleModel;
     std::unique_ptr<Object3d> LongReticleObject3d;
 
-    std::unique_ptr<Model> ChargeReticleModel;
-    std::unique_ptr<Object3d> ChargeReticleObject3d;
+    std::unique_ptr<Sprite> ChargeReticleSprite;
 
     // UI(スプライト)
     std::unique_ptr<Sprite> PlayerMaxHpUI;

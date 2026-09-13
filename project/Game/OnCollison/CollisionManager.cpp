@@ -64,3 +64,13 @@ bool CollisionManager::CheckAllAABBCollision(const AllAABB& a, const AllAABB& b)
     }
     return false;
 }
+
+bool CollisionManager::CheckOBB(const OBB& a, const OBB& b) const
+{
+    return false;
+}
+
+bool CollisionManager::CheckAllOBBCollision(const AllOBB& a, const AllOBB& b) const
+{
+    return false;
+}

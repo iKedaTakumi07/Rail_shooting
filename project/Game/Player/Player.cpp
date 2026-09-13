@@ -18,6 +18,7 @@
 #include "../Enemy/base/baseEnemyBullet.h"
 #include "PlayerBullet.h"
 
+#include "../../Engine/base/WinApp.h"
 #include <cstdlib>
 #include <utility>
 
@@ -28,7 +29,6 @@ void Player::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/player/playerReticle.png");
     ModelManager::GetInstance()->LoadModel("player/playerReticle.obj");
     TextureManager::getInstance()->LoadTexture("resources/player/ChargeReticle.png");
-    ModelManager::GetInstance()->LoadModel("player/playerChargeReticle.obj");
     TextureManager::getInstance()->LoadTexture("resources/player/playerHpUI2.png");
     TextureManager::getInstance()->LoadTexture("resources/player/playerHpUI3.png");
 
@@ -57,13 +57,8 @@ void Player::Initialize()
     LongReticleModel->Initialize("resources/player", "playerReticle.obj");
     LongReticleObject3d->SetModel(LongReticleModel.get());
 
-    ChargeReticleObject3d = std::make_unique<Object3d>();
-    ChargeReticleObject3d->Initialize();
-
-    ChargeReticleModel = std::make_unique<Model>();
-    ChargeReticleModel->Initialize("resources/player", "playerChargeReticle.obj");
-    ChargeReticleObject3d->SetModel(ChargeReticleModel.get());
-    ChargeReticleObject3d->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+    ChargeReticleSprite = std::make_unique<Sprite>();
+    ChargeReticleSprite->Initialize("resources/player/ChargeReticle.png");
 
     PlayerMaxHpUI = std::make_unique<Sprite>();
     PlayerMaxHpUI->Initialize("resources/player/playerHpUI2.png");
@@ -84,7 +79,6 @@ void Player::Update()
         invincibleTime -= deltaTime;
         const float kBlinkInterval = 0.1f; // 点滅周期
 
-        
         if (std::fmod(invincibleTime, kBlinkInterval * 2.0f) > kBlinkInterval) {
             playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 0.5f));
         } else {
@@ -120,16 +114,16 @@ void Player::Draw()
 
     ShortReticleObject3d->Draw();
     LongReticleObject3d->Draw();
-
-    if (ChageLook_) {
-        ChargeReticleObject3d->Draw();
-    }
 }
 
 void Player::SpritDraw()
 {
     PlayerMaxHpUI->Draw();
     PlayerHpUI->Draw();
+
+    if (ChageLook_) {
+        ChargeReticleSprite->Draw();
+    }
 }
 
 AllAABB Player::GetAllAABB() const
@@ -415,16 +409,17 @@ void Player::BulletCharge()
         // 対象が生きているなら
         if (target != nullptr && target->GetIsAvile_()) {
             Vector3 pos = target->GetTranslate();
-            ChargeReticleObject3d->SetTranslate(pos);
+            Vector2 screenPos = WorldToScreen(pos, CameraManager::GetInstance()->GetActiveCamera());
+            ChargeReticleSprite->SetPosition(screenPos);
             ChageLook_ = true;
         } else {
-            ChargeReticleObject3d->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
+
             ChageLook_ = false;
             ChageLookId_ = 0;
             lockonTargetId_ = 0;
         }
     } else {
-        ChargeReticleObject3d->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
+
         ChageLook_ = false;
     }
 
@@ -447,14 +442,22 @@ void Player::BulletCharge()
             const float kMaxRotateZ = static_cast<float>(std::numbers::pi) * 2.0f;
             float currentRotateZ = (1.0f - easeT) * kMaxRotateZ;
 
-            ChargeReticleObject3d->SetScale(Vector3(currentScale, currentScale, currentScale));
-            ChargeReticleObject3d->SetRotate(Vector3(0.0f, 0.0f, currentRotateZ));
+            Vector2 baseSize = ChargeReticleSprite->GetextureSize();
+            ChargeReticleSprite->SetSize({ baseSize.x * currentScale, baseSize.y * currentScale });
+            ChargeReticleSprite->SetRotation(currentRotateZ);
+
+            if (progress >= 1.0f) {
+                ChargeReticleSprite->SetColor(Vector4(1.0f, 0.2f, 0.2f, 1.0f)); // チャージ完了時赤点滅等
+            } else {
+                ChargeReticleSprite->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            }
         } else {
             ChageLook_ = false;
         }
     }
 
-    ChargeReticleObject3d->Update();
+    ChargeReticleSprite->SetAnchorPoint(Vector2(0.5f, 0.5f));
+    ChargeReticleSprite->Update();
 }
 
 void Player::UIUpdate()
@@ -466,6 +469,35 @@ void Player::UIUpdate()
 
     PlayerMaxHpUI->Update();
     PlayerHpUI->Update();
+}
+
+Vector2 Player::WorldToScreen(const Vector3& worldPos, Camera* camera)
+{
+    if (!camera) {
+        return Vector2(0.0f, 0.0f);
+    }
+
+    const Matrix4x4& vp = camera->GetViewProjectionMatrix();
+
+    // ビュー変換
+    float x = worldPos.x * vp.m[0][0] + worldPos.y * vp.m[1][0] + worldPos.z * vp.m[2][0] + vp.m[3][0];
+    float y = worldPos.x * vp.m[0][1] + worldPos.y * vp.m[1][1] + worldPos.z * vp.m[2][1] + vp.m[3][1];
+    float z = worldPos.x * vp.m[0][2] + worldPos.y * vp.m[1][2] + worldPos.z * vp.m[2][2] + vp.m[3][2];
+    float w = worldPos.x * vp.m[0][3] + worldPos.y * vp.m[1][3] + worldPos.z * vp.m[2][3] + vp.m[3][3];
+
+    // 背面にあるなら動かさない(動作しない)
+    if (w <= 0.0f) {
+        return Vector2(0.0f, 0.0f);
+    }
+
+    // w除算
+    float ndcX = x / w;
+    float ndcY = y / w;
+
+    float screenX = (ndcX + 1.0f) * 0.5f * static_cast<float>(WinApp::KClientWidth);
+    float screenY = (1.0f - ndcY) * 0.5f * static_cast<float>(WinApp::KClientHeight);
+
+    return Vector2(screenX, screenY);
 }
 
 void Player::ColliderUpdate(Collider* other)

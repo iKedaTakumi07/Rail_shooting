@@ -21,6 +21,7 @@ void FourEyesBoss::Initialize(Vector3 pos)
 {
     // スポーン位置を中心座標としてセット
     centerPos_ = pos;
+    deadPos_ = pos;
 
     TextureManager::getInstance()->LoadTexture("resources/baseEnemy/uvChecker.png");
     TextureManager::getInstance()->LoadTexture("resources/EnemyUI/bossHpBar.png");
@@ -69,6 +70,10 @@ void FourEyesBoss::Update()
     if (isAppearing_) {
         // 出現演出中は演出ロジックのみを更新（攻撃は行わない）
         UpdateAppearance(deltaTime);
+        return;
+    }
+    if (isDeathProdiction_) {
+        UpdateDeathProduction(deltaTime);
         return;
     }
 
@@ -165,7 +170,7 @@ void FourEyesBoss::OnCollision(Collider* other)
         partsDamage(other);
 
         if (currentHp_ <= 0) {
-            isAvile_ = false; // 死亡演出作ったならそっちに移行
+            StartDeathProduction();
             isDead_ = true; // 死亡演出トリガー用
         }
     } else if (other->GetCollisionGroup() == CollisionGroup::kPlayer) {
@@ -173,7 +178,7 @@ void FourEyesBoss::OnCollision(Collider* other)
         currentHp_ -= 1;
 
         if (currentHp_ <= 0) {
-            isAvile_ = false; // 死亡演出作ったならそっちに移行
+            StartDeathProduction();
             isDead_ = true; // 死亡演出トリガー用
         }
     }
@@ -218,6 +223,53 @@ void FourEyesBoss::UpdateAppearance(float deltaTime)
     if (appearanceTimer_ >= kAppearanceDuration) {
         isAppearing_ = false; // 演出終了、通常戦闘状態へ遷移
     }
+}
+
+void FourEyesBoss::StartDeathProduction()
+{
+    isDeathProdiction_ = true;
+    isDeadMoveCompletion_ = false;
+    deadPos_ = transform_.translate;
+    deathTimer = 0.0f;
+}
+
+void FourEyesBoss::UpdateDeathProduction(float deltaTime)
+{
+    deathTimer += deltaTime;
+    if (deathTimer >= kdeathTimer) {
+        isAvile_ = false;
+        return;
+    }
+
+    if (!isDeadMoveCompletion_) {
+        float t = (deathTimer * 2.0f) / kdeathTimer;
+        t = std::clamp(t, 0.0f, 1.0f);
+        if (t >= 1.0f) {
+            isDeadMoveCompletion_ = true;
+        }
+
+        transform_.translate.y = std::lerp(deadPos_.y, centerPos_.y, t);
+    
+    } else {
+        // 死亡時間までパーティクルとsclaeいじいじ
+        float scaleTimer = deathTimer - (kdeathTimer * 0.5f);
+
+        const float kFrequency = 19.0f;
+        const float kAmplitude = 0.3f;
+
+        // 1.0 を中心に 0.7 ～ 1.3 の範囲で拡大縮小
+        float scaleFactor = 1.0f + std::sin(scaleTimer * kFrequency) * kAmplitude;
+        transform_.scale = { scaleFactor, scaleFactor, scaleFactor };
+    }
+
+    Vector3 pos = CameraManager::GetInstance()->GetActiveCamera()->GetTranslate();
+    pos.z = pos.z + offsetPosZ;
+    transform_.translate.z = pos.z;
+
+    object3d->SetScale(transform_.scale);
+    object3d->SetTranslate(transform_.translate);
+    object3d->SetRotate(transform_.rotate);
+    object3d->Update();
 }
 
 void FourEyesBoss::FireFourWayBullets()
