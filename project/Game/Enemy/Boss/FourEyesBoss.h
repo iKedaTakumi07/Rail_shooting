@@ -34,6 +34,7 @@ public:
     int GetCurrentPhase() const override { return currentPhase_; }
 
     AllAABB GetAllAABB() const override;
+    AllOBB GetAllOBB() const override;
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kEnenmy; }
     std::vector<Vector3> GetTargetPositions() override; // ホーミング用の座標渡し
     void OnCollision(Collider* other) override;

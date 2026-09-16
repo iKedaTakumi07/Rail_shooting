@@ -27,12 +27,9 @@ public:
     virtual ~Collider() = default;
 
     virtual AllAABB GetAllAABB() const = 0;
+    virtual AllOBB GetAllOBB() const = 0;
 
     virtual CollisionGroup GetCollisionGroup() const = 0;
-
-    //virtual AllOBB GetAllOBB() const = 0;
-
-    //virtual CollisionGroup GetCollisionGroup() const = 0;
 
     /// <summary>
     /// 当たり半テオ

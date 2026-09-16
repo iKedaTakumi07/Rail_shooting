@@ -24,6 +24,7 @@ public:
     bool IsChargBullet() const { return isChargeBullet; }
 
     AllAABB GetAllAABB() const override;
+    AllOBB GetAllOBB() const override;
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kPlayerBullet; }
     void OnCollision(Collider* other) override;
     int GetDamage() const override;

@@ -21,6 +21,7 @@ class threeShotsEnemy : public baseEnemy {
 public:
     // Get関数
     AllAABB GetAllAABB() const override;
+    AllOBB GetAllOBB() const override;
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kEnenmy; }
     void OnCollision(Collider* other) override;
     int GetDamage() const override { return dameg_; }

@@ -13,6 +13,7 @@
 
 #include "../../../Engine/3d/Object3d.h"
 #include "../../../Engine/scene/SceneManager.h"
+#include "../../OnCollison/CollisionManager.h"
 #include "../Bullet/EnemyHomingBullet.h"
 #include "../Bullet/TargetBullet.h"
 #include <memory>
@@ -145,6 +146,88 @@ AllAABB FourEyesBoss::GetAllAABB() const
     return compound;
 }
 
+AllOBB FourEyesBoss::GetAllOBB() const
+{
+    AllOBB compound;
+
+    // 方向ベクトル
+    Matrix4x4 rotX = MakeRotateXMatrix(transform_.rotate.x);
+    Matrix4x4 rotY = MakeRotateYMatrix(transform_.rotate.y);
+    Matrix4x4 rotZ = MakeRotateZMatrix(transform_.rotate.z);
+    Matrix4x4 rotMat = Multiply(rotX, Multiply(rotY, rotZ));
+
+    // 各軸
+    Vector3 orientations[3] = {
+        Normalize({ rotMat.m[0][0], rotMat.m[0][1], rotMat.m[0][2] }),
+        Normalize({ rotMat.m[1][0], rotMat.m[1][1], rotMat.m[1][2] }),
+        Normalize({ rotMat.m[2][0], rotMat.m[2][1], rotMat.m[2][2] })
+    };
+
+    // 全体のサイズ
+    Vector3 wholeMin = { -7.5f, -7.5f, -3.0f };
+    Vector3 wholeMax = { 7.5f, 7.5f, 1.5f };
+
+    // スケールを考慮したローカル中心とサイズ
+    Vector3 wholeLocalCenter = {
+        (wholeMin.x + wholeMax.x) / 2.0f * transform_.scale.x,
+        (wholeMin.y + wholeMax.y) / 2.0f * transform_.scale.y,
+        (wholeMin.z + wholeMax.z) / 2.0f * transform_.scale.z
+    };
+    Vector3 wholeHalfSize = {
+        (wholeMax.x - wholeMin.x) / 2.0f * transform_.scale.x,
+        (wholeMax.y - wholeMin.y) / 2.0f * transform_.scale.y,
+        (wholeMax.z - wholeMin.z) / 2.0f * transform_.scale.z
+    };
+
+    // 中心位置
+    Vector3 wholeWorldCenter = {
+        transform_.translate.x + (wholeLocalCenter.x * rotMat.m[0][0] + wholeLocalCenter.y * rotMat.m[1][0] + wholeLocalCenter.z * rotMat.m[2][0]),
+        transform_.translate.y + (wholeLocalCenter.x * rotMat.m[0][1] + wholeLocalCenter.y * rotMat.m[1][1] + wholeLocalCenter.z * rotMat.m[2][1]),
+        transform_.translate.z + (wholeLocalCenter.x * rotMat.m[0][2] + wholeLocalCenter.y * rotMat.m[1][2] + wholeLocalCenter.z * rotMat.m[2][2])
+    };
+
+    compound.wholeBox.center = wholeWorldCenter;
+    compound.wholeBox.orientations[0] = orientations[0];
+    compound.wholeBox.orientations[1] = orientations[1];
+    compound.wholeBox.orientations[2] = orientations[2];
+    compound.wholeBox.size = wholeHalfSize;
+
+    // 部位ごとの当たり判定
+    for (const auto& part : parts_) {
+        if (part.hp > 0) {
+            // ローカルの中心点とサイズを計算
+            Vector3 localCenter = {
+                (part.aabbMinOffset.x + part.aabbMaxOffset.x) / 2.0f * transform_.scale.x,
+                (part.aabbMinOffset.y + part.aabbMaxOffset.y) / 2.0f * transform_.scale.y,
+                (part.aabbMinOffset.z + part.aabbMaxOffset.z) / 2.0f * transform_.scale.z
+            };
+            Vector3 halfSize = {
+                (part.aabbMaxOffset.x - part.aabbMinOffset.x) / 2.0f * transform_.scale.x,
+                (part.aabbMaxOffset.y - part.aabbMinOffset.y) / 2.0f * transform_.scale.y,
+                (part.aabbMaxOffset.z - part.aabbMinOffset.z) / 2.0f * transform_.scale.z
+            };
+
+            // ワールド座標の中心位置への変換
+            Vector3 worldCenter = {
+                transform_.translate.x + (localCenter.x * rotMat.m[0][0] + localCenter.y * rotMat.m[1][0] + localCenter.z * rotMat.m[2][0]),
+                transform_.translate.y + (localCenter.x * rotMat.m[0][1] + localCenter.y * rotMat.m[1][1] + localCenter.z * rotMat.m[2][1]),
+                transform_.translate.z + (localCenter.x * rotMat.m[0][2] + localCenter.y * rotMat.m[1][2] + localCenter.z * rotMat.m[2][2])
+            };
+
+            OBB box;
+            box.center = worldCenter;
+            box.orientations[0] = orientations[0];
+            box.orientations[1] = orientations[1];
+            box.orientations[2] = orientations[2];
+            box.size = halfSize;
+
+            compound.dividBoxes.push_back(box);
+        }
+    }
+
+    return compound;
+}
+
 std::vector<Vector3> FourEyesBoss::GetTargetPositions()
 {
     std::vector<Vector3> positions;
@@ -242,14 +325,14 @@ void FourEyesBoss::UpdateDeathProduction(float deltaTime)
     }
 
     if (!isDeadMoveCompletion_) {
-        float t = (deathTimer * 2.0f) / kdeathTimer;
+        float t = (deathTimer + 4.0f) / kdeathTimer;
         t = std::clamp(t, 0.0f, 1.0f);
         if (t >= 1.0f) {
             isDeadMoveCompletion_ = true;
         }
 
         transform_.translate.y = std::lerp(deadPos_.y, centerPos_.y, t);
-    
+
     } else {
         // 死亡時間までパーティクルとsclaeいじいじ
         float scaleTimer = deathTimer - (kdeathTimer * 0.5f);
@@ -341,26 +424,25 @@ void FourEyesBoss::UIUpdate()
 
 void FourEyesBoss::partsDamage(Collider* other)
 {
-    AllAABB otherAllAABB = other->GetAllAABB();
+    AllOBB otherAllOBB = other->GetAllOBB();
+    AllOBB myAllOBB = GetAllOBB(); // ボス自身の現在の回転が反映されたOBB群を取得
     int damage = other->GetDamage();
 
+    size_t obbIndex = 0;
     for (auto& part : parts_) {
         if (part.hp <= 0) {
             continue;
         }
 
-        AABB partBox;
-        partBox.min = { transform_.translate.x + part.aabbMinOffset.x,
-            transform_.translate.y + part.aabbMinOffset.y,
-            transform_.translate.z + part.aabbMinOffset.z };
-        partBox.max = { transform_.translate.x + part.aabbMaxOffset.x,
-            transform_.translate.y + part.aabbMaxOffset.y,
-            transform_.translate.z + part.aabbMaxOffset.z };
+        if (obbIndex >= myAllOBB.dividBoxes.size()) {
+            break;
+        }
 
-        for (const auto& otherBox : otherAllAABB.dividBoxes) {
-            bool isHit = (partBox.min.x < otherBox.max.x && partBox.max.x > otherBox.min.x) && (partBox.min.y < otherBox.max.y && partBox.max.y > otherBox.min.y) && (partBox.min.z < otherBox.max.z && partBox.max.z > otherBox.min.z);
+        const OBB& partOBB = myAllOBB.dividBoxes[obbIndex++];
 
-            if (isHit) {
+        for (const auto& otherBox : otherAllOBB.dividBoxes) {
+            // CollisionManager と同様の OBB 判定を実施 (またはヘルパー関数化)
+            if (CollisionManager::CheckOBB(partOBB, otherBox)) {
                 part.hp = std::max(0, part.hp - damage);
                 break; // 同一フレームでの多重ヒット防止
             }

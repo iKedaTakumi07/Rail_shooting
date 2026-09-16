@@ -35,6 +35,16 @@ void stageObjectManager::Update()
         }
     }
 
+    const float kDespawnDistance = -50.0f; // 破棄する基準となるプレイヤーからの相対距離
+    stageObjects_.erase(std::remove_if(stageObjects_.begin(), stageObjects_.end(), [&](const std::unique_ptr<stageObject>& obj) {
+        if (player_) {
+            float zDiff = obj->GetAllAABB().wholeBox.max.z - player_->GetTranslate().z;
+            return zDiff < kDespawnDistance;
+        }
+        return false;
+    }),
+        stageObjects_.end());
+
     for (auto& obj : stageObjects_) {
         obj->Update();
     }
