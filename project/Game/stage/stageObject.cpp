@@ -29,6 +29,16 @@ void stageObject::Initialize(const std::string& patan, const Vector3& pos, const
     Object3d_->SetTranslate(transform_.translate);
     Object3d_->SetScale(transform_.scale);
     Object3d_->SetRotate(transform_.rotate);
+
+    if (objPatan_ == "stageCube1") {
+        parts_[0] = { { -1.0f, -1.0f, -1.0f }, { -0.5f, 0.5f, 1.0f } }; // 右
+        parts_[1] = { { 0.5f, -1.0f, -1.0f }, { 1.0f, 0.5f, 1.0f } }; // 左
+        parts_[2] = { { -1.0f, 0.5f, -1.0f }, { 1.0f, 1.0f, 1.0f } }; // 屋根
+    } else {
+        parts_[0] = { { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f } }; // エラー対策
+        parts_[1] = { { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f } }; // エラー対策
+        parts_[2] = { { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f } }; // エラー対策
+    }
 }
 
 void stageObject::Update()
@@ -87,6 +97,84 @@ AllAABB stageObject::GetAllAABB() const
         compound.dividBoxes.push_back(aabb);
     }
 
+    return compound;
+}
+
+AllOBB stageObject::GetAllOBB() const
+{
+    AllOBB compound;
+
+    // 方向ベクトル
+    Matrix4x4 rotX = MakeRotateXMatrix(transform_.rotate.x);
+    Matrix4x4 rotY = MakeRotateYMatrix(transform_.rotate.y);
+    Matrix4x4 rotZ = MakeRotateZMatrix(transform_.rotate.z);
+    Matrix4x4 rotMat = Multiply(rotX, Multiply(rotY, rotZ));
+
+    Vector3 orientations[3] = {
+        Normalize({ rotMat.m[0][0], rotMat.m[0][1], rotMat.m[0][2] }),
+        Normalize({ rotMat.m[1][0], rotMat.m[1][1], rotMat.m[1][2] }),
+        Normalize({ rotMat.m[2][0], rotMat.m[2][1], rotMat.m[2][2] })
+    };
+
+    // 透けるに応じたsize変更
+    Vector3 extents = {
+        baseSize_ * transform_.scale.x,
+        baseSize_ * transform_.scale.y,
+        baseSize_ * transform_.scale.z
+    };
+
+    // 全体のOBB
+    OBB wholeObb;
+    wholeObb.center = transform_.translate;
+    wholeObb.orientations[0] = orientations[0];
+    wholeObb.orientations[1] = orientations[1];
+    wholeObb.orientations[2] = orientations[2];
+    wholeObb.size = extents;
+
+    compound.wholeBox = wholeObb;
+
+    if (objPatan_ == "stageObjectCube") {
+        // 穴が開いているわけではないのでそのまま
+        OBB box;
+        box.center = transform_.translate;
+        box.orientations[0] = orientations[0];
+        box.orientations[1] = orientations[1];
+        box.orientations[2] = orientations[2];
+        box.size = extents;
+
+        compound.dividBoxes.push_back(box);
+    } else if (objPatan_ == "stageCube1") {
+        for (const auto& part : parts_) {
+
+            // ローカルの中心点とサイズを計算
+            Vector3 localCenter = {
+                (part.aabbMinOffset.x + part.aabbMaxOffset.x) / 2.0f * transform_.scale.x,
+                (part.aabbMinOffset.y + part.aabbMaxOffset.y) / 2.0f * transform_.scale.y,
+                (part.aabbMinOffset.z + part.aabbMaxOffset.z) / 2.0f * transform_.scale.z
+            };
+            Vector3 halfSize = {
+                (part.aabbMaxOffset.x - part.aabbMinOffset.x) / 2.0f * transform_.scale.x,
+                (part.aabbMaxOffset.y - part.aabbMinOffset.y) / 2.0f * transform_.scale.y,
+                (part.aabbMaxOffset.z - part.aabbMinOffset.z) / 2.0f * transform_.scale.z
+            };
+
+            // ワールド座標の中心位置への変換
+            Vector3 worldCenter = {
+                transform_.translate.x + (localCenter.x * rotMat.m[0][0] + localCenter.y * rotMat.m[1][0] + localCenter.z * rotMat.m[2][0]),
+                transform_.translate.y + (localCenter.x * rotMat.m[0][1] + localCenter.y * rotMat.m[1][1] + localCenter.z * rotMat.m[2][1]),
+                transform_.translate.z + (localCenter.x * rotMat.m[0][2] + localCenter.y * rotMat.m[1][2] + localCenter.z * rotMat.m[2][2])
+            };
+
+            OBB box;
+            box.center = worldCenter;
+            box.orientations[0] = orientations[0];
+            box.orientations[1] = orientations[1];
+            box.orientations[2] = orientations[2];
+            box.size = halfSize;
+
+            compound.dividBoxes.push_back(box);
+        }
+    }
     return compound;
 }
 

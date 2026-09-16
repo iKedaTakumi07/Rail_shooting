@@ -75,6 +75,44 @@ AllAABB TargetBullet::GetAllAABB() const
     return compound;
 }
 
+AllOBB TargetBullet::GetAllOBB() const
+{
+    OBB obb;
+    obb.center = transform_.translate;
+
+     Vector3 forward = velocity_;
+    float sqLength = Dot(forward, forward);
+
+    if (sqLength == 0.0f) {
+        forward = { 0.0f, 0.0f, 1.0f };
+    } else {
+        forward = Normalize(forward);
+    }
+
+    Vector3 up = { 0.0f, 1.0f, 0.0f };
+    if (std::abs(forward.y) == 1.0f) {
+        up = { 0.0f, 0.0f, 1.0f };
+    }
+
+    Vector3 right = Normalize(Cross(up, forward));
+    Vector3 localUp = Cross(forward, right);
+
+    obb.orientations[0] = right; // ローカル X 軸
+    obb.orientations[1] = localUp; // ローカル Y 軸
+    obb.orientations[2] = forward; // ローカル Z 軸
+
+    obb.size = {
+        size * transform_.scale.x,
+        size * transform_.scale.y,
+        size * transform_.scale.z
+    };
+
+    AllOBB compound;
+    compound.wholeBox = obb;
+    compound.dividBoxes.push_back(obb);
+    return compound;
+}
+
 void TargetBullet::OnCollision(Collider* other)
 {
     // 当たったもの次第で分岐

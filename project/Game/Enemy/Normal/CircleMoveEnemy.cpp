@@ -91,6 +91,33 @@ AllAABB CircleMoveEnemy::GetAllAABB() const
     return compound;
 }
 
+AllOBB CircleMoveEnemy::GetAllOBB() const
+{
+    OBB obb;
+    obb.center = transform_.translate;
+
+    Matrix4x4 rotX = MakeRotateXMatrix(transform_.rotate.x);
+    Matrix4x4 rotY = MakeRotateYMatrix(transform_.rotate.y);
+    Matrix4x4 rotZ = MakeRotateZMatrix(transform_.rotate.z);
+    Matrix4x4 rotYX = Multiply(rotY, rotX);
+    Matrix4x4 rotMat = Multiply(rotYX, rotZ);
+
+    obb.orientations[0] = Normalize({ rotMat.m[0][0], rotMat.m[0][1], rotMat.m[0][2] });
+    obb.orientations[1] = Normalize({ rotMat.m[1][0], rotMat.m[1][1], rotMat.m[1][2] });
+    obb.orientations[2] = Normalize({ rotMat.m[2][0], rotMat.m[2][1], rotMat.m[2][2] });
+
+    obb.size = {
+        size * transform_.scale.x,
+        size * transform_.scale.y,
+        size * transform_.scale.z
+    };
+
+    AllOBB compound;
+    compound.wholeBox = obb;
+    compound.dividBoxes.push_back(obb);
+    return compound;
+}
+
 void CircleMoveEnemy::OnCollision(Collider* other)
 {
     // 当たったもの次第で分岐

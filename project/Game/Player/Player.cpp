@@ -18,6 +18,7 @@
 #include "../Enemy/base/baseEnemyBullet.h"
 #include "PlayerBullet.h"
 
+#include "../../Engine/base/WinApp.h"
 #include <cstdlib>
 #include <utility>
 
@@ -28,7 +29,6 @@ void Player::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/player/playerReticle.png");
     ModelManager::GetInstance()->LoadModel("player/playerReticle.obj");
     TextureManager::getInstance()->LoadTexture("resources/player/ChargeReticle.png");
-    ModelManager::GetInstance()->LoadModel("player/playerChargeReticle.obj");
     TextureManager::getInstance()->LoadTexture("resources/player/playerHpUI2.png");
     TextureManager::getInstance()->LoadTexture("resources/player/playerHpUI3.png");
 
@@ -57,13 +57,8 @@ void Player::Initialize()
     LongReticleModel->Initialize("resources/player", "playerReticle.obj");
     LongReticleObject3d->SetModel(LongReticleModel.get());
 
-    ChargeReticleObject3d = std::make_unique<Object3d>();
-    ChargeReticleObject3d->Initialize();
-
-    ChargeReticleModel = std::make_unique<Model>();
-    ChargeReticleModel->Initialize("resources/player", "playerChargeReticle.obj");
-    ChargeReticleObject3d->SetModel(ChargeReticleModel.get());
-    ChargeReticleObject3d->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+    ChargeReticleSprite = std::make_unique<Sprite>();
+    ChargeReticleSprite->Initialize("resources/player/ChargeReticle.png");
 
     PlayerMaxHpUI = std::make_unique<Sprite>();
     PlayerMaxHpUI->Initialize("resources/player/playerHpUI2.png");
@@ -84,7 +79,6 @@ void Player::Update()
         invincibleTime -= deltaTime;
         const float kBlinkInterval = 0.1f; // 点滅周期
 
-        
         if (std::fmod(invincibleTime, kBlinkInterval * 2.0f) > kBlinkInterval) {
             playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 0.5f));
         } else {
@@ -120,16 +114,16 @@ void Player::Draw()
 
     ShortReticleObject3d->Draw();
     LongReticleObject3d->Draw();
-
-    if (ChageLook_) {
-        ChargeReticleObject3d->Draw();
-    }
 }
 
 void Player::SpritDraw()
 {
     PlayerMaxHpUI->Draw();
     PlayerHpUI->Draw();
+
+    if (ChageLook_) {
+        ChargeReticleSprite->Draw();
+    }
 }
 
 AllAABB Player::GetAllAABB() const
@@ -264,6 +258,26 @@ void Player::HoverUpdate()
 
     transform_.rotate.z = basetransform_.rotate.z + swayZ;
     transform_.rotate.x = basetransform_.rotate.x + swayX;
+
+    // shift押しているなら機体を進行方向の横向きにする
+    bool isShift = Input::getInstance()->PushKey(DIK_LSHIFT) || Input::getInstance()->PushKey(DIK_RSHIFT);
+    Vector3 inputDir = { 0, 0, 0 };
+
+    if (Input::getInstance()->PushKey(DIK_A)) {
+        inputDir.x -= 1.0f;
+    }
+    if (Input::getInstance()->PushKey(DIK_D)) {
+        inputDir.x += 1.0f;
+    }
+    if (isShift) {
+        if (inputDir.x <= 0.0f) {
+            transform_.rotate.z += 0.75f;
+            basetransform_.rotate.z += 0.3f;
+        } else if (inputDir.x >= 0.0f) {
+            transform_.rotate.z -= 0.75f;
+            basetransform_.rotate.z -= 0.3f;
+        }
+    }
 
     transform_.rotate.y = basetransform_.rotate.y;
 }
@@ -414,17 +428,23 @@ void Player::BulletCharge()
 
         // 対象が生きているなら
         if (target != nullptr && target->GetIsAvile_()) {
+            std::vector<Vector3> targetPositions = target->GetTargetPositions();
             Vector3 pos = target->GetTranslate();
-            ChargeReticleObject3d->SetTranslate(pos);
+            if (ChageLookIndex_ >= 0 && ChageLookIndex_ < static_cast<int>(targetPositions.size())) {
+                pos = targetPositions[ChageLookIndex_];
+            }
+
+            Vector2 screenPos = WorldToScreen(pos, CameraManager::GetInstance()->GetActiveCamera());
+            ChargeReticleSprite->SetPosition(screenPos);
             ChageLook_ = true;
         } else {
-            ChargeReticleObject3d->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
+
             ChageLook_ = false;
             ChageLookId_ = 0;
             lockonTargetId_ = 0;
         }
     } else {
-        ChargeReticleObject3d->SetTranslate(Vector3(0.0f, 0.0f, 0.0f));
+
         ChageLook_ = false;
     }
 
@@ -436,7 +456,7 @@ void Player::BulletCharge()
             progress = 1.0f; // t
 
         // 0.15f未満なら表示しない
-        if (progress > 0.15f) {
+        if (progress > 0.1f) {
             float easeT = progress * progress * progress; // EaseInCubic
 
             const float kStartScale = 1.5f;
@@ -447,14 +467,22 @@ void Player::BulletCharge()
             const float kMaxRotateZ = static_cast<float>(std::numbers::pi) * 2.0f;
             float currentRotateZ = (1.0f - easeT) * kMaxRotateZ;
 
-            ChargeReticleObject3d->SetScale(Vector3(currentScale, currentScale, currentScale));
-            ChargeReticleObject3d->SetRotate(Vector3(0.0f, 0.0f, currentRotateZ));
+            Vector2 baseSize = ChargeReticleSprite->GetextureSize();
+            ChargeReticleSprite->SetSize({ baseSize.x * currentScale, baseSize.y * currentScale });
+            ChargeReticleSprite->SetRotation(currentRotateZ);
+
+            if (progress >= 1.0f) {
+                ChargeReticleSprite->SetColor(Vector4(1.0f, 0.2f, 0.2f, 1.0f)); // チャージ完了時赤点滅等
+            } else {
+                ChargeReticleSprite->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            }
         } else {
             ChageLook_ = false;
         }
     }
 
-    ChargeReticleObject3d->Update();
+    ChargeReticleSprite->SetAnchorPoint(Vector2(0.5f, 0.5f));
+    ChargeReticleSprite->Update();
 }
 
 void Player::UIUpdate()
@@ -466,6 +494,61 @@ void Player::UIUpdate()
 
     PlayerMaxHpUI->Update();
     PlayerHpUI->Update();
+}
+
+Vector2 Player::WorldToScreen(const Vector3& worldPos, Camera* camera)
+{
+    if (!camera) {
+        return Vector2(0.0f, 0.0f);
+    }
+
+    const Matrix4x4& vp = camera->GetViewProjectionMatrix();
+
+    // ビュー変換
+    float x = worldPos.x * vp.m[0][0] + worldPos.y * vp.m[1][0] + worldPos.z * vp.m[2][0] + vp.m[3][0];
+    float y = worldPos.x * vp.m[0][1] + worldPos.y * vp.m[1][1] + worldPos.z * vp.m[2][1] + vp.m[3][1];
+    float z = worldPos.x * vp.m[0][2] + worldPos.y * vp.m[1][2] + worldPos.z * vp.m[2][2] + vp.m[3][2];
+    float w = worldPos.x * vp.m[0][3] + worldPos.y * vp.m[1][3] + worldPos.z * vp.m[2][3] + vp.m[3][3];
+
+    // 背面にあるなら動かさない(動作しない)
+    if (w <= 0.0f) {
+        return Vector2(0.0f, 0.0f);
+    }
+
+    // w除算
+    float ndcX = x / w;
+    float ndcY = y / w;
+
+    float screenX = (ndcX + 1.0f) * 0.5f * static_cast<float>(WinApp::KClientWidth);
+    float screenY = (1.0f - ndcY) * 0.5f * static_cast<float>(WinApp::KClientHeight);
+
+    return Vector2(screenX, screenY);
+}
+
+AllOBB Player::GetAllOBB() const
+{
+    OBB obb;
+    obb.center = basetransform_.translate;
+
+    Matrix4x4 rotX = MakeRotateXMatrix(basetransform_.rotate.x);
+    Matrix4x4 rotY = MakeRotateYMatrix(basetransform_.rotate.y);
+    Matrix4x4 rotZ = MakeRotateZMatrix(basetransform_.rotate.z);
+    Matrix4x4 rotMat = Multiply(rotX, Multiply(rotY, rotZ));
+
+    obb.orientations[0] = Normalize({ rotMat.m[0][0], rotMat.m[0][1], rotMat.m[0][2] });
+    obb.orientations[1] = Normalize({ rotMat.m[1][0], rotMat.m[1][1], rotMat.m[1][2] });
+    obb.orientations[2] = Normalize({ rotMat.m[2][0], rotMat.m[2][1], rotMat.m[2][2] });
+
+    obb.size = {
+        size * transform_.scale.x,
+        size * transform_.scale.y,
+        size * transform_.scale.z
+    };
+
+    AllOBB compound;
+    compound.wholeBox = obb;
+    compound.dividBoxes.push_back(obb);
+    return compound;
 }
 
 void Player::ColliderUpdate(Collider* other)

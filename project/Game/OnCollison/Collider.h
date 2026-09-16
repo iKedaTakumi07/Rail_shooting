@@ -10,6 +10,11 @@ enum class CollisionGroup {
     kStageObject,
 };
 
+struct AllOBB {
+    OBB wholeBox; // 分割しないオブジェクト自体の大きさ
+    std::vector<OBB> dividBoxes; // 分割した詳細判定用OBB
+};
+
 struct AllAABB {
     AABB wholeBox; // 分割しないオブジェクト自体の大きさ
     std::vector<AABB> dividBoxes; // 分割した判定
@@ -22,6 +27,7 @@ public:
     virtual ~Collider() = default;
 
     virtual AllAABB GetAllAABB() const = 0;
+    virtual AllOBB GetAllOBB() const = 0;
 
     virtual CollisionGroup GetCollisionGroup() const = 0;
 

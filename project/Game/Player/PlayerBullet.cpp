@@ -63,48 +63,51 @@ void PlayerBullet::Update(float deltaTime)
 
     if (target && target->GetIsAvile_()) { // ターゲットが存在し、生きている場合
         std::vector<Vector3> targetPositions = target->GetTargetPositions();
-        Vector3 targetPos = targetPositions[0];
 
-        // 指定された番号の座標を取得
-        if (targetIndex_ >= 0 && targetIndex_ < targetPositions.size()) {
-            targetPos = targetPositions[targetIndex_];
-        }
+        if (!targetPositions.empty()) {
+            Vector3 targetPos = targetPositions[0];
 
-        // ベクトル計算
-        Vector3 toTarget = {
-            targetPos.x - transform_.translate.x,
-            targetPos.y - transform_.translate.y,
-            targetPos.z - transform_.translate.z
-        };
+            // 指定された番号の座標を取得
+            if (targetIndex_ >= 0 && targetIndex_ < targetPositions.size()) {
+                targetPos = targetPositions[targetIndex_];
+            }
 
-        // 正規化
-        float dist = std::sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y + toTarget.z * toTarget.z);
-        if (dist > 0.0f) {
-            toTarget.x /= dist;
-            toTarget.y /= dist;
-            toTarget.z /= dist;
-        }
+            // ベクトル計算
+            Vector3 toTarget = {
+                targetPos.x - transform_.translate.x,
+                targetPos.y - transform_.translate.y,
+                targetPos.z - transform_.translate.z
+            };
 
-        // 速度ベクトルを正規化
-        Vector3 currentDir = velocity_;
-        float currentSpeed = std::sqrt(currentDir.x * currentDir.x + currentDir.y * currentDir.y + currentDir.z * currentDir.z);
-        if (currentSpeed > 0.0f) {
-            currentDir.x /= currentSpeed;
-            currentDir.y /= currentSpeed;
-            currentDir.z /= currentSpeed;
-        }
+            // 正規化
+            float dist = std::sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y + toTarget.z * toTarget.z);
+            if (dist > 0.0f) {
+                toTarget.x /= dist;
+                toTarget.y /= dist;
+                toTarget.z /= dist;
+            }
 
-        // 現在の進行方向とターゲット方向を線形補間(Lerp)して曲げる
-        currentDir.x = std::lerp(currentDir.x, toTarget.x, homingStrength_);
-        currentDir.y = std::lerp(currentDir.y, toTarget.y, homingStrength_);
-        currentDir.z = std::lerp(currentDir.z, toTarget.z, homingStrength_);
+            // 速度ベクトルを正規化
+            Vector3 currentDir = velocity_;
+            float currentSpeed = std::sqrt(currentDir.x * currentDir.x + currentDir.y * currentDir.y + currentDir.z * currentDir.z);
+            if (currentSpeed > 0.0f) {
+                currentDir.x /= currentSpeed;
+                currentDir.y /= currentSpeed;
+                currentDir.z /= currentSpeed;
+            }
 
-        // 再度正規化して速度を掛け直す
-        float newDirLen = std::sqrt(currentDir.x * currentDir.x + currentDir.y * currentDir.y + currentDir.z * currentDir.z);
-        if (newDirLen > 0.0f) {
-            velocity_.x = (currentDir.x / newDirLen) * speed_;
-            velocity_.y = (currentDir.y / newDirLen) * speed_;
-            velocity_.z = (currentDir.z / newDirLen) * speed_;
+            // 現在の進行方向とターゲット方向を線形補間(Lerp)して曲げる
+            currentDir.x = std::lerp(currentDir.x, toTarget.x, homingStrength_);
+            currentDir.y = std::lerp(currentDir.y, toTarget.y, homingStrength_);
+            currentDir.z = std::lerp(currentDir.z, toTarget.z, homingStrength_);
+
+            // 再度正規化して速度を掛け直す
+            float newDirLen = std::sqrt(currentDir.x * currentDir.x + currentDir.y * currentDir.y + currentDir.z * currentDir.z);
+            if (newDirLen > 0.0f) {
+                velocity_.x = (currentDir.x / newDirLen) * speed_;
+                velocity_.y = (currentDir.y / newDirLen) * speed_;
+                velocity_.z = (currentDir.z / newDirLen) * speed_;
+            }
         }
     }
 
@@ -154,6 +157,44 @@ AllAABB PlayerBullet::GetAllAABB() const
     AllAABB compound;
     compound.wholeBox = aabb;
     compound.dividBoxes.push_back(aabb); // 単一コライダーでも配列に1つ入れることで共通化
+    return compound;
+}
+
+AllOBB PlayerBullet::GetAllOBB() const
+{
+    OBB obb;
+    obb.center = transform_.translate;
+
+    Vector3 forward = velocity_;
+    float sqLength = Dot(forward, forward);
+
+    if (sqLength == 0.0f) {
+        forward = { 0.0f, 0.0f, 1.0f };
+    } else {
+        forward = Normalize(forward);
+    }
+
+    Vector3 up = { 0.0f, 1.0f, 0.0f };
+    if (std::abs(forward.y) == 1.0f) {
+        up = { 0.0f, 0.0f, 1.0f };
+    }
+
+    Vector3 right = Normalize(Cross(up, forward));
+    Vector3 localUp = Cross(forward, right);
+
+    obb.orientations[0] = right; // ローカル X 軸
+    obb.orientations[1] = localUp; // ローカル Y 軸
+    obb.orientations[2] = forward; // ローカル Z 軸
+
+    obb.size = {
+        size * transform_.scale.x,
+        size * transform_.scale.y,
+        size * transform_.scale.z
+    };
+
+    AllOBB compound;
+    compound.wholeBox = obb;
+    compound.dividBoxes.push_back(obb);
     return compound;
 }
 

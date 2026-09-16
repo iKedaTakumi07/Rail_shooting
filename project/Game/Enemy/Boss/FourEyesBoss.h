@@ -34,6 +34,7 @@ public:
     int GetCurrentPhase() const override { return currentPhase_; }
 
     AllAABB GetAllAABB() const override;
+    AllOBB GetAllOBB() const override;
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kEnenmy; }
     std::vector<Vector3> GetTargetPositions() override; // ホーミング用の座標渡し
     void OnCollision(Collider* other) override;
@@ -45,6 +46,9 @@ public:
     void StartAppearance() override;
     void UpdateAppearance(float deltaTime) override;
     bool IsAppearing() const override { return isAppearing_; }
+
+    void StartDeathProduction() override;
+    void UpdateDeathProduction(float deltaTime) override;
 
 private:
     void FireFourWayBullets();
@@ -67,6 +71,10 @@ private:
 
     float appearanceTimer_ = 0.0f;
     const float kAppearanceDuration = 3.0f;
+    float deathTimer = 0.0f;
+    const float kdeathTimer = 5.0f;
+    Vector3 deadPos_ = { 0.0f, 0.0f, 0.0f };
+
     const float kStartOffsetY = 40.0f;
     const float kStartRotateY = std::numbers::pi_v<float>;
 
@@ -76,6 +84,7 @@ private:
     int dameg_ = 5;
     bool isAvile_ = true; // 存在しているか
     bool isDead_ = false; // 死んでいるか
+    bool isDeadMoveCompletion_ = false;
 
     float interval = 3.0f; // 弾を発射する間隔
     static inline const float maxInterval = 3.0f; // 間隔

@@ -22,6 +22,7 @@ public:
     bool GetIsDead() const override { return isDead_; };
 
     AllAABB GetAllAABB() const override;
+    AllOBB GetAllOBB() const override;
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kEnemyBullet; }
     void OnCollision(Collider* other) override;
     int GetDamage() const override { return dameg_; }

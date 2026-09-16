@@ -11,10 +11,14 @@ public:
 
     void CheckAllCollisions();
 
+    static bool CheckOBB(const OBB& a, const OBB& b);
+
 private:
     bool CheckAABB(const AABB& a, const AABB& b) const;
 
     bool CheckAllAABBCollision(const AllAABB& a, const AllAABB& b) const;
+
+    bool CheckAllOBBCollision(const AllOBB& a, const AllOBB& b) const;
 
     std::list<Collider*> colliders_;
 };
