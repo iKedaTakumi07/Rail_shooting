@@ -159,9 +159,6 @@ void Player::OnCollision(Collider* other)
         // 無敵時間のフラグ実行
         isinvincible = true;
         invincibleTime = KinvincibleTime;
-
-        // 押し出し処理
-        ColliderUpdate(other);
     }
 }
 
@@ -549,49 +546,4 @@ AllOBB Player::GetAllOBB() const
     compound.wholeBox = obb;
     compound.dividBoxes.push_back(obb);
     return compound;
-}
-
-void Player::ColliderUpdate(Collider* other)
-{
-    AllAABB otherAllAABB = other->GetAllAABB();
-    // トンネル形状のボックスもあるので厳密な当たり判定
-    for (const auto& otherBox : otherAllAABB.dividBoxes) {
-        AABB myBox = this->GetAllAABB().wholeBox; // プレイヤーは全体の範囲
-
-        bool isIntersect = (myBox.min.x < otherBox.max.x && myBox.max.x > otherBox.min.x) && (myBox.min.y < otherBox.max.y && myBox.max.y > otherBox.min.y) && (myBox.min.z < otherBox.max.z && myBox.max.z > otherBox.min.z);
-        if (!isIntersect) {
-            continue; // 関係のないパーツは処理しない
-        }
-
-        float overlapX_left = myBox.max.x - otherBox.min.x;
-        float overlapX_right = otherBox.max.x - myBox.min.x;
-        float overlapY_bottom = myBox.max.y - otherBox.min.y;
-        float overlapY_top = otherBox.max.y - myBox.min.y;
-
-        // めり込んでいる中の最小値を求める
-        float overlapX = (overlapX_left < overlapX_right) ? overlapX_left : -overlapX_right;
-        float overlapY = (overlapY_bottom < overlapY_top) ? overlapY_bottom : -overlapY_top;
-
-        // x,yの最小値から小さい方に押し出す(もしかしたらxオンリーに修正するかも?)
-        Vector3 prePos = localPos_; // 押し出し前の座標
-        if (std::abs(overlapX) < std::abs(overlapY)) {
-            localPos_.x -= overlapX;
-            velocity_.x = 0.0f;
-        } else {
-            localPos_.y -= overlapY;
-            velocity_.y = 0.0f;
-        }
-
-        float clampedX = std::clamp(localPos_.x, -kMoveLimitX, kMoveLimitX);
-        float clampedY = std::clamp(localPos_.y, -kMoveLimitY, kMoveLimitY);
-
-        // 押し出し位置がレール範囲外なら
-        if (clampedX != localPos_.x || clampedY != localPos_.y) {
-            localPos_ = prePos; // 押し出し処理をしない
-        } else {
-            // 補正した座標を即座にワールド座標系に反映させる
-            basetransform_.translate.x = railBasePos_.x + localPos_.x;
-            basetransform_.translate.y = railBasePos_.y + localPos_.y;
-        }
-    }
 }
