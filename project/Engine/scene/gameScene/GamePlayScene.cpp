@@ -86,6 +86,9 @@ void GamePlayScene::Initialize()
     stageObject_ = std::make_unique<stageObjectManager>();
     stageObject_->Initialize(stageDataLoad::GetInstance()->GetStageObjectData(), player_.get());
 
+    sceneState_ = SceneState::kIntro;
+    clearTimer_ = 0.0f;
+
     // 音がうるさいので停止中
     // Audio::GetInstance()->Play(fanfare);
     // Audio::GetInstance()->Play(clearSe);
@@ -111,40 +114,85 @@ void GamePlayScene::Update()
         CameraManager::GetInstance()->SetActiveCamera("PlayBoss");
     }
 
-    // ステージ振興
-    StageManager_->Update();
     Vector3 railPos = StageManager_->CalcRailPosition(); // 現在のレーる位置を取得
 
-    player_->SetBasePosition(railPos);
-    player_->Update();
+    switch (sceneState_) {
+    case GamePlayScene::SceneState::kIntro: {
 
-    cameraController_->Update(railPos);
+        StageManager_->Update();
 
-    enemyManager_->Update();
-    stageObject_->Update();
+        player_->SetBasePosition(railPos);
+        player_->UpdateIntro(); // 操作不能
 
-    // 当たり判定一括
-    collisionManager_->Clear();
-    collisionManager_->AddCollider(player_.get());
-    for (auto& bullet : player_->GetBullets()) {
-        collisionManager_->AddCollider(bullet.get());
-    }
-    for (auto& enemy : enemyManager_->GetEnemyes()) {
-        collisionManager_->AddCollider(enemy.get());
-        for (auto& enemyBullet : enemy->GetBullets()) {
-            collisionManager_->AddCollider(enemyBullet.get());
+        // 進行速度の5秒分
+        float currentZ = StageManager_->GetCurrentZ();
+        float progress = (currentZ - (-25.0f)) / 25.0f;
+
+        if (progress >= 1.0f) {
+            progress = 1.0f;
+            sceneState_ = SceneState::kPlay;
         }
-    }
-    for (auto& stageObj : stageObject_->GetstageObjects()) {
-        collisionManager_->AddCollider(stageObj.get());
-    }
 
-    collisionManager_->CheckAllCollisions();
+        cameraController_->UpdateIntro(railPos, progress);
 
-    // 終了条件
-    if (enemyManager_->IsAllEnemiesCleared()) {
-        isSceneFinished_ = true;
-        SceneManager::GetInstance()->ChangeScene("RESULT");
+        enemyManager_->Update();
+        stageObject_->Update();
+
+        break;
+    }
+    case GamePlayScene::SceneState::kPlay: {
+        // ステージ振興
+        StageManager_->Update();
+
+        player_->SetBasePosition(railPos);
+        player_->Update();
+
+        cameraController_->Update(railPos);
+
+        enemyManager_->Update();
+        stageObject_->Update();
+
+        // 当たり判定一括
+        collisionManager_->Clear();
+        collisionManager_->AddCollider(player_.get());
+        for (auto& bullet : player_->GetBullets()) {
+            collisionManager_->AddCollider(bullet.get());
+        }
+        for (auto& enemy : enemyManager_->GetEnemyes()) {
+            collisionManager_->AddCollider(enemy.get());
+            for (auto& enemyBullet : enemy->GetBullets()) {
+                collisionManager_->AddCollider(enemyBullet.get());
+            }
+        }
+        for (auto& stageObj : stageObject_->GetstageObjects()) {
+            collisionManager_->AddCollider(stageObj.get());
+        }
+
+        collisionManager_->CheckAllCollisions();
+
+        // 終了条件
+        if (enemyManager_->IsAllEnemiesCleared()) {
+            sceneState_ = SceneState::kClear;
+            clearTimer_ = 0.0f;
+        }
+
+        break;
+    }
+    case GamePlayScene::SceneState::kClear: {
+        float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+        clearTimer_ += deltaTime;
+
+        player_->UpdateClear();
+
+        stageObject_->Update();
+
+        // 3秒経過後にリザルト画面へ移行
+        if (clearTimer_ >= 3.0f) {
+            isSceneFinished_ = true;
+            SceneManager::GetInstance()->ChangeScene("RESULT");
+        }
+        break;
+    }
     }
 }
 

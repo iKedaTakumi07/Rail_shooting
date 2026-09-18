@@ -34,6 +34,14 @@ public:
     void Draw() override;
 
 private:
+    enum class SceneState {
+        kIntro,
+        kPlay,
+        kClear
+    };
+    SceneState sceneState_ = SceneState::kIntro;
+    float clearTimer_ = 0.0f;
+
     std::unique_ptr<Skybox> skydox;
 
     // プレイヤー

@@ -13,6 +13,7 @@ void StageManager::Initialize(const std::string& filePath)
     jsonFilePath_ = filePath;
     isBossCutscene_ = false;
     isBossBattle_ = false;
+    currentZ_ = kScrollSpeed * 5.0f; // 進行速度の5秒分
 
     LoadStageData(jsonFilePath_);
 }
@@ -42,6 +43,10 @@ Vector3 StageManager::CalcRailPosition()
         return { 0.0f, 0.0f, currentZ_ };
     if (points.size() == 1)
         return { points[0].x, points[0].y, currentZ_ };
+
+    if (currentZ_ <= points[0].z) {
+        return { points[0].x, points[0].y, currentZ_ };
+    }
 
     for (size_t i = 0; i < points.size() - 1; ++i) {
         const Vector3& p0 = points[i];

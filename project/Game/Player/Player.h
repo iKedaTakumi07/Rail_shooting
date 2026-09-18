@@ -19,6 +19,9 @@ public:
 
     void Update();
 
+    void UpdateIntro();
+    void UpdateClear();
+
     void Draw();
 
     void SpritDraw();

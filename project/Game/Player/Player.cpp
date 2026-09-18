@@ -104,6 +104,42 @@ void Player::Update()
     UIUpdate();
 }
 
+void Player::UpdateIntro()
+{
+    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+    idleTimer_ += deltaTime;
+
+    // 入力を無視し、レール座標にそのまま追従
+    basetransform_.translate = railBasePos_;
+
+    HoverUpdate(); // 揺れ処理のみ適用
+    ReticleUpdate();
+
+    playerObject3d->SetTranslate(transform_.translate);
+    playerObject3d->SetRotate(transform_.rotate);
+    playerObject3d->Update();
+    UIUpdate();
+}
+
+void Player::UpdateClear()
+{
+    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+    idleTimer_ += deltaTime;
+
+    // 奥に進みながら上昇 (数値は要調整)
+    basetransform_.translate.z += 40.0f * deltaTime;
+    basetransform_.translate.y += 15.0f * deltaTime;
+
+    HoverUpdate();
+
+    // 前の角度から戻すため
+    transform_.rotate = { 0.0f, 0.0f, 0.0f };
+
+    playerObject3d->SetTranslate(transform_.translate);
+    playerObject3d->SetRotate(transform_.rotate);
+    playerObject3d->Update();
+}
+
 void Player::Draw()
 {
     for (auto& bullet_ : playerBullets_) {
