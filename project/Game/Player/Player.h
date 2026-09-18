@@ -90,8 +90,8 @@ private:
     const float kMoveLimitY = 5.0f;
 
     // 機体の傾き
-    float rollFactor = 0.8f;
-    float shiftRollFactor = 1.4f;
+    float shiftYRollFactor = 2.0f;
+    float shiftZRollFactor = 4.5f;
 
     // 静止時の揺れ
     const float kHoverSpeed = 2.5f; // 浮遊の速さ（周波数）

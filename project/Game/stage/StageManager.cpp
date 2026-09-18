@@ -13,7 +13,7 @@ void StageManager::Initialize(const std::string& filePath)
     jsonFilePath_ = filePath;
     isBossCutscene_ = false;
     isBossBattle_ = false;
-    currentZ_ = kScrollSpeed * 5.0f; // 進行速度の5秒分
+    currentZ_ = -kScrollSpeed * 5.0f; // 進行速度の5秒分
 
     LoadStageData(jsonFilePath_);
 }

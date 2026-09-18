@@ -10,6 +10,7 @@
 #include "../Enemy/base/baseEnemy.h"
 
 #include "../Particle/LaserParticle.h"
+#include "../Particle/chargeParticle.h"
 
 void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vector3& rotation)
 {
@@ -48,6 +49,9 @@ void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vec
     laserParticle_->Initialize();
     laserParticle_->SetStartColor(Vector4(0.5f, 1.0f, 0.5f, 1.0f));
     laserParticle_->SetEndColor(Vector4(0.5f, 1.0f, 0.5f, 0.0f));
+
+    chargeParticle_ = std::make_unique<chargeParticle>();
+    chargeParticle_->Initialize();
 }
 
 void PlayerBullet::Update(float deltaTime)
@@ -202,8 +206,10 @@ void PlayerBullet::OnCollision(Collider* other)
 {
     // 当たったもの次第で分岐
     if (other->GetCollisionGroup() == CollisionGroup::kEnenmy) {
+        SpawnImpact();
         isDead_ = true;
     } else if (other->GetCollisionGroup() == CollisionGroup::kStageObject) {
+        SpawnImpact();
         // 弾削除
         isDead_ = true;
     } else if (other->GetCollisionGroup() == CollisionGroup::kEnemyBullet) {
@@ -224,4 +230,9 @@ int PlayerBullet::GetDamage() const
     }
 
     return Dameg;
+}
+
+void PlayerBullet::SpawnImpact()
+{
+    chargeParticle_->NewParticle(transform_);
 }

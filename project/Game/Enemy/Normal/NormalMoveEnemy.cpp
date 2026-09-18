@@ -44,6 +44,7 @@ void NormalMoveEnemy::Update()
         isRanAway_ = true;
     }
 
+    BulletUpdate();
     if (isRanAway_) {
         withdrawalUpdate();
         return;
@@ -62,8 +63,6 @@ void NormalMoveEnemy::Update()
     if (transform_.translate.z + velocity.z >= basePos.z + maxBaseMove || transform_.translate.z + velocity.z <= basePos.z - maxBaseMove) {
         move.z = -move.z;
     }
-
-    BulletUpdate();
 
     object3d->SetTranslate(transform_.translate);
     object3d->SetRotate(transform_.rotate);
@@ -191,7 +190,7 @@ void NormalMoveEnemy::withdrawalUpdate()
     }
     transform_.translate.y += AwaySpeedY * DeltaTime;
 
-      if (transform_.translate.y >= 40.0f) {
+    if (transform_.translate.y >= 40.0f) {
         isAvile_ = false;
     }
 

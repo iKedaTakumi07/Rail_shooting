@@ -260,19 +260,26 @@ void Player::MoveUpdate()
     basetransform_.translate.y = railBasePos_.y + localPos_.y;
     basetransform_.translate.z = railBasePos_.z;
 
-    // 高速旋回しているか?
-    float lerpRate = isShift ? shiftRollFactor : rollFactor;
-
     // 揺れを含まない回転角
-    const float kTargetRoll = -(velocity_.x / currentMaxSpeed) * lerpRate;
-    const float kTargetYRoll = -(velocity_.y / currentMaxSpeed) * lerpRate;
+    float kTargetRoll = (velocity_.x / currentMaxSpeed);
+    float kTargetYRoll = -(velocity_.y / currentMaxSpeed);
+    float kTargetZRoll = 0.0f;
+
+    // シフトを押しているなら機体を進行方向横に傾ける(キー入力していないなら傾けない)
+    if (isShift) {
+        if (length != 0.0f) {
+            kTargetRoll = -(velocity_.x / currentMaxSpeed);
+            kTargetZRoll = -(velocity_.x / currentMaxSpeed) * shiftZRollFactor;
+        }
+    }
 
     // 補間の速度
-    float lerpSpeed = isShift ? 15.0f : 8.0f;
+    float lerpSpeed = 8.0f;
     float t = 1.0f - std::exp(-lerpSpeed * deltaTime);
 
-    basetransform_.rotate.z += (kTargetRoll - basetransform_.rotate.z) * t;
+    basetransform_.rotate.y += (kTargetRoll - basetransform_.rotate.y) * t;
     basetransform_.rotate.x += (kTargetYRoll - basetransform_.rotate.x) * t;
+    basetransform_.rotate.z += (kTargetZRoll - basetransform_.rotate.z) * t;
 
     // 揺れの計算
     HoverUpdate();
@@ -291,26 +298,6 @@ void Player::HoverUpdate()
 
     transform_.rotate.z = basetransform_.rotate.z + swayZ;
     transform_.rotate.x = basetransform_.rotate.x + swayX;
-
-    // shift押しているなら機体を進行方向の横向きにする
-    bool isShift = Input::getInstance()->PushKey(DIK_LSHIFT) || Input::getInstance()->PushKey(DIK_RSHIFT);
-    Vector3 inputDir = { 0, 0, 0 };
-
-    if (Input::getInstance()->PushKey(DIK_A)) {
-        inputDir.x -= 1.0f;
-    }
-    if (Input::getInstance()->PushKey(DIK_D)) {
-        inputDir.x += 1.0f;
-    }
-    if (isShift) {
-        if (inputDir.x <= 0.0f) {
-            transform_.rotate.z += 0.75f;
-            basetransform_.rotate.z += 0.3f;
-        } else if (inputDir.x >= 0.0f) {
-            transform_.rotate.z -= 0.75f;
-            basetransform_.rotate.z -= 0.3f;
-        }
-    }
 
     transform_.rotate.y = basetransform_.rotate.y;
 }
