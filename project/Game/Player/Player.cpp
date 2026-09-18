@@ -112,7 +112,9 @@ void Player::UpdateIntro()
     // 入力を無視し、レール座標にそのまま追従
     basetransform_.translate = railBasePos_;
 
-    HoverUpdate(); // 揺れ処理のみ適用
+    float length = 0.0f; // 横上下移動しないので0.0f固定
+
+    HoverUpdate(length); // 揺れ処理のみ適用
     ReticleUpdate();
 
     playerObject3d->SetTranslate(transform_.translate);
@@ -130,7 +132,9 @@ void Player::UpdateClear()
     basetransform_.translate.z += 40.0f * deltaTime;
     basetransform_.translate.y += 15.0f * deltaTime;
 
-    HoverUpdate();
+      float length = 0.0f; // 横上下移動しないので0.0f固定
+
+    HoverUpdate(length);
 
     // 前の角度から戻すため
     transform_.rotate = { 0.0f, 0.0f, 0.0f };
@@ -260,33 +264,46 @@ void Player::MoveUpdate()
     basetransform_.translate.y = railBasePos_.y + localPos_.y;
     basetransform_.translate.z = railBasePos_.z;
 
-    // 揺れを含まない回転角
-    float kTargetRoll = (velocity_.x / currentMaxSpeed);
-    float kTargetYRoll = -(velocity_.y / currentMaxSpeed);
-    float kTargetZRoll = 0.0f;
+    float maxTheoreticalSpeed = currentAccel / (1.0f - kFriction);
 
-    // シフトを押しているなら機体を進行方向横に傾ける(キー入力していないなら傾けない)
+    float ratioX = std::clamp(velocity_.x / maxTheoreticalSpeed, -1.0f, 1.0f);
+    float ratioY = std::clamp(velocity_.y / maxTheoreticalSpeed, -1.0f, 1.0f);
+
+    float targetRotateX = 0.0f; // Pitch (X軸回転)
+    float targetRotateY = 0.0f; // Yaw   (Y軸回転)
+    float targetRotateZ = 0.0f; // Roll  (Z軸回転)
+
     if (isShift) {
-        if (length != 0.0f) {
-            kTargetRoll = -(velocity_.x / currentMaxSpeed);
-            kTargetZRoll = -(velocity_.x / currentMaxSpeed) * shiftZRollFactor;
-        }
+        targetRotateZ = -ratioX * kMaxRollShift;
+        targetRotateX = -ratioY * kMaxPitchAngle;
+        targetRotateY = (ratioX * kMaxYawAngle) * kShiftYawFactor;
+    } else {
+        targetRotateZ = -ratioX * kMaxRollNormal;
+        targetRotateX = -ratioY * kMaxPitchAngle;
+        targetRotateY = ratioX * kMaxYawAngle;
     }
 
-    // 補間の速度
+    // 補間処理 (フレームレート非依存)
     float lerpSpeed = 8.0f;
     float t = 1.0f - std::exp(-lerpSpeed * deltaTime);
 
-    basetransform_.rotate.y += (kTargetRoll - basetransform_.rotate.y) * t;
-    basetransform_.rotate.x += (kTargetYRoll - basetransform_.rotate.x) * t;
-    basetransform_.rotate.z += (kTargetZRoll - basetransform_.rotate.z) * t;
+    basetransform_.rotate.x += (targetRotateX - basetransform_.rotate.x) * t;
+    basetransform_.rotate.y += (targetRotateY - basetransform_.rotate.y) * t;
+    basetransform_.rotate.z += (targetRotateZ - basetransform_.rotate.z) * t;
 
-    // 揺れの計算
-    HoverUpdate();
+    // 揺れの計算(操作していない時のみ)
+    HoverUpdate(length);
 }
 
-void Player::HoverUpdate()
+void Player::HoverUpdate(float length)
 {
+    if (length != 0.0f) {
+        // 移動中は揺れを適用せず、ベースの座標・回転をそのまま適用
+        transform_.translate = basetransform_.translate;
+        transform_.rotate = basetransform_.rotate;
+        return;
+    }
+
     // 揺れを含む座標系
     float hoverY = std::sin(idleTimer_ * kHoverSpeed) * kHoverAmount;
     transform_.translate = basetransform_.translate;

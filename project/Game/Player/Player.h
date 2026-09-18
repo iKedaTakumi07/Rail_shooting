@@ -10,6 +10,7 @@
 #include "../OnCollison/Collider.h"
 
 #include "PlayerBullet.h"
+#include <numbers>
 class EnemyManager;
 class baseEnemy;
 
@@ -47,7 +48,7 @@ public:
 private:
     // 更新系列
     void MoveUpdate();
-    void HoverUpdate();
+    void HoverUpdate(float length);
     void ReticleUpdate();
 
     // 弾の制御
@@ -90,8 +91,11 @@ private:
     const float kMoveLimitY = 5.0f;
 
     // 機体の傾き
-    float shiftYRollFactor = 2.0f;
-    float shiftZRollFactor = 4.5f;
+    const float kMaxRollShift = std::numbers::pi_v<float> * 0.5f; // AD+shift時90°Z軸回転
+    const float kMaxRollNormal = 0.35f; // 非shift時、横移動時の回転
+    const float kMaxPitchAngle = 0.45f; // 上下移動時の回転
+    const float kMaxYawAngle = 0.35f; // 横移動時の回転
+    const float kShiftYawFactor = 0.2f; // shift時にy回転を抑える減衰係数
 
     // 静止時の揺れ
     const float kHoverSpeed = 2.5f; // 浮遊の速さ（周波数）
