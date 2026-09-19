@@ -37,6 +37,7 @@ private:
     enum class SceneState {
         kIntro,
         kPlay,
+        kPause,
         kClear
     };
     SceneState sceneState_ = SceneState::kIntro;

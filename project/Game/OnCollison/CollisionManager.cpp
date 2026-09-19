@@ -69,7 +69,7 @@ static bool IsSeparatedOnAxis(const Vector3& axis, const OBB& a, const OBB& b, c
 {
     // 辺同士が平行な場合、クロス積が零ベクトルになるため判定をスキップ
     float sqrLen = Dot(axis, axis);
-    if (sqrLen == 0.0f) {
+    if (sqrLen < 0.0f) {
         return false;
     }
 

@@ -1,6 +1,7 @@
 #include "EnemyManager.h"
 #include "Normal/CircleMoveEnemy.h"
 #include "Normal/FixedEnemy.h"
+#include "Normal/LaserEnemy.h"
 #include "Normal/NormalMoveEnemy.h"
 #include "Normal/threeShotsEnemy.h"
 #include "base/baseEnemy.h"
@@ -156,6 +157,8 @@ void EnemyManager::PopEnemyCheck(const EnemyPopData& data)
         newEnemy = std::make_unique<threeShotsEnemy>();
     } else if (data.enemyPopType == "FourEyesBoss") {
         newEnemy = std::make_unique<FourEyesBoss>();
+    } else if (data.enemyPopType == "LaserEnemy") {
+        newEnemy = std::make_unique<LaserEnemy>();
     } else {
         // 万が一のエラー対策
         newEnemy = std::make_unique<FixedEnemy>();
@@ -175,6 +178,11 @@ void EnemyManager::PopEnemyCheck(const EnemyPopData& data)
             newEnemy->SetUseBullet(1); // 1番をHomingBullet
         } else {
             newEnemy->SetUseBullet(0); // 0番をTargetBullet
+        }
+
+        if (data.enemyPopType == "LaserEnemy") {
+            Vector3 endPos = { data.popPosition.x + data.moveDirection.x, data.popPosition.y + data.moveDirection.y, data.popPosition.z + data.moveDirection.z };
+            newEnemy->SetLastStopPos(endPos);
         }
 
         enemies_.push_back(std::move(newEnemy));

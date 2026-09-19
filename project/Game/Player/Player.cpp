@@ -132,7 +132,7 @@ void Player::UpdateClear()
     basetransform_.translate.z += 40.0f * deltaTime;
     basetransform_.translate.y += 15.0f * deltaTime;
 
-      float length = 0.0f; // 横上下移動しないので0.0f固定
+    float length = 0.0f; // 横上下移動しないので0.0f固定
 
     HoverUpdate(length);
 
@@ -565,6 +565,12 @@ Vector2 Player::WorldToScreen(const Vector3& worldPos, Camera* camera)
 AllOBB Player::GetAllOBB() const
 {
     OBB obb;
+    obb.size = {
+        kModelExtents.x * basetransform_.scale.x,
+        kModelExtents.y * basetransform_.scale.y,
+        kModelExtents.z * basetransform_.scale.z
+    };
+
     obb.center = basetransform_.translate;
 
     Matrix4x4 rotX = MakeRotateXMatrix(basetransform_.rotate.x);
@@ -575,12 +581,6 @@ AllOBB Player::GetAllOBB() const
     obb.orientations[0] = Normalize({ rotMat.m[0][0], rotMat.m[0][1], rotMat.m[0][2] });
     obb.orientations[1] = Normalize({ rotMat.m[1][0], rotMat.m[1][1], rotMat.m[1][2] });
     obb.orientations[2] = Normalize({ rotMat.m[2][0], rotMat.m[2][1], rotMat.m[2][2] });
-
-    obb.size = {
-        size * transform_.scale.x,
-        size * transform_.scale.y,
-        size * transform_.scale.z
-    };
 
     AllOBB compound;
     compound.wholeBox = obb;

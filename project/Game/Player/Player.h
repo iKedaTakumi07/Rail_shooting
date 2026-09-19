@@ -69,7 +69,9 @@ private:
     Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
 
     // 当たり判定
-    float size = 1.0f; // OBBに移植後は知らん。
+    float size = 0.8f; // OBBに移植後は知らん。
+
+    static constexpr Vector3 kModelExtents = { 2.8f, 0.6f, 2.3f }; // objの大きさ
 
     // 体力
     int hp_ = 100; // 現体力

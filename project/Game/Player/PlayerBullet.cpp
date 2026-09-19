@@ -28,6 +28,7 @@ void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vec
     // 座標セット
     transform_.translate = position;
     transform_.rotate = rotation;
+    transform_.scale = { 1.0f, 1.0f, 1.0f };
 
     velocity_.x = -std::sin(transform_.rotate.z) * speed_;
     velocity_.y = -std::sin(transform_.rotate.x) * speed_;
