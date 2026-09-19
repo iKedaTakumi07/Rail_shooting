@@ -10,6 +10,7 @@
 #include "../OnCollison/Collider.h"
 
 #include "PlayerBullet.h"
+#include <numbers>
 class EnemyManager;
 class baseEnemy;
 
@@ -18,6 +19,9 @@ public:
     void Initialize();
 
     void Update();
+
+    void UpdateIntro();
+    void UpdateClear();
 
     void Draw();
 
@@ -44,7 +48,7 @@ public:
 private:
     // 更新系列
     void MoveUpdate();
-    void HoverUpdate();
+    void HoverUpdate(float length);
     void ReticleUpdate();
 
     // 弾の制御
@@ -54,9 +58,6 @@ private:
     // 体力UIの制御
     void UIUpdate();
     Vector2 WorldToScreen(const Vector3& worldPos, Camera* camera);
-
-    // 押し出し処理
-    void ColliderUpdate(Collider* other);
 
 private:
     Transform transform_ = { { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } }; // モデル座標
@@ -68,7 +69,9 @@ private:
     Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
 
     // 当たり判定
-    float size = 1.0f; // OBBに移植後は知らん。
+    float size = 0.8f; // OBBに移植後は知らん。
+
+    static constexpr Vector3 kModelExtents = { 2.8f, 0.6f, 2.3f }; // objの大きさ
 
     // 体力
     int hp_ = 100; // 現体力
@@ -90,8 +93,11 @@ private:
     const float kMoveLimitY = 5.0f;
 
     // 機体の傾き
-    float rollFactor = 0.8f;
-    float shiftRollFactor = 1.4f;
+    const float kMaxRollShift = std::numbers::pi_v<float> * 0.5f; // AD+shift時90°Z軸回転
+    const float kMaxRollNormal = 0.35f; // 非shift時、横移動時の回転
+    const float kMaxPitchAngle = 0.45f; // 上下移動時の回転
+    const float kMaxYawAngle = 0.35f; // 横移動時の回転
+    const float kShiftYawFactor = 0.2f; // shift時にy回転を抑える減衰係数
 
     // 静止時の揺れ
     const float kHoverSpeed = 2.5f; // 浮遊の速さ（周波数）

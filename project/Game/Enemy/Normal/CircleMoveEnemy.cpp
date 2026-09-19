@@ -48,6 +48,7 @@ void CircleMoveEnemy::Update()
         isRanAway_ = true;
     }
 
+    BulletUpdate();
     if (isRanAway_) {
         withdrawalUpdate();
         return;
@@ -62,8 +63,6 @@ void CircleMoveEnemy::Update()
     transform_.translate.x = centerPos_.x + radius_ * std::cos(angle_);
     transform_.translate.y = centerPos_.y + radius_ * std::sin(angle_);
     transform_.translate.z = centerPos_.z;
-
-    BulletUpdate();
 
     object3d->SetTranslate(transform_.translate);
     object3d->SetRotate(transform_.rotate);

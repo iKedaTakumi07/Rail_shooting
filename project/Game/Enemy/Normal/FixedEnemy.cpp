@@ -41,12 +41,11 @@ void FixedEnemy::Update()
         isRanAway_ = true;
     }
 
+    BulletUpdate();
     if (isRanAway_) {
         withdrawalUpdate();
         return;
     }
-
-    BulletUpdate();
 
     object3d->SetTranslate(transform_.translate);
     object3d->SetRotate(transform_.rotate);

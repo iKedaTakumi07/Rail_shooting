@@ -160,6 +160,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Game\Particle\chargeParticle.cpp" />
     <ClCompile Include="Game\Enemy\Boss\FourEyesBoss.cpp" />
     <ClCompile Include="Game\Enemy\base\baseBossEnemy.cpp" />
     <ClCompile Include="Game\Enemy\Normal\CircleMoveEnemy.cpp" />
@@ -226,6 +227,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\3d\GPUParticleManager.cpp" />
     <ClCompile Include="Engine\base\LevelLoader.cpp" />
     <ClCompile Include="Game\Enemy\Normal\NormalMoveEnemy.cpp" />
+    <ClCompile Include="Game\Enemy\Bullet\LaserBeamBullet.cpp" />
+    <ClCompile Include="Game\Enemy\Normal\LaserEnemy.cpp" />
     <ClCompile Include="main.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
@@ -271,6 +274,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Game\stage\stageObject.cpp" />
     <ClCompile Include="Game\stage\stageDataLoad.cpp" />
     <ClCompile Include="Game\Enemy\Normal\threeShotsEnemy.cpp" />
+    <ClCompile Include="Game\pauseUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\EmitParticle.CS.hlsl">
@@ -521,6 +525,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game\Particle\chargeParticle.h" />
     <ClInclude Include="Game\Enemy\Boss\FourEyesBoss.h" />
     <ClInclude Include="Game\Enemy\base\baseBossEnemy.h" />
     <ClInclude Include="Game\Enemy\Normal\CircleMoveEnemy.h" />
@@ -624,6 +629,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\Player\PlayerBullet.h" />
     <ClInclude Include="Game\OnCollison\Collider.h" />
     <ClInclude Include="Game\Enemy\Normal\NormalMoveEnemy.h" />
+    <ClInclude Include="Game\pauseUI.h" />
+    <ClInclude Include="Game\Enemy\Bullet\LaserBeamBullet.h" />
+    <ClInclude Include="Game\Enemy\Normal\LaserEnemy.h" />
     <ClInclude Include="resources\nlohmann\json.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

@@ -1,6 +1,7 @@
 #include "CameraController.h"
 #include "../../Engine/3d/Camera.h"
 #include "../../Engine/3d/CameraManager.h"
+#include "../../Engine/base/PostProcess.h"
 #include "../../Engine/scene/SceneManager.h"
 #include "../Player/Player.h"
 #include <algorithm>
@@ -70,6 +71,41 @@ void CameraController::Update(const Vector3& railPos)
     newPos.x = currentPos.x + (targetCameraPos.x - currentPos.x) * t;
     newPos.y = currentPos.y + (targetCameraPos.y - currentPos.y) * t;
     newPos.z = targetCameraPos.z; // ブースト実装まで補間抜き
+
+    // カメラ座標の設定と行列計算の更新
+    camera_->SetTranslate(newPos);
+    camera_->Update();
+}
+
+void CameraController::UpdateIntro(const Vector3& railPos, float progress)
+{
+    if (!camera_ || !player_)
+        return;
+
+    // -20.0fまでブラーを入れる
+    if (progress <= 0.2f) {
+        Vector2 Center = { 0.5f, 0.5f }; // 中心位置
+
+        float Blur = 1.0f - (progress * 5.0f);
+
+        PostProcess::GetInstance()->SetRadialBlur(true);
+        PostProcess::GetInstance()->SetRadialBlurParam(Center, Blur);
+    } else {
+        PostProcess::GetInstance()->SetRadialBlur(false);
+    }
+
+    // カメラの移動量を計算
+    Vector3 targetCameraPos = defaultCameraPos_;
+    Vector3 currentPos = camera_->GetTranslate();
+
+    targetCameraPos.x = railPos.x + defaultCameraPos_.x;
+    targetCameraPos.y = railPos.y + defaultCameraPos_.y;
+    targetCameraPos.z = railPos.z + defaultOffsetZ_;
+
+    Vector3 newPos;
+    newPos.x = targetCameraPos.x;
+    newPos.y = targetCameraPos.y;
+    newPos.z = targetCameraPos.z;
 
     // カメラ座標の設定と行列計算の更新
     camera_->SetTranslate(newPos);

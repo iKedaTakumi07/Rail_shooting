@@ -2,10 +2,11 @@
 #include "../../Engine/3d/Model.h"
 #include "../../Engine/3d/Object3d.h"
 #include "../../Engine/base/Math.h"
-#include "../Particle/LaserParticle.h"
 #include <memory>
 
 #include "../OnCollison/Collider.h"
+#include "../Particle/LaserParticle.h"
+#include "../Particle/chargeParticle.h"
 
 class Camera;
 class EnemyManager;
@@ -43,6 +44,8 @@ public:
         life = 5;
     }
 
+    void SpawnImpact();
+
 private:
     Transform transform_ = { 0.0f, 0.0f, 0.0f }; // 座標
 
@@ -72,4 +75,5 @@ private:
     std::unique_ptr<Object3d> object3d;
 
     std::unique_ptr<LaserParticle> laserParticle_;
+    std::unique_ptr<chargeParticle> chargeParticle_;
 };

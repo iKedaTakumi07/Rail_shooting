@@ -104,6 +104,46 @@ void Player::Update()
     UIUpdate();
 }
 
+void Player::UpdateIntro()
+{
+    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+    idleTimer_ += deltaTime;
+
+    // 入力を無視し、レール座標にそのまま追従
+    basetransform_.translate = railBasePos_;
+
+    float length = 0.0f; // 横上下移動しないので0.0f固定
+
+    HoverUpdate(length); // 揺れ処理のみ適用
+    ReticleUpdate();
+
+    playerObject3d->SetTranslate(transform_.translate);
+    playerObject3d->SetRotate(transform_.rotate);
+    playerObject3d->Update();
+    UIUpdate();
+}
+
+void Player::UpdateClear()
+{
+    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+    idleTimer_ += deltaTime;
+
+    // 奥に進みながら上昇 (数値は要調整)
+    basetransform_.translate.z += 40.0f * deltaTime;
+    basetransform_.translate.y += 15.0f * deltaTime;
+
+    float length = 0.0f; // 横上下移動しないので0.0f固定
+
+    HoverUpdate(length);
+
+    // 前の角度から戻すため
+    transform_.rotate = { 0.0f, 0.0f, 0.0f };
+
+    playerObject3d->SetTranslate(transform_.translate);
+    playerObject3d->SetRotate(transform_.rotate);
+    playerObject3d->Update();
+}
+
 void Player::Draw()
 {
     for (auto& bullet_ : playerBullets_) {
@@ -159,9 +199,6 @@ void Player::OnCollision(Collider* other)
         // 無敵時間のフラグ実行
         isinvincible = true;
         invincibleTime = KinvincibleTime;
-
-        // 押し出し処理
-        ColliderUpdate(other);
     }
 }
 
@@ -227,26 +264,46 @@ void Player::MoveUpdate()
     basetransform_.translate.y = railBasePos_.y + localPos_.y;
     basetransform_.translate.z = railBasePos_.z;
 
-    // 高速旋回しているか?
-    float lerpRate = isShift ? shiftRollFactor : rollFactor;
+    float maxTheoreticalSpeed = currentAccel / (1.0f - kFriction);
 
-    // 揺れを含まない回転角
-    const float kTargetRoll = -(velocity_.x / currentMaxSpeed) * lerpRate;
-    const float kTargetYRoll = -(velocity_.y / currentMaxSpeed) * lerpRate;
+    float ratioX = std::clamp(velocity_.x / maxTheoreticalSpeed, -1.0f, 1.0f);
+    float ratioY = std::clamp(velocity_.y / maxTheoreticalSpeed, -1.0f, 1.0f);
 
-    // 補間の速度
-    float lerpSpeed = isShift ? 15.0f : 8.0f;
+    float targetRotateX = 0.0f; // Pitch (X軸回転)
+    float targetRotateY = 0.0f; // Yaw   (Y軸回転)
+    float targetRotateZ = 0.0f; // Roll  (Z軸回転)
+
+    if (isShift) {
+        targetRotateZ = -ratioX * kMaxRollShift;
+        targetRotateX = -ratioY * kMaxPitchAngle;
+        targetRotateY = (ratioX * kMaxYawAngle) * kShiftYawFactor;
+    } else {
+        targetRotateZ = -ratioX * kMaxRollNormal;
+        targetRotateX = -ratioY * kMaxPitchAngle;
+        targetRotateY = ratioX * kMaxYawAngle;
+    }
+
+    // 補間処理 (フレームレート非依存)
+    float lerpSpeed = 8.0f;
     float t = 1.0f - std::exp(-lerpSpeed * deltaTime);
 
-    basetransform_.rotate.z += (kTargetRoll - basetransform_.rotate.z) * t;
-    basetransform_.rotate.x += (kTargetYRoll - basetransform_.rotate.x) * t;
+    basetransform_.rotate.x += (targetRotateX - basetransform_.rotate.x) * t;
+    basetransform_.rotate.y += (targetRotateY - basetransform_.rotate.y) * t;
+    basetransform_.rotate.z += (targetRotateZ - basetransform_.rotate.z) * t;
 
-    // 揺れの計算
-    HoverUpdate();
+    // 揺れの計算(操作していない時のみ)
+    HoverUpdate(length);
 }
 
-void Player::HoverUpdate()
+void Player::HoverUpdate(float length)
 {
+    if (length != 0.0f) {
+        // 移動中は揺れを適用せず、ベースの座標・回転をそのまま適用
+        transform_.translate = basetransform_.translate;
+        transform_.rotate = basetransform_.rotate;
+        return;
+    }
+
     // 揺れを含む座標系
     float hoverY = std::sin(idleTimer_ * kHoverSpeed) * kHoverAmount;
     transform_.translate = basetransform_.translate;
@@ -258,26 +315,6 @@ void Player::HoverUpdate()
 
     transform_.rotate.z = basetransform_.rotate.z + swayZ;
     transform_.rotate.x = basetransform_.rotate.x + swayX;
-
-    // shift押しているなら機体を進行方向の横向きにする
-    bool isShift = Input::getInstance()->PushKey(DIK_LSHIFT) || Input::getInstance()->PushKey(DIK_RSHIFT);
-    Vector3 inputDir = { 0, 0, 0 };
-
-    if (Input::getInstance()->PushKey(DIK_A)) {
-        inputDir.x -= 1.0f;
-    }
-    if (Input::getInstance()->PushKey(DIK_D)) {
-        inputDir.x += 1.0f;
-    }
-    if (isShift) {
-        if (inputDir.x <= 0.0f) {
-            transform_.rotate.z += 0.75f;
-            basetransform_.rotate.z += 0.3f;
-        } else if (inputDir.x >= 0.0f) {
-            transform_.rotate.z -= 0.75f;
-            basetransform_.rotate.z -= 0.3f;
-        }
-    }
 
     transform_.rotate.y = basetransform_.rotate.y;
 }
@@ -528,6 +565,12 @@ Vector2 Player::WorldToScreen(const Vector3& worldPos, Camera* camera)
 AllOBB Player::GetAllOBB() const
 {
     OBB obb;
+    obb.size = {
+        kModelExtents.x * basetransform_.scale.x,
+        kModelExtents.y * basetransform_.scale.y,
+        kModelExtents.z * basetransform_.scale.z
+    };
+
     obb.center = basetransform_.translate;
 
     Matrix4x4 rotX = MakeRotateXMatrix(basetransform_.rotate.x);
@@ -539,59 +582,8 @@ AllOBB Player::GetAllOBB() const
     obb.orientations[1] = Normalize({ rotMat.m[1][0], rotMat.m[1][1], rotMat.m[1][2] });
     obb.orientations[2] = Normalize({ rotMat.m[2][0], rotMat.m[2][1], rotMat.m[2][2] });
 
-    obb.size = {
-        size * transform_.scale.x,
-        size * transform_.scale.y,
-        size * transform_.scale.z
-    };
-
     AllOBB compound;
     compound.wholeBox = obb;
     compound.dividBoxes.push_back(obb);
     return compound;
-}
-
-void Player::ColliderUpdate(Collider* other)
-{
-    AllAABB otherAllAABB = other->GetAllAABB();
-    // トンネル形状のボックスもあるので厳密な当たり判定
-    for (const auto& otherBox : otherAllAABB.dividBoxes) {
-        AABB myBox = this->GetAllAABB().wholeBox; // プレイヤーは全体の範囲
-
-        bool isIntersect = (myBox.min.x < otherBox.max.x && myBox.max.x > otherBox.min.x) && (myBox.min.y < otherBox.max.y && myBox.max.y > otherBox.min.y) && (myBox.min.z < otherBox.max.z && myBox.max.z > otherBox.min.z);
-        if (!isIntersect) {
-            continue; // 関係のないパーツは処理しない
-        }
-
-        float overlapX_left = myBox.max.x - otherBox.min.x;
-        float overlapX_right = otherBox.max.x - myBox.min.x;
-        float overlapY_bottom = myBox.max.y - otherBox.min.y;
-        float overlapY_top = otherBox.max.y - myBox.min.y;
-
-        // めり込んでいる中の最小値を求める
-        float overlapX = (overlapX_left < overlapX_right) ? overlapX_left : -overlapX_right;
-        float overlapY = (overlapY_bottom < overlapY_top) ? overlapY_bottom : -overlapY_top;
-
-        // x,yの最小値から小さい方に押し出す(もしかしたらxオンリーに修正するかも?)
-        Vector3 prePos = localPos_; // 押し出し前の座標
-        if (std::abs(overlapX) < std::abs(overlapY)) {
-            localPos_.x -= overlapX;
-            velocity_.x = 0.0f;
-        } else {
-            localPos_.y -= overlapY;
-            velocity_.y = 0.0f;
-        }
-
-        float clampedX = std::clamp(localPos_.x, -kMoveLimitX, kMoveLimitX);
-        float clampedY = std::clamp(localPos_.y, -kMoveLimitY, kMoveLimitY);
-
-        // 押し出し位置がレール範囲外なら
-        if (clampedX != localPos_.x || clampedY != localPos_.y) {
-            localPos_ = prePos; // 押し出し処理をしない
-        } else {
-            // 補正した座標を即座にワールド座標系に反映させる
-            basetransform_.translate.x = railBasePos_.x + localPos_.x;
-            basetransform_.translate.y = railBasePos_.y + localPos_.y;
-        }
-    }
 }
