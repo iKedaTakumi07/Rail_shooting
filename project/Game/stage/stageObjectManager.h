@@ -21,6 +21,7 @@ public:
     void Initialize(const std::string& filePath, Player* player);
 
     void Update();
+    void ClearUpdate();
 
     void Draw();
 

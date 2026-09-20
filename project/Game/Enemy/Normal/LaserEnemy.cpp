@@ -184,16 +184,24 @@ void LaserEnemy::OnCollision(Collider* other)
         partsDamage(other);
 
     } else if (other->GetCollisionGroup() == CollisionGroup::kPlayer) {
-        // お互いダメージ処理
-        partsDamage(other);
+        // ダメージ処理なし
     }
 }
 
 std::vector<Vector3> LaserEnemy::GetTargetPositions()
 {
     std::vector<Vector3> positions;
-    positions.push_back(startingPointtransform_.translate);
-    positions.push_back(lastStoptransform_.translate);
+    if (!AllisAvile_) {
+        // 万が一のエラー対策
+        positions.push_back(startingPointtransform_.translate);
+    }
+
+    if (startisAvile_) {
+        positions.push_back(startingPointtransform_.translate);
+    }
+    if (lastisAvile_) {
+        positions.push_back(lastStoptransform_.translate);
+    }
 
     return positions;
 }

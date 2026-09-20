@@ -26,6 +26,7 @@
 #include "../../../Game/Enemy/base/baseEnemy.h"
 #include "../../../Game/OnCollison/CollisionManager.h"
 #include "../../../Game/Player/Player.h"
+#include "../../../Game/clearUI.h"
 #include "../../../Game/stage/StageManager.h"
 #include "../../../Game/stage/stageDataLoad.h"
 #include "../../../Game/stage/stageObjectManager.h"
@@ -85,6 +86,9 @@ void GamePlayScene::Initialize()
 
     stageObject_ = std::make_unique<stageObjectManager>();
     stageObject_->Initialize(stageDataLoad::GetInstance()->GetStageObjectData(), player_.get());
+
+    ClearUI_ = std::make_unique<clearUI>();
+    ClearUI_->Initialize();
 
     sceneState_ = SceneState::kIntro;
     clearTimer_ = 0.0f;
@@ -185,9 +189,10 @@ void GamePlayScene::Update()
         player_->UpdateClear();
 
         stageObject_->Update();
+        ClearUI_->Update(clearTimer_);
 
         // 3秒経過後にリザルト画面へ移行
-        if (clearTimer_ >= 3.0f) {
+        if (clearTimer_ >= 5.0f) {
             isSceneFinished_ = true;
             SceneManager::GetInstance()->ChangeScene("RESULT");
         }
@@ -218,6 +223,7 @@ void GamePlayScene::Draw()
     SpriteCommon::GetInstance()->PrepareSpriteDraw();
     player_->SpritDraw();
     enemyManager_->SpriteDraw();
+    ClearUI_->SpritDraw();
 
     CPUParticleManager::getInstance()->Draw();
 }

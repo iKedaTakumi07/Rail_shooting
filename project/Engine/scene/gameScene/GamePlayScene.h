@@ -9,6 +9,7 @@ class Model;
 class Object3d;
 class Skybox;
 class Player;
+class clearUI;
 class EnemyManager;
 class CollisionManager;
 class CameraController;
@@ -58,6 +59,7 @@ private:
     // ステージ置物
     std::unique_ptr<stageObjectManager> stageObject_;
     std::unique_ptr<StageManager> StageManager_;
+    std::unique_ptr<clearUI> ClearUI_;
 
     // 当たり半テオ
     std::unique_ptr<CollisionManager> collisionManager_;

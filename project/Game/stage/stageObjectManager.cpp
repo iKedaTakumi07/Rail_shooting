@@ -52,6 +52,16 @@ void stageObjectManager::Update()
     GrauondUpdate();
 }
 
+void stageObjectManager::ClearUpdate()
+{
+    // クリア状態なので地面等更新しない
+    for (auto& obj : stageObjects_) {
+        obj->Update();
+    }
+
+    GrauondUpdate();
+}
+
 void stageObjectManager::Draw()
 {
     grauond3d->Draw();
