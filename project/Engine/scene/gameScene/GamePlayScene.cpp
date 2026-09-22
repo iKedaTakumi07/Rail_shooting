@@ -177,6 +177,7 @@ void GamePlayScene::Update()
         // 終了条件
         if (enemyManager_->IsAllEnemiesCleared()) {
             sceneState_ = SceneState::kClear;
+            player_->SetisClear(true);
             clearTimer_ = 0.0f;
         }
 
@@ -188,7 +189,7 @@ void GamePlayScene::Update()
 
         player_->UpdateClear();
 
-        stageObject_->Update();
+        stageObject_->ClearUpdate();
         ClearUI_->Update(clearTimer_);
 
         // 3秒経過後にリザルト画面へ移行

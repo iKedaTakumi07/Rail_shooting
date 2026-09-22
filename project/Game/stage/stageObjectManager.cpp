@@ -58,8 +58,6 @@ void stageObjectManager::ClearUpdate()
     for (auto& obj : stageObjects_) {
         obj->Update();
     }
-
-    GrauondUpdate();
 }
 
 void stageObjectManager::Draw()
