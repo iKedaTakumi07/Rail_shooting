@@ -26,6 +26,7 @@
 #include "../../../Game/Enemy/base/baseEnemy.h"
 #include "../../../Game/OnCollison/CollisionManager.h"
 #include "../../../Game/Player/Player.h"
+#include "../../../Game/SceneTransition.h"
 #include "../../../Game/clearUI.h"
 #include "../../../Game/stage/StageManager.h"
 #include "../../../Game/stage/stageDataLoad.h"
@@ -83,6 +84,9 @@ void GamePlayScene::Initialize()
 
     cameraController_ = std::make_unique<CameraController>();
     cameraController_->Initialize(player_.get());
+
+    Transition_ = std::make_unique<SceneTransition>();
+    Transition_->Initialize("resources/noise2.png");
 
     stageObject_ = std::make_unique<stageObjectManager>();
     stageObject_->Initialize(stageDataLoad::GetInstance()->GetStageObjectData(), player_.get());
@@ -189,10 +193,16 @@ void GamePlayScene::Update()
 
         player_->UpdateClear();
 
+        if (clearTimer_ >= 4.0f && Transition_->GetState() == SceneTransition::State::None) {
+            Transition_->Start(SceneTransition::State::Out, 1.0f);
+        }
+
+        Transition_->Update(deltaTime);
+
         stageObject_->ClearUpdate();
         ClearUI_->Update(clearTimer_);
 
-        // 3秒経過後にリザルト画面へ移行
+        // 5秒経過後にリザルト画面へ移行
         if (clearTimer_ >= 5.0f) {
             isSceneFinished_ = true;
             SceneManager::GetInstance()->ChangeScene("RESULT");

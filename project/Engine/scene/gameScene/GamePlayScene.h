@@ -15,6 +15,7 @@ class CollisionManager;
 class CameraController;
 class stageObjectManager;
 class StageManager;
+class SceneTransition;
 
 class GamePlayScene : public BaseScene {
 public:
@@ -60,6 +61,7 @@ private:
     std::unique_ptr<stageObjectManager> stageObject_;
     std::unique_ptr<StageManager> StageManager_;
     std::unique_ptr<clearUI> ClearUI_;
+    std::unique_ptr<SceneTransition> Transition_;
 
     // 当たり半テオ
     std::unique_ptr<CollisionManager> collisionManager_;

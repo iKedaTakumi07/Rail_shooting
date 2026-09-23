@@ -1,5 +1,6 @@
 #pragma once
 #include "../Engine/2d/Sprite.h"
+#include "../Engine/base/PostProcess.h"
 #include <memory>
 
 class clearUI {

@@ -1,4 +1,5 @@
 #pragma once
+#include "../../../Game/SceneTransition.h"
 #include "../base/BaseScene.h"
 #include <memory>
 
@@ -24,4 +25,6 @@ public:
 
 private:
     std::unique_ptr<Player> player_;
+
+    std::unique_ptr<SceneTransition> Transition_;
 };
