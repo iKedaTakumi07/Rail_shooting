@@ -16,6 +16,7 @@ class CameraController;
 class stageObjectManager;
 class StageManager;
 class SceneTransition;
+class pauseUI;
 
 class GamePlayScene : public BaseScene {
 public:
@@ -37,12 +38,14 @@ public:
 
 private:
     enum class SceneState {
+        knull = -1,
         kIntro,
         kPlay,
         kPause,
         kClear
     };
     SceneState sceneState_ = SceneState::kIntro;
+    SceneState PreState_ = SceneState::knull;
     float clearTimer_ = 0.0f;
 
     std::unique_ptr<Skybox> skydox;
@@ -61,6 +64,7 @@ private:
     std::unique_ptr<stageObjectManager> stageObject_;
     std::unique_ptr<StageManager> StageManager_;
     std::unique_ptr<clearUI> ClearUI_;
+    std::unique_ptr<pauseUI> PauseUI_;
     std::unique_ptr<SceneTransition> Transition_;
 
     // 当たり半テオ

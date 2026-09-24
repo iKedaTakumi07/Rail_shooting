@@ -28,6 +28,7 @@
 #include "../../../Game/Player/Player.h"
 #include "../../../Game/SceneTransition.h"
 #include "../../../Game/clearUI.h"
+#include "../../../Game/pauseUI.h"
 #include "../../../Game/stage/StageManager.h"
 #include "../../../Game/stage/stageDataLoad.h"
 #include "../../../Game/stage/stageObjectManager.h"
@@ -94,6 +95,9 @@ void GamePlayScene::Initialize()
     ClearUI_ = std::make_unique<clearUI>();
     ClearUI_->Initialize();
 
+    PauseUI_ = std::make_unique<pauseUI>();
+    PauseUI_->Initialize();
+
     sceneState_ = SceneState::kIntro;
     clearTimer_ = 0.0f;
 
@@ -110,6 +114,8 @@ void GamePlayScene::Update()
         return;
     }
 
+#ifdef USE_IMGUI
+    // リリース版使用不可
     if (input->TriggerKey(DIK_1)) {
         isSceneFinished_ = true;
         SceneManager::GetInstance()->ChangeScene("TITLE");
@@ -121,13 +127,19 @@ void GamePlayScene::Update()
     if (input->TriggerKey(DIK_0)) {
         CameraManager::GetInstance()->SetActiveCamera("PlayBoss");
     }
-
-    Vector3 railPos = StageManager_->CalcRailPosition(); // 現在のレーる位置を取得
+#endif // DEBUG
 
     switch (sceneState_) {
     case GamePlayScene::SceneState::kIntro: {
 
         StageManager_->Update();
+        Vector3 railPos = StageManager_->CalcRailPosition(); // 現在のレーる位置を取得
+
+        PauseUI_->Update();
+        if (PauseUI_->GetPause()) {
+            PreState_ = sceneState_;
+            sceneState_ = SceneState::kPause;
+        }
 
         player_->SetBasePosition(railPos);
         player_->UpdateIntro(); // 操作不能
@@ -151,6 +163,13 @@ void GamePlayScene::Update()
     case GamePlayScene::SceneState::kPlay: {
         // ステージ振興
         StageManager_->Update();
+        Vector3 railPos = StageManager_->CalcRailPosition(); // 現在のレーる位置を取得
+
+        PauseUI_->Update();
+        if (PauseUI_->GetPause()) {
+            PreState_ = sceneState_;
+            sceneState_ = SceneState::kPause;
+        }
 
         player_->SetBasePosition(railPos);
         player_->Update();
@@ -209,6 +228,22 @@ void GamePlayScene::Update()
         }
         break;
     }
+    case GamePlayScene::SceneState::kPause: {
+        // 時間を止める
+        PauseUI_->Update();
+
+        if (PauseUI_->GetResetOrder()) {
+            SceneManager::GetInstance()->ChangeScene("GAMEPLAY");
+        }
+        if (PauseUI_->GetSelectOrder()) {
+            SceneManager::GetInstance()->ChangeScene("SELECT");
+        }
+        if (!PauseUI_->GetPause()) {
+            sceneState_ = PreState_;
+            PreState_ = SceneState::knull;
+        }
+        break;
+    }
     }
 }
 
@@ -235,6 +270,7 @@ void GamePlayScene::Draw()
     player_->SpritDraw();
     enemyManager_->SpriteDraw();
     ClearUI_->SpritDraw();
+    PauseUI_->SpritDraw();
 
     CPUParticleManager::getInstance()->Draw();
 }
