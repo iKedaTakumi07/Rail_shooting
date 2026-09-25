@@ -3,6 +3,8 @@
 #include "../base/BaseScene.h"
 #include <memory>
 
+class SceneTransition;
+
 class SelectScene : public BaseScene {
 public:
     SelectScene();
@@ -27,8 +29,15 @@ private:
     int MinStageNumber = 1;
 
     bool selectStop = false;
+    bool GameChange = false;
+    float GameChangeTimer = 0.5f;
 
     // UI(スプライト)
     std::unique_ptr<Sprite> SatgeUI1;
     std::unique_ptr<Sprite> SatgeUI2;
+
+    bool isTitile = false; // タイトルバック
+    float titleChangeTimer = 1.0f;
+
+    std::unique_ptr<SceneTransition> Transition_;
 };

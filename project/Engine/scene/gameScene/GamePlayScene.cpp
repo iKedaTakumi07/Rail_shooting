@@ -231,16 +231,28 @@ void GamePlayScene::Update()
         break;
     }
     case GamePlayScene::SceneState::kPause: {
+        float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
         // 時間を止める
         PauseUI_->Update();
 
-        if (PauseUI_->GetResetOrder()) {
+        if (PauseUI_->GetResetOrder() && !isChange) {
+            isReset = true;
+            isSceneFinished_ = true;
             SceneManager::GetInstance()->ChangeScene("GAMEPLAY");
         }
-        if (PauseUI_->GetSelectOrder()) {
-            SceneManager::GetInstance()->ChangeScene("SELECT");
+        if (PauseUI_->GetSelectOrder() && !isReset) {
+            if (!isChange) {
+                isChange = true;
+                Transition_->Start(SceneTransition::State::Out, 1.0f);
+            }
+
+            ChangeTimer += deltaTime;
+            if (ChangeTimer >= 1.0f) {
+                isSceneFinished_ = true;
+                SceneManager::GetInstance()->ChangeScene("SELECT");
+            }
         }
-        if (!PauseUI_->GetPause()) {
+        if (!PauseUI_->GetPause() && !isChange && !isReset) {
             sceneState_ = PreState_;
             PreState_ = SceneState::knull;
         }

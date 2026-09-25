@@ -71,6 +71,9 @@ private:
     std::unique_ptr<CollisionManager> collisionManager_;
 
     bool isSceneFinished_ = false;
+    bool isChange = false; // ステージ変更
+    bool isReset = false; // (再トライ)リセット
+    float ChangeTimer = 0.0f;
 
     // 音声データ
     Sound fanfare;
