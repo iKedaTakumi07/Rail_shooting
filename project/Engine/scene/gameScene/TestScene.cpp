@@ -1,0 +1,211 @@
+#include "TestScene.h"
+
+#include "../SceneManager.h"
+
+#include "../../base/PostProcess.h"
+
+#include <random>
+
+#include "../../3d/Camera.h"
+#include "../../base/WinApp.h"
+
+#include "../../2d/SpriteCommon.h"
+#include "../../base/TextureManager.h"
+
+#include "../../3d/Model.h"
+#include "../../3d/ModelManager.h"
+#include "../../3d/Object3d.h"
+#include "../../3d/Object3dCommon.h"
+
+#include "../../3d/Skybox/SkyBoxCommon.h"
+#include "../../3d/Skybox/Skybox.h"
+
+#include "../../3d/CPUParticle/CPUParticleManager.h"
+#include "../../3d/CPUParticle/ParticleEmitter.h"
+#include "../../3d/GPUParticleManager.h"
+
+#include "../../io/Input.h"
+
+#include "../../../Game/Particle/HitParticle.h"
+#include "../../../Game/Particle/LaserParticle.h"
+#include "../../../Game/Player/Player.h"
+#include "../../../Game/stage/skydome.h"
+#include "../../3d/CameraManager.h"
+#include "math.h"
+
+TestScene::TestScene()
+{
+}
+
+TestScene::~TestScene() = default;
+
+void TestScene::Initialize()
+{
+    Camera* mainCamera = CameraManager::GetInstance()->CreateCamera("PlayMain");
+    mainCamera->SetTranslate({ 0.0f, 2.0f, -15.0f });
+
+    Camera* subCamera = CameraManager::GetInstance()->CreateCamera("SubView");
+    subCamera->SetTranslate({ 0.0f, 10.0f, -40.0f });
+
+    CameraManager::GetInstance()->SetActiveCamera("PlayMain");
+
+    TextureManager::getInstance()->LoadTexture("resources/rostock_laage_airport_4k.dds");
+    TextureManager::getInstance()->LoadTexture("resources/uvChecker.png");
+    TextureManager::getInstance()->LoadTexture("resources/grass.png");
+    TextureManager::getInstance()->LoadTexture("resources/AnimatedCube_BaseColor.png");
+    TextureManager::getInstance()->LoadTexture("resources/AnimatedCube_MetallicRoughness.png");
+    TextureManager::getInstance()->LoadTexture("resources/simpleSkin/uvChecker.png");
+    TextureManager::getInstance()->LoadTexture("resources/human/white.png");
+
+    ModelManager::GetInstance()->LoadModel("axis.obj");
+    ModelManager::GetInstance()->LoadModel("terrain.obj");
+    ModelManager::GetInstance()->LoadModel("plane.gltf");
+    ModelManager::GetInstance()->LoadModel("AnimatedCube.gltf");
+    ModelManager::GetInstance()->LoadModel("simpleSkin/simpleSkin.gltf");
+    ModelManager::GetInstance()->LoadModel("human/walk.gltf");
+    ModelManager::GetInstance()->LoadModel("human/sneakWalk.gltf");
+
+    skydox = std::make_unique<Skybox>();
+    // skydox->Initialize("resources/rostock_laage_airport_4k.dds");
+
+    object3d = std::make_unique<Object3d>();
+    object3d->Initialize();
+
+    model = std::make_unique<Model>();
+    model->Initialize("resources", "terrain.obj");
+    // model->SetEvnTexturefilePath(skydox->GetTextureFilePath());
+    object3d->SetModel(model.get());
+
+    object3d_2 = std::make_unique<Object3d>();
+    object3d_2->Initialize();
+
+    model_2 = std::make_unique<Model>();
+    model_2->Initialize("resources", "human/walk.gltf");
+    object3d_2->SetScale({ 100.0f, 100.0f, 100.0f });
+    object3d_2->SetRotate({ -1.5f, 3.14f, 0.0f });
+    // model_2->SetEvnTexturefilePath(skydox->GetTextureFilePath());
+    object3d_2->SetModel(model_2.get()); // スケルトンもセットで構築
+    object3d_2->LoadAnimation("resources", "human/walk.gltf", "walk");
+    object3d_2->LoadAnimation("resources", "human/sneakWalk.gltf", "sneakWalk");
+    object3d_2->PlayAnimation("sneakWalk", true);
+
+    CPUParticleManager::getInstance()->CreateParticleGroup("pori", "resources/circle2.png", ParticleMeshType::kPlane);
+    CPUParticleManager::getInstance()->CreateParticleGroup("circle3", "resources/circle3.png", ParticleMeshType::kPlane);
+    CPUParticleManager::getInstance()->CreateParticleGroup("Plane", "resources/uvChecker.png", ParticleMeshType::kPlane);
+    CPUParticleManager::getInstance()->CreateParticleGroup("gradationLine", "resources/gradationLine.png", ParticleMeshType::kRing);
+    CPUParticleManager::getInstance()->CreateParticleGroup("Cylinder", "resources/gradationLine.png", ParticleMeshType::kCylinder);
+
+    // ポストエフェクトのON/OFFならこれ。
+    PostProcess::GetInstance()->SetEnableBoxFilter(false);
+    PostProcess::GetInstance()->SetKernelSizeBoxFilter(7);
+
+    // 板ポリ
+    Transform emitter { };
+    emitter.translate = { 0.0f, 2.0f, 0.0f };
+    emitter.rotate = { 0.0f, 0.0f, 1.0f };
+    emitter.scale = { 0.05f, 1.0f, 1.0f };
+    EmitterParam fireParam;
+
+    // particleEmitter2 = std::make_unique<ParticleEmitter>("gradationLine", emitter, 0.8f, 3, true);
+    // fireParam.maxRotate = { std::numbers::pi_v<float>, std::numbers::pi_v<float>, 0.0f };
+    // fireParam.minRotate = { -std::numbers::pi_v<float>, -std::numbers::pi_v<float>, 0.0f };
+    // fireParam.maxScale = { 1.0f, 1.0f, 1.0f };
+    // fireParam.minScale = { 1.0f, 0.4f, 1.0f };
+    // fireParam.SetStartColor({ 1.0f, 1.0f, 0.5f, 1.0f });
+    // fireParam.SetEndColor({ 1.0f, 1.0f, 1.0f, 0.0f });
+    // fireParam.SetVelocity({ 0.0f, 0.0f, 0.0f });
+    // fireParam.SetLifeTime(1.2f);
+    // particleEmitter2->SetParam(fireParam);
+
+    // [アップデート予定]パーティクルPS閾値をCBuffer経由で設定できるようにする
+    /*emitter.translate = { 0.0f, 0.0f, 0.0f };
+    particleEmitter4 = std::make_unique<ParticleEmitter>("Cylinder", emitter, 10.0f, 1, false);
+    fireParam.SetScale({ 1.0f, 1.0f, 1.0f });
+    fireParam.SetRotate({ 0.0f, 0.0f, 0.0f });
+    fireParam.SetStartColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+    fireParam.SetEndColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+    fireParam.SetVelocity({ 0.0f, 0.0f, 0.0f });
+    fireParam.SetLifeTime(10.0f);
+    fireParam.isInfinite = true;
+    particleEmitter4->SetParam(fireParam);
+    ParticleManager::getInstance()->SetGroupScrollSpeed("Cylinder", { 0.2f, 0.0f });*/
+
+    player_ = std::make_unique<Player>();
+    player_->Initialize();
+
+    // hitParticle = std::make_unique<HitParticle>();
+    // hitParticle->Initialize();
+    // hitParticle->NewTransform();
+}
+
+void TestScene::Finalize()
+{
+}
+
+void TestScene::Update()
+{
+
+    auto* input = Input::getInstance();
+    Camera* camera = GetCamera();
+
+    // skydox->SetCamera(camera);
+
+    if (input->TriggerKey(DIK_RETURN)) {
+        SceneManager::GetInstance()->ChangeScene("SELECT");
+    }
+
+#ifdef USE_IMGUI
+    if (input->TriggerKey(DIK_9)) {
+        CameraManager::GetInstance()->SetActiveCamera("PlayMain");
+    }
+    if (input->TriggerKey(DIK_0)) {
+        CameraManager::GetInstance()->SetActiveCamera("SubView");
+    }
+#endif // USE_IMGUI
+
+    // skydox->Update();
+
+    object3d->Update();
+    object3d_2->Update();
+
+    player_->Update();
+
+    // particleEmitter2->Update();
+    // particleEmitter4->Update();
+
+    // 5秒ごとに生成(軽いテストなう)
+    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+    testTimer += deltaTime;
+
+    laserTest->Update();
+    hitParticle->Update();
+
+    // IMGUI
+    object3d->DrawImGui("Terrain");
+    object3d_2->DrawImGui("Plane");
+}
+
+void TestScene::Draw()
+{
+    //
+    // モデルデータ
+    //
+    Object3dCommon::GetInstance()->PrepareObjectDraw();
+
+    object3d->Draw();
+    object3d_2->Draw();
+    player_->Draw();
+
+#ifdef USE_IMGUI
+    object3d_2->DrawSkeleton();
+#endif // USE_IMGUI
+
+    SkyBoxCommon::GetInstance()->PrepareObjectDraw();
+    // skydox->Draw();
+
+    SpriteCommon::GetInstance()->PrepareSpriteDraw();
+
+    CPUParticleManager::getInstance()->Draw();
+
+    GPUParticleManager::getInstance()->Draw();
+}
