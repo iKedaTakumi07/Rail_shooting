@@ -24,8 +24,12 @@
 #include "../../../Game/Camera/CameraController.h"
 #include "../../../Game/Enemy/EnemyManager.h"
 #include "../../../Game/Enemy/base/baseEnemy.h"
+#include "../../../Game/Loder/GameScoreManager.h"
 #include "../../../Game/OnCollison/CollisionManager.h"
 #include "../../../Game/Player/Player.h"
+#include "../../../Game/SceneTransition.h"
+#include "../../../Game/clearUI.h"
+#include "../../../Game/pauseUI.h"
 #include "../../../Game/stage/StageManager.h"
 #include "../../../Game/stage/stageDataLoad.h"
 #include "../../../Game/stage/stageObjectManager.h"
@@ -47,6 +51,7 @@ GamePlayScene::~GamePlayScene() = default;
 void GamePlayScene::Initialize()
 {
     CameraManager::GetInstance()->Clear();
+    GameScoreManager::GetInstance()->Reset();
 
     Camera* mainCamera = CameraManager::GetInstance()->CreateCamera("PlayMain");
     mainCamera->SetTranslate({ 0.0f, 0.0f, -15.0f });
@@ -83,8 +88,17 @@ void GamePlayScene::Initialize()
     cameraController_ = std::make_unique<CameraController>();
     cameraController_->Initialize(player_.get());
 
+    Transition_ = std::make_unique<SceneTransition>();
+    Transition_->Initialize("resources/noise2.png");
+
     stageObject_ = std::make_unique<stageObjectManager>();
     stageObject_->Initialize(stageDataLoad::GetInstance()->GetStageObjectData(), player_.get());
+
+    ClearUI_ = std::make_unique<clearUI>();
+    ClearUI_->Initialize();
+
+    PauseUI_ = std::make_unique<pauseUI>();
+    PauseUI_->Initialize();
 
     sceneState_ = SceneState::kIntro;
     clearTimer_ = 0.0f;
@@ -102,6 +116,8 @@ void GamePlayScene::Update()
         return;
     }
 
+#ifdef USE_IMGUI
+    // リリース版使用不可
     if (input->TriggerKey(DIK_1)) {
         isSceneFinished_ = true;
         SceneManager::GetInstance()->ChangeScene("TITLE");
@@ -113,13 +129,19 @@ void GamePlayScene::Update()
     if (input->TriggerKey(DIK_0)) {
         CameraManager::GetInstance()->SetActiveCamera("PlayBoss");
     }
-
-    Vector3 railPos = StageManager_->CalcRailPosition(); // 現在のレーる位置を取得
+#endif // DEBUG
 
     switch (sceneState_) {
     case GamePlayScene::SceneState::kIntro: {
 
         StageManager_->Update();
+        Vector3 railPos = StageManager_->CalcRailPosition(); // 現在のレーる位置を取得
+
+        PauseUI_->Update();
+        if (PauseUI_->GetPause()) {
+            PreState_ = sceneState_;
+            sceneState_ = SceneState::kPause;
+        }
 
         player_->SetBasePosition(railPos);
         player_->UpdateIntro(); // 操作不能
@@ -143,6 +165,13 @@ void GamePlayScene::Update()
     case GamePlayScene::SceneState::kPlay: {
         // ステージ振興
         StageManager_->Update();
+        Vector3 railPos = StageManager_->CalcRailPosition(); // 現在のレーる位置を取得
+
+        PauseUI_->Update();
+        if (PauseUI_->GetPause()) {
+            PreState_ = sceneState_;
+            sceneState_ = SceneState::kPause;
+        }
 
         player_->SetBasePosition(railPos);
         player_->Update();
@@ -173,6 +202,7 @@ void GamePlayScene::Update()
         // 終了条件
         if (enemyManager_->IsAllEnemiesCleared()) {
             sceneState_ = SceneState::kClear;
+            player_->SetisClear(true);
             clearTimer_ = 0.0f;
         }
 
@@ -184,12 +214,35 @@ void GamePlayScene::Update()
 
         player_->UpdateClear();
 
-        stageObject_->Update();
+        if (clearTimer_ >= 4.0f && Transition_->GetState() == SceneTransition::State::None) {
+            Transition_->Start(SceneTransition::State::Out, 1.0f);
+        }
 
-        // 3秒経過後にリザルト画面へ移行
-        if (clearTimer_ >= 3.0f) {
+        Transition_->Update(deltaTime);
+
+        stageObject_->ClearUpdate();
+        ClearUI_->Update(clearTimer_);
+
+        // 5秒経過後にリザルト画面へ移行
+        if (clearTimer_ >= 5.0f) {
             isSceneFinished_ = true;
             SceneManager::GetInstance()->ChangeScene("RESULT");
+        }
+        break;
+    }
+    case GamePlayScene::SceneState::kPause: {
+        // 時間を止める
+        PauseUI_->Update();
+
+        if (PauseUI_->GetResetOrder()) {
+            SceneManager::GetInstance()->ChangeScene("GAMEPLAY");
+        }
+        if (PauseUI_->GetSelectOrder()) {
+            SceneManager::GetInstance()->ChangeScene("SELECT");
+        }
+        if (!PauseUI_->GetPause()) {
+            sceneState_ = PreState_;
+            PreState_ = SceneState::knull;
         }
         break;
     }
@@ -218,6 +271,8 @@ void GamePlayScene::Draw()
     SpriteCommon::GetInstance()->PrepareSpriteDraw();
     player_->SpritDraw();
     enemyManager_->SpriteDraw();
+    ClearUI_->SpritDraw();
+    PauseUI_->SpritDraw();
 
     CPUParticleManager::getInstance()->Draw();
 }

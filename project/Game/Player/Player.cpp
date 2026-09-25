@@ -34,6 +34,8 @@ void Player::Initialize()
 
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
 
+    isClear = false;
+
     playerObject3d = std::make_unique<Object3d>();
     playerObject3d->Initialize();
 
@@ -135,6 +137,7 @@ void Player::UpdateClear()
     float length = 0.0f; // 横上下移動しないので0.0f固定
 
     HoverUpdate(length);
+    BulletUpdate();
 
     // 前の角度から戻すため
     transform_.rotate = { 0.0f, 0.0f, 0.0f };
@@ -152,12 +155,18 @@ void Player::Draw()
 
     playerObject3d->Draw();
 
-    ShortReticleObject3d->Draw();
-    LongReticleObject3d->Draw();
+    if (!isClear) {
+        ShortReticleObject3d->Draw();
+        LongReticleObject3d->Draw();
+    }
 }
 
 void Player::SpritDraw()
 {
+    if (isClear) {
+        return;
+    }
+
     PlayerMaxHpUI->Draw();
     PlayerHpUI->Draw();
 
@@ -181,7 +190,7 @@ AllAABB Player::GetAllAABB() const
 void Player::OnCollision(Collider* other)
 {
     // 無敵状態はスルー
-    if (isinvincible)
+    if (isinvincible || isClear)
         return;
 
     // 当たったもの次第で分岐

@@ -44,6 +44,7 @@ public:
     // set
     void SetBasePosition(const Vector3& pos) { railBasePos_ = pos; }
     void SetEnemyManager(EnemyManager* enemyManager) { enemyManager_ = enemyManager; }
+    void SetisClear(bool num) { isClear = num; }
 
 private:
     // 更新系列
@@ -72,6 +73,8 @@ private:
     float size = 0.8f; // OBBに移植後は知らん。
 
     static constexpr Vector3 kModelExtents = { 2.8f, 0.6f, 2.3f }; // objの大きさ
+
+    bool isClear = false;
 
     // 体力
     int hp_ = 100; // 現体力

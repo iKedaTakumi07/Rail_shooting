@@ -160,6 +160,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Game\Loder\GameScoreManager.cpp" />
+    <ClCompile Include="Game\clearUI.cpp" />
     <ClCompile Include="Game\Particle\chargeParticle.cpp" />
     <ClCompile Include="Game\Enemy\Boss\FourEyesBoss.cpp" />
     <ClCompile Include="Game\Enemy\base\baseBossEnemy.cpp" />
@@ -229,6 +231,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Game\Enemy\Normal\NormalMoveEnemy.cpp" />
     <ClCompile Include="Game\Enemy\Bullet\LaserBeamBullet.cpp" />
     <ClCompile Include="Game\Enemy\Normal\LaserEnemy.cpp" />
+    <ClCompile Include="Game\SceneTransition.cpp" />
     <ClCompile Include="main.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
@@ -275,6 +278,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Game\stage\stageDataLoad.cpp" />
     <ClCompile Include="Game\Enemy\Normal\threeShotsEnemy.cpp" />
     <ClCompile Include="Game\pauseUI.cpp" />
+    <ClCompile Include="Game\ResultUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\EmitParticle.CS.hlsl">
@@ -525,6 +529,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game\Loder\GameScoreManager.h" />
+    <ClInclude Include="Game\clearUI.h" />
     <ClInclude Include="Game\Particle\chargeParticle.h" />
     <ClInclude Include="Game\Enemy\Boss\FourEyesBoss.h" />
     <ClInclude Include="Game\Enemy\base\baseBossEnemy.h" />
@@ -632,6 +638,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\pauseUI.h" />
     <ClInclude Include="Game\Enemy\Bullet\LaserBeamBullet.h" />
     <ClInclude Include="Game\Enemy\Normal\LaserEnemy.h" />
+    <ClInclude Include="Game\SceneTransition.h" />
     <ClInclude Include="resources\nlohmann\json.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -646,6 +653,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\stage\stageObject.h" />
     <ClInclude Include="Game\stage\stageDataLoad.h" />
     <ClInclude Include="Game\Enemy\Normal\threeShotsEnemy.h" />
+    <ClInclude Include="Game\ResultUI.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">

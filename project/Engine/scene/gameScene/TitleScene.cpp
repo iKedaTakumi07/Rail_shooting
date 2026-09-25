@@ -68,7 +68,6 @@ void TitleScene::Initialize()
 
     object3d = std::make_unique<Object3d>();
     object3d->Initialize();
-   
 
     model = std::make_unique<Model>();
     model->Initialize("resources", "terrain.obj");
@@ -149,16 +148,18 @@ void TitleScene::Update()
 
     // skydox->SetCamera(camera);
 
-    if (input->TriggerKey(DIK_1)) {
+    if (input->TriggerKey(DIK_RETURN)) {
         SceneManager::GetInstance()->ChangeScene("SELECT");
     }
 
+#ifdef USE_IMGUI
     if (input->TriggerKey(DIK_9)) {
         CameraManager::GetInstance()->SetActiveCamera("PlayMain");
     }
     if (input->TriggerKey(DIK_0)) {
         CameraManager::GetInstance()->SetActiveCamera("SubView");
     }
+#endif // USE_IMGUI
 
     // skydox->Update();
 
