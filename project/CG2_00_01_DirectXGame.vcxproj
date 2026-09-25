@@ -160,6 +160,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Game\Loder\GameScoreManager.cpp" />
     <ClCompile Include="Game\clearUI.cpp" />
     <ClCompile Include="Game\Particle\chargeParticle.cpp" />
     <ClCompile Include="Game\Enemy\Boss\FourEyesBoss.cpp" />
@@ -277,6 +278,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Game\stage\stageDataLoad.cpp" />
     <ClCompile Include="Game\Enemy\Normal\threeShotsEnemy.cpp" />
     <ClCompile Include="Game\pauseUI.cpp" />
+    <ClCompile Include="Game\ResultUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\EmitParticle.CS.hlsl">
@@ -527,6 +529,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game\Loder\GameScoreManager.h" />
     <ClInclude Include="Game\clearUI.h" />
     <ClInclude Include="Game\Particle\chargeParticle.h" />
     <ClInclude Include="Game\Enemy\Boss\FourEyesBoss.h" />
@@ -650,6 +653,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\stage\stageObject.h" />
     <ClInclude Include="Game\stage\stageDataLoad.h" />
     <ClInclude Include="Game\Enemy\Normal\threeShotsEnemy.h" />
+    <ClInclude Include="Game\ResultUI.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">

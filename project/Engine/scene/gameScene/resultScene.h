@@ -4,6 +4,7 @@
 #include <memory>
 
 class Player;
+class ResultUI;
 
 class resultScene : public BaseScene {
 public:
@@ -25,6 +26,9 @@ public:
 
 private:
     std::unique_ptr<Player> player_;
+    std::unique_ptr<ResultUI> ResultUI_;
 
     std::unique_ptr<SceneTransition> Transition_;
+    float Timer = 0.0f;
+    bool isChange = false;
 };

@@ -9,6 +9,7 @@
 
 #include "../../Engine/3d/CameraManager.h"
 #include "../../resources/nlohmann/json.hpp"
+#include "../Loder/GameScoreManager.h"
 #include <algorithm>
 
 #include <fstream>
@@ -39,6 +40,9 @@ void EnemyManager::Update()
         // 敵更新
         enemy->Update();
         // スコア加算
+        if (!enemy->GetIsAvile_()) {
+            GameScoreManager::GetInstance()->AddDefeatCount(1);
+        }
     }
 
     // 死亡している奴ら削除

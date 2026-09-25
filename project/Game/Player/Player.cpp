@@ -137,6 +137,7 @@ void Player::UpdateClear()
     float length = 0.0f; // 横上下移動しないので0.0f固定
 
     HoverUpdate(length);
+    BulletUpdate();
 
     // 前の角度から戻すため
     transform_.rotate = { 0.0f, 0.0f, 0.0f };

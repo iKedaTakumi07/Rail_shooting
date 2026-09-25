@@ -24,6 +24,7 @@
 #include "../../../Game/Camera/CameraController.h"
 #include "../../../Game/Enemy/EnemyManager.h"
 #include "../../../Game/Enemy/base/baseEnemy.h"
+#include "../../../Game/Loder/GameScoreManager.h"
 #include "../../../Game/OnCollison/CollisionManager.h"
 #include "../../../Game/Player/Player.h"
 #include "../../../Game/SceneTransition.h"
@@ -50,6 +51,7 @@ GamePlayScene::~GamePlayScene() = default;
 void GamePlayScene::Initialize()
 {
     CameraManager::GetInstance()->Clear();
+    GameScoreManager::GetInstance()->Reset();
 
     Camera* mainCamera = CameraManager::GetInstance()->CreateCamera("PlayMain");
     mainCamera->SetTranslate({ 0.0f, 0.0f, -15.0f });

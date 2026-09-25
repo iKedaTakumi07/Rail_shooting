@@ -28,6 +28,7 @@
 #include "../../../Game/Particle/HitParticle.h"
 #include "../../../Game/Particle/LaserParticle.h"
 #include "../../../Game/Player/Player.h"
+#include "../../../Game/ResultUI.h"
 #include "../../../Game/SceneTransition.h"
 #include "../../3d/CameraManager.h"
 #include "math.h"
@@ -48,6 +49,9 @@ void resultScene::Initialize()
     player_ = std::make_unique<Player>();
     player_->Initialize();
 
+    ResultUI_ = std::make_unique<ResultUI>();
+    ResultUI_->Initialize();
+
     Transition_ = std::make_unique<SceneTransition>();
     Transition_->Initialize("resources/noise3.png");
 
@@ -62,12 +66,23 @@ void resultScene::Update()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     auto* input = Input::getInstance();
-    if (input->TriggerKey(DIK_1)) {
-        SceneManager::GetInstance()->ChangeScene("TITLE");
-    }
+
     Transition_->Update(deltaTime);
 
     player_->Update();
+    ResultUI_->Update();
+
+    if (ResultUI_->GetSelectOrder()) {
+        if (!isChange) {
+            Transition_->Start(SceneTransition::State::Out, 1.0f);
+            isChange = true;
+        }
+
+        Timer += deltaTime;
+        if (Timer >= 1.0f) {
+            SceneManager::GetInstance()->ChangeScene("SELECT");
+        }
+    }
 }
 
 void resultScene::Draw()
@@ -84,6 +99,7 @@ void resultScene::Draw()
     // skydox->Draw();
 
     SpriteCommon::GetInstance()->PrepareSpriteDraw();
+    ResultUI_->SpritDraw();
 
     CPUParticleManager::getInstance()->Draw();
 

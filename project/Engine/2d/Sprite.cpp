@@ -164,3 +164,14 @@ void Sprite::Draw()
     // 描画
     SpriteCommon::GetInstance()->GetDxCommon()->GetCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 }
+
+void Sprite::SetTexture(const std::string& texturefilePath, bool resetSize)
+{
+    texturefilePath_ = texturefilePath;
+
+    if (resetSize) {
+        AdjustTextureSize(texturefilePath_);
+    }
+
+    TransferVertices();
+}

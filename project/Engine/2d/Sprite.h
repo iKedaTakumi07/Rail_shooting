@@ -34,6 +34,7 @@ public:
     const Vector2& GetextureSize() const { return textureSize; }
 
     // setter
+    void SetTexture(const std::string& texturefilePath, bool resetSize = true);
     void SetPosition(const Vector2& position) { this->position = position; }
     void SetRotation(float rotation) { this->rotation = rotation; }
     void SetColor(const Vector4& color) { materialData->color = color; }
