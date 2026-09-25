@@ -4,6 +4,7 @@
 #include <memory>
 
 class SceneTransition;
+class skydome;
 
 class SelectScene : public BaseScene {
 public:
@@ -24,7 +25,7 @@ public:
     void Draw() override;
 
 private:
-    int stageNumber;
+    int stageNumber = 0;
     int MaxStageNumber = 2;
     int MinStageNumber = 1;
 
@@ -35,6 +36,7 @@ private:
     // UI(スプライト)
     std::unique_ptr<Sprite> SatgeUI1;
     std::unique_ptr<Sprite> SatgeUI2;
+    std::unique_ptr<skydome> skydome_;
 
     bool isTitile = false; // タイトルバック
     float titleChangeTimer = 1.0f;

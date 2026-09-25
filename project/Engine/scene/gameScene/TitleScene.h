@@ -12,7 +12,8 @@ class HitParticle;
 
 class Model;
 class Object3d;
-class Skybox;
+class SceneTransition;
+
 class skydome;
 
 class TitleScene : public BaseScene {
@@ -34,6 +35,10 @@ public:
     void Draw() override;
 
 private:
+    float SceneChangeTimer = 0.5f;
+    bool isChange = false;
+
     // 3dモデル
     std::unique_ptr<skydome> skydome_;
+    std::unique_ptr<SceneTransition> Transition_;
 };

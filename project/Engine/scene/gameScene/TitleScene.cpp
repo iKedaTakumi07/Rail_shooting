@@ -11,23 +11,18 @@
 #include "../../2d/SpriteCommon.h"
 #include "../../base/TextureManager.h"
 
-#include "../../3d/Model.h"
 #include "../../3d/ModelManager.h"
 #include "../../3d/Object3d.h"
 #include "../../3d/Object3dCommon.h"
 
 #include "../../3d/Skybox/SkyBoxCommon.h"
-#include "../../3d/Skybox/Skybox.h"
 
 #include "../../3d/CPUParticle/CPUParticleManager.h"
-#include "../../3d/CPUParticle/ParticleEmitter.h"
 #include "../../3d/GPUParticleManager.h"
 
 #include "../../io/Input.h"
 
-#include "../../../Game/Particle/HitParticle.h"
-#include "../../../Game/Particle/LaserParticle.h"
-#include "../../../Game/Player/Player.h"
+#include "../../../Game/SceneTransition.h"
 #include "../../../Game/stage/skydome.h"
 #include "../../3d/CameraManager.h"
 #include "math.h"
@@ -64,8 +59,13 @@ void TitleScene::Initialize()
     ModelManager::GetInstance()->LoadModel("human/walk.gltf");
     ModelManager::GetInstance()->LoadModel("human/sneakWalk.gltf");
 
+    Transition_ = std::make_unique<SceneTransition>();
+    Transition_->Initialize("resources/noise2.png");
+
     skydome_ = std::make_unique<skydome>();
     skydome_->Initialize();
+
+    Transition_->Start(SceneTransition::State::In, 0.1f);
 }
 
 void TitleScene::Finalize()
@@ -76,12 +76,19 @@ void TitleScene::Update()
 {
 
     auto* input = Input::getInstance();
+    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     Camera* camera = GetCamera();
 
-    // skydox->SetCamera(camera);
-
-    if (input->TriggerKey(DIK_RETURN)) {
-        SceneManager::GetInstance()->ChangeScene("SELECT");
+    if (!isChange) {
+        if (input->TriggerKey(DIK_RETURN)) {
+            isChange = true;
+            Transition_->Start(SceneTransition::State::Out, 0.5f);
+        }
+    } else {
+        SceneChangeTimer -= deltaTime;
+        if (SceneChangeTimer <= 0.0f) {
+            SceneManager::GetInstance()->ChangeScene("SELECT");
+        }
     }
 
 #ifdef USE_IMGUI
@@ -97,6 +104,7 @@ void TitleScene::Update()
 #endif // USE_IMGUI
 
     skydome_->Update();
+    Transition_->Update(deltaTime);
 }
 
 void TitleScene::Draw()
@@ -107,6 +115,7 @@ void TitleScene::Draw()
     Object3dCommon::GetInstance()->PrepareObjectDraw();
 
     skydome_->Draw();
+
 #ifdef USE_IMGUI
 
 #endif // USE_IMGUI
@@ -117,5 +126,5 @@ void TitleScene::Draw()
 
     CPUParticleManager::getInstance()->Draw();
 
-    GPUParticleManager::getInstance()->Draw();
+    // GPUParticleManager::getInstance()->Draw();
 }

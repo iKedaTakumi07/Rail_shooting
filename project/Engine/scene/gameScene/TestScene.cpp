@@ -178,7 +178,7 @@ void TestScene::Update()
     testTimer += deltaTime;
 
     laserTest->Update();
-    hitParticle->Update();
+    //hitParticle->Update();
 
     // IMGUI
     object3d->DrawImGui("Terrain");

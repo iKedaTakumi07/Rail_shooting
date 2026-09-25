@@ -2,6 +2,7 @@
 #include "../SceneManager.h"
 
 #include "../../../Game/SceneTransition.h"
+#include "../../../Game/stage/skydome.h"
 #include "../../../Game/stage/stageDataLoad.h"
 #include "../../2d/SpriteCommon.h"
 #include "../../3d/CPUParticle/CPUParticleManager.h"
@@ -46,6 +47,9 @@ void SelectScene::Initialize()
     Transition_->Initialize("resources/noise3.png");
 
     Transition_->Start(SceneTransition::State::In, 1.0f);
+
+    skydome_ = std::make_unique<skydome>();
+    skydome_->Initialize();
 }
 
 void SelectScene::Update()
@@ -72,6 +76,7 @@ void SelectScene::Update()
         if (input->TriggerKey(DIK_BACKSPACE)) {
             selectStop = true;
             isTitile = true;
+            Transition_->Start(SceneTransition::State::Out, 1.0f);
         }
     }
 
@@ -94,13 +99,14 @@ void SelectScene::Update()
         titleChangeTimer -= deltaTime;
 
         if (titleChangeTimer <= 0.0f) {
+
             SceneManager::GetInstance()->ChangeScene("TITLE");
-            Transition_->Start(SceneTransition::State::Out, 1.0f);
         }
     }
 
     SatgeUI1->Update();
     SatgeUI2->Update();
+    skydome_->Update();
     Transition_->Update(deltaTime);
 }
 
@@ -110,6 +116,7 @@ void SelectScene::Draw()
     //
     // モデルデータ
     //
+    skydome_->Draw();
 
     SkyBoxCommon::GetInstance()->PrepareObjectDraw();
     // skydox->Draw();

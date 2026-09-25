@@ -30,6 +30,7 @@
 #include "../../../Game/Player/Player.h"
 #include "../../../Game/ResultUI.h"
 #include "../../../Game/SceneTransition.h"
+#include "../../../Game/stage/skydome.h"
 #include "../../3d/CameraManager.h"
 #include "math.h"
 
@@ -55,6 +56,9 @@ void resultScene::Initialize()
     Transition_ = std::make_unique<SceneTransition>();
     Transition_->Initialize("resources/noise3.png");
 
+    skydome_ = std::make_unique<skydome>();
+    skydome_->Initialize();
+
     Transition_->Start(SceneTransition::State::In, 1.0f);
 }
 
@@ -71,6 +75,7 @@ void resultScene::Update()
 
     player_->Update();
     ResultUI_->Update();
+    skydome_->Update();
 
     if (ResultUI_->GetSelectOrder()) {
         if (!isChange) {
@@ -90,6 +95,7 @@ void resultScene::Draw()
     Object3dCommon::GetInstance()->PrepareObjectDraw();
 
     player_->Draw();
+    skydome_->Draw();
 
 #ifdef USE_IMGUI
 
