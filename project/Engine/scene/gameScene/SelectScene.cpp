@@ -34,14 +34,6 @@ void SelectScene::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/selectUI/stage1UI.png");
     TextureManager::getInstance()->LoadTexture("resources/selectUI/stage2UI.png");
 
-    SatgeUI1 = std::make_unique<Sprite>();
-    SatgeUI1->Initialize("resources/selectUI/stage1UI.png");
-    SatgeUI1->SetPosition(Vector2(400.0f, 280.0f));
-
-    SatgeUI2 = std::make_unique<Sprite>();
-    SatgeUI2->Initialize("resources/selectUI/stage2UI.png");
-    SatgeUI2->SetPosition(Vector2(400.0f, 280.0f));
-
     stageNumber = 1;
 
     stageSelectUI_ = std::make_unique<stageSelectUI>();
@@ -120,8 +112,7 @@ void SelectScene::Update()
     }
 
     stageSelectUI_->Update(deltaTime);
-    SatgeUI1->Update();
-    SatgeUI2->Update();
+
     skydome_->Update();
     Transition_->Update(deltaTime);
 }
@@ -142,11 +133,6 @@ void SelectScene::Draw()
     // 2d/スプライト
     //
     SpriteCommon::GetInstance()->PrepareSpriteDraw();
-    if (stageNumber == 1) {
-        SatgeUI1->Draw();
-    } else if (stageNumber == 2) {
-        SatgeUI2->Draw();
-    }
 
     stageSelectUI_->SpriteDraw();
 

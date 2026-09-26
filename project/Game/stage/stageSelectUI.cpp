@@ -1,8 +1,10 @@
 #include "stageSelectUI.h"
+#include "../../Engine/2d/Sprite.h"
 #include "../../Engine/3d/Camera.h"
 #include "../../Engine/3d/CameraManager.h"
 #include "../../Engine/3d/ModelManager.h"
 #include "../../Engine/base/TextureManager.h"
+#include "../../Engine/base/WinApp.h"
 
 void stageSelectUI::Initialize()
 {
@@ -11,6 +13,7 @@ void stageSelectUI::Initialize()
 
     TextureManager::getInstance()->LoadTexture("resources/UI/SelectUIStage1.png"); // ステージ名
     TextureManager::getInstance()->LoadTexture("resources/UI/SelectUIStage2.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/SelectUI1.png");
 
     ModelManager::GetInstance()->LoadModel("player/Player.obj");
     ModelManager::GetInstance()->LoadModel("skydone/Selectskydome.obj");
@@ -49,15 +52,38 @@ void stageSelectUI::Initialize()
     playerObject3d_->SetRotate(Vector3(0.0f, 0.0f, 0.0f));
 
     // スプライトを表示↓後で
+    std::array<std::string, maxStage> stageTexturePaths = {
+        "resources/UI/SelectUIStage1.png",
+        "resources/UI/SelectUIStage2.png"
+    };
+
+    for (int i = 0; i < maxStage; i++) {
+        stageSprite[i] = std::make_unique<Sprite>();
+        stageSprite[i]->Initialize(stageTexturePaths[i]);
+        stageSprite[i]->SetPosition(Vector2(WinApp::KClientWidth / 2.0f, WinApp::KClientHeight / 8.0f)); // 中心位置
+        stageSprite[i]->SetAnchorPoint(Vector2(0.5f, 0.5f));
+        stageSpriteBaseSize_[i] = stageSprite[i]->GetSize();
+    }
+
+    UI = std::make_unique<Sprite>();
+    UI->Initialize("resources/UI/SelectUI1.png");
+    UI->SetPosition(Vector2(0.0f, WinApp::KClientHeight / 8.0f * 6.0f)); // 中心位置
+    UI->SetAnchorPoint(Vector2(0.0f, 0.0f));
+
+    stageNumber_ = 1;
+    uiAnimTimer_ = 0.0f;
 }
 
 void stageSelectUI::Update(float deltaTime)
 {
     MoveUpdate(deltaTime);
+    UIAnimationUpdate(deltaTime);
 
     playerObject3d_->Update();
+    UI->Update();
     for (int i = 0; i < maxStage; i++) {
         Object3d_[i]->Update();
+        stageSprite[i]->Update();
     }
 }
 
@@ -73,6 +99,11 @@ void stageSelectUI::Draw()
 
 void stageSelectUI::SpriteDraw()
 {
+
+    int idx = std::clamp(stageNumber_ - 1, 0, maxStage - 1);
+    stageSprite[idx]->Draw();
+
+    UI->Draw();
 }
 
 void stageSelectUI::ChangeStage(int stageIndex)
@@ -84,6 +115,7 @@ void stageSelectUI::ChangeStage(int stageIndex)
     // 選択された惑星の手前に機体を移動させる
     targetPlanetPos_ = Vector3(stagePos[idx].x, stagePos[idx].y, -2.0f);
 
+    uiAnimTimer_ = 0.0f;
     moveTimer_ = 0.0f;
     moveDuration_ = kmoveDuration_;
     isMoving_ = true;
@@ -142,4 +174,18 @@ void stageSelectUI::MoveUpdate(float deltaTime)
     cameraPos.z += -15.0f;
     cameraPos.y += 1.0f;
     camere->SetTranslate(cameraPos);
+}
+
+void stageSelectUI::UIAnimationUpdate(float deltaTime)
+{
+    if (uiAnimTimer_ < kUIAnimDuration_) {
+        uiAnimTimer_ += deltaTime;
+        float t = std::clamp(uiAnimTimer_ / kUIAnimDuration_, 0.0f, 1.0f);
+        float easedT = EaseOutCubic(t);
+
+        // 現在選択されているステージ名スプライトのYサイズ可変設定
+        int activeIdx = std::clamp(stageNumber_ - 1, 0, maxStage - 1);
+        Vector2 baseSize = stageSpriteBaseSize_[activeIdx];
+        stageSprite[activeIdx]->SetSize({ baseSize.x, baseSize.y * easedT });
+    }
 }

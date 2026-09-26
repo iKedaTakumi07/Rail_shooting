@@ -36,8 +36,7 @@ private:
     const float kGameChangeTimer = 0.5f;
 
     // UI(スプライト)
-    std::unique_ptr<Sprite> SatgeUI1;
-    std::unique_ptr<Sprite> SatgeUI2;
+
     std::unique_ptr<skydome> skydome_;
     std::unique_ptr<stageSelectUI> stageSelectUI_;
 

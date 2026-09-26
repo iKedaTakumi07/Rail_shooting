@@ -31,6 +31,7 @@ public:
 
 private:
     void MoveUpdate(float deltaTime);
+    void UIAnimationUpdate(float deltaTime);
 
 private:
     static inline const int maxStage = 2; // ステージ文
@@ -39,7 +40,11 @@ private:
 
     std::unique_ptr<Model> ObjectModel; // 惑星テクすちゃ増やすならarray化か?
     std::array<std::unique_ptr<Object3d>, maxStage> Object3d_; // 惑星オブジェクト
+
     std::array<std::unique_ptr<Sprite>, maxStage> stageSprite; // 惑星名スプライトを表示
+    std::array<Vector2, maxStage> stageSpriteBaseSize_;
+
+    std::unique_ptr<Sprite> UI; // 操作UI
 
     std::array<Vector3, maxStage> stagePos; // ステージ座標
 
@@ -54,4 +59,7 @@ private:
     float moveTimer_ = 0.0f; // 経過時間
     float moveDuration_ = 0.25f;
     const float kmoveDuration_ = 0.25f; // 移動にかかる時間(秒)
+
+    float uiAnimTimer_ = 0.0f;
+    const float kUIAnimDuration_ = 0.3f; // UIの展開時間(秒)
 };

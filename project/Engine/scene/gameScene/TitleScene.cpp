@@ -50,6 +50,8 @@ void TitleScene::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/AnimatedCube_MetallicRoughness.png");
     TextureManager::getInstance()->LoadTexture("resources/simpleSkin/uvChecker.png");
     TextureManager::getInstance()->LoadTexture("resources/human/white.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/Title.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/TitleUI.png");
 
     ModelManager::GetInstance()->LoadModel("axis.obj");
     ModelManager::GetInstance()->LoadModel("terrain.obj");
@@ -64,6 +66,16 @@ void TitleScene::Initialize()
 
     skydome_ = std::make_unique<skydome>();
     skydome_->Initialize();
+
+    TitleScene_ = std::make_unique<Sprite>();
+    TitleScene_->Initialize("resources/UI/Title.png");
+    TitleScene_->SetPosition(Vector2(WinApp::KClientWidth / 2.0f, WinApp::KClientHeight / 8.0f * 1.0f));
+    TitleScene_->SetAnchorPoint(Vector2(0.5f, 0.5f));
+
+    TitleScenestateUI_ = std::make_unique<Sprite>();
+    TitleScenestateUI_->Initialize("resources/UI/TitleUI.png");
+    TitleScenestateUI_->SetPosition(Vector2(WinApp::KClientWidth / 2.0f, WinApp::KClientHeight / 8.0f * 7.0f)); // 中心位置
+    TitleScenestateUI_->SetAnchorPoint(Vector2(0.5f, 0.5f));
 
     Transition_->Start(SceneTransition::State::In, 0.1f);
 }
@@ -105,6 +117,8 @@ void TitleScene::Update()
 
     skydome_->Update();
     Transition_->Update(deltaTime);
+    TitleScene_->Update();
+    TitleScenestateUI_->Update();
 }
 
 void TitleScene::Draw()
@@ -123,6 +137,8 @@ void TitleScene::Draw()
     SkyBoxCommon::GetInstance()->PrepareObjectDraw();
 
     SpriteCommon::GetInstance()->PrepareSpriteDraw();
+    TitleScene_->Draw();
+    TitleScenestateUI_->Draw();
 
     CPUParticleManager::getInstance()->Draw();
 
