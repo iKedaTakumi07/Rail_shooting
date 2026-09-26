@@ -12,7 +12,9 @@ class HitParticle;
 
 class Model;
 class Object3d;
-class Skybox;
+class SceneTransition;
+class Sprite;
+class skydome;
 
 class TitleScene : public BaseScene {
 public:
@@ -33,24 +35,13 @@ public:
     void Draw() override;
 
 private:
+    float SceneChangeTimer = 0.5f;
+    bool isChange = false;
+
     // 3dモデル
-    std::unique_ptr<Model> model;
-    std::unique_ptr<Object3d> object3d;
+    std::unique_ptr<skydome> skydome_;
+    std::unique_ptr<SceneTransition> Transition_;
 
-    std::unique_ptr<Model> model_2;
-    std::unique_ptr<Object3d> object3d_2;
-
-    std::unique_ptr<Skeleton> skeleton_2;
-
-    std::unique_ptr<Skybox> skydox;
-
-    std::unique_ptr<ParticleEmitter> particleEmitter2;
-
-    std::unique_ptr<ParticleEmitter> particleEmitter4;
-
-    std::unique_ptr<Player> player_;
-
-    std::unique_ptr<LaserParticle> laserTest;
-    std::unique_ptr<HitParticle> hitParticle;
-    float testTimer = 0.0f;
+    std::unique_ptr<Sprite> TitleScene_;
+    std::unique_ptr<Sprite> TitleScenestateUI_;
 };

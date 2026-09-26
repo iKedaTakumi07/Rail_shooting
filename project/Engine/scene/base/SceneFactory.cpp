@@ -3,6 +3,7 @@
 
 #include "../gameScene/GamePlayScene.h"
 #include "../gameScene/SelectScene.h"
+#include "../gameScene/TestScene.h"
 #include "../gameScene/TitleScene.h"
 #include "../gameScene/resultScene.h"
 
@@ -25,6 +26,8 @@ std::unique_ptr<BaseScene> SceneFactory::CreateScene(const std::string& sceneNam
         newScene = std::make_unique<SelectScene>();
     } else if (sceneName == "RESULT") {
         newScene = std::make_unique<resultScene>();
+    } else if (sceneName == "TEST") {
+        newScene = std::make_unique<TestScene>();
     }
 
     if (newScene) {

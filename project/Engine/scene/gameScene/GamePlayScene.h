@@ -17,6 +17,7 @@ class stageObjectManager;
 class StageManager;
 class SceneTransition;
 class pauseUI;
+class skydome;
 
 class GamePlayScene : public BaseScene {
 public:
@@ -60,6 +61,8 @@ private:
     std::unique_ptr<Camera> PlayerMainCamera_; // プレイヤーのやつ
     std::unique_ptr<Camera> BossCamera_; // ボス演出用
 
+    std::unique_ptr<skydome> skydome_;
+
     // ステージ置物
     std::unique_ptr<stageObjectManager> stageObject_;
     std::unique_ptr<StageManager> StageManager_;
@@ -71,6 +74,9 @@ private:
     std::unique_ptr<CollisionManager> collisionManager_;
 
     bool isSceneFinished_ = false;
+    bool isChange = false; // ステージ変更
+    bool isReset = false; // (再トライ)リセット
+    float ChangeTimer = 0.5f;
 
     // 音声データ
     Sound fanfare;

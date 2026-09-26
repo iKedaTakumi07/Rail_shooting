@@ -31,6 +31,7 @@
 #include "../../../Game/clearUI.h"
 #include "../../../Game/pauseUI.h"
 #include "../../../Game/stage/StageManager.h"
+#include "../../../Game/stage/skydome.h"
 #include "../../../Game/stage/stageDataLoad.h"
 #include "../../../Game/stage/stageObjectManager.h"
 
@@ -103,6 +104,9 @@ void GamePlayScene::Initialize()
     sceneState_ = SceneState::kIntro;
     clearTimer_ = 0.0f;
 
+    skydome_ = std::make_unique<skydome>();
+    skydome_->Initialize();
+
     // 音がうるさいので停止中
     // Audio::GetInstance()->Play(fanfare);
     // Audio::GetInstance()->Play(clearSe);
@@ -130,6 +134,8 @@ void GamePlayScene::Update()
         CameraManager::GetInstance()->SetActiveCamera("PlayBoss");
     }
 #endif // DEBUG
+
+    skydome_->Update();
 
     switch (sceneState_) {
     case GamePlayScene::SceneState::kIntro: {
@@ -231,16 +237,32 @@ void GamePlayScene::Update()
         break;
     }
     case GamePlayScene::SceneState::kPause: {
+        float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
         // 時間を止める
         PauseUI_->Update();
 
         if (PauseUI_->GetResetOrder()) {
-            SceneManager::GetInstance()->ChangeScene("GAMEPLAY");
+            if (!isChange && !isReset) {
+                isReset = true;
+                isSceneFinished_ = true;
+                SceneManager::GetInstance()->ChangeScene("GAMEPLAY");
+            }
         }
+
         if (PauseUI_->GetSelectOrder()) {
-            SceneManager::GetInstance()->ChangeScene("SELECT");
+            if (!isChange && !isReset) {
+                isChange = true;
+                Transition_->Start(SceneTransition::State::Out, 0.5f);
+            }
+
+            ChangeTimer -= deltaTime;
+            if (ChangeTimer <= 0.0f) {
+                isSceneFinished_ = true;
+                SceneManager::GetInstance()->ChangeScene("SELECT");
+            }
         }
-        if (!PauseUI_->GetPause()) {
+
+        if (!PauseUI_->GetPause() && !isChange && !isReset) {
             sceneState_ = PreState_;
             PreState_ = SceneState::knull;
         }
@@ -257,6 +279,7 @@ void GamePlayScene::Draw()
     //
     // モデルデータ
     //
+    skydome_->Draw();
     player_->Draw();
     enemyManager_->Draw();
 
