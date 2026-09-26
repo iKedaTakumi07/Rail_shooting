@@ -313,3 +313,5 @@ inline Vector3 operator+(const Vector3& lhv, const Vector3& rhv);
 inline Vector3 operator-(const Vector3& lhv, const Vector3& rhv);
 
 Matrix4x4 MakeTranslateMatrix(const Vector3& translate);
+
+float EaseOutCubic(float t);

@@ -5,6 +5,7 @@
 
 class SceneTransition;
 class skydome;
+class stageSelectUI;
 
 class SelectScene : public BaseScene {
 public:
@@ -32,11 +33,13 @@ private:
     bool selectStop = false;
     bool GameChange = false;
     float GameChangeTimer = 0.5f;
+    const float kGameChangeTimer = 0.5f;
 
     // UI(スプライト)
     std::unique_ptr<Sprite> SatgeUI1;
     std::unique_ptr<Sprite> SatgeUI2;
     std::unique_ptr<skydome> skydome_;
+    std::unique_ptr<stageSelectUI> stageSelectUI_;
 
     bool isTitile = false; // タイトルバック
     float titleChangeTimer = 1.0f;

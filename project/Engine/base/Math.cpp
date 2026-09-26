@@ -405,3 +405,9 @@ Matrix4x4 MakeTranslateMatrix(const Vector3& translate)
 
     return result;
 }
+
+float EaseOutCubic(float t) 
+{
+    float f = 1.0f - t;
+    return 1.0f - (f * f * f);
+}
