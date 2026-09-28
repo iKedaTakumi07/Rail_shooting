@@ -29,7 +29,7 @@ public:
     Sound() = default;
     ~Sound() { Unload(); }
 
-    void SoundLoadFile(const std::string& filename);
+    bool SoundLoadFile(const std::string& filename);
     void Unload();
 
     const SoundData& GetSoundData() const { return soundData; }
