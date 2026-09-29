@@ -9,6 +9,7 @@ class Player;
 
 class LaserParticle;
 class HitParticle;
+class TitleFloating;
 
 class Model;
 class Object3d;
@@ -41,6 +42,7 @@ private:
     // 3dモデル
     std::unique_ptr<skydome> skydome_;
     std::unique_ptr<SceneTransition> Transition_;
+    std::unique_ptr<TitleFloating> TitleFloating_;
 
     std::unique_ptr<Sprite> TitleScene_;
     std::unique_ptr<Sprite> TitleScenestateUI_;

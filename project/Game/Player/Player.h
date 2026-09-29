@@ -103,11 +103,11 @@ private:
     const float kShiftYawFactor = 0.2f; // shift時にy回転を抑える減衰係数
 
     // 静止時の揺れ
-    const float kHoverSpeed = 2.5f; // 浮遊の速さ（周波数）
-    const float kHoverAmount = 0.015f; // 浮遊の揺れ幅（上下移動量）
-    const float kSwaySpeed = 4.0f; // 揺れる速さ（周波数）
-    const float kSwayAmountZ = 0.025f; // Roll（左右の傾き）の揺れ幅
-    const float kSwayAmountX = 0.015f; // Pitch（前後の傾き）の揺れ幅
+    const float kHoverSpeed = 2.5f; // 浮遊の速さ
+    const float kHoverAmount = 0.015f; // 浮遊の揺れ幅
+    const float kSwaySpeed = 4.0f; // 揺れる速さ
+    const float kSwayAmountZ = 0.025f; // Rollの揺れ幅
+    const float kSwayAmountX = 0.015f; // Pitchの揺れ幅
     float idleTimer_ = 0.0f; // 揺れタイマー
 
     // 弾の詳細設定(チャージショット一連の操作、チュートリアルを作成後作成)

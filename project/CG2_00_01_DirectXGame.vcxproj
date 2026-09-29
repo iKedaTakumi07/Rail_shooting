@@ -282,6 +282,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Game\stage\skydome.cpp" />
     <ClCompile Include="Engine\scene\gameScene\TestScene.cpp" />
     <ClCompile Include="Game\stage\stageSelectUI.cpp" />
+    <ClCompile Include="Game\Player\TitleFloating.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\EmitParticle.CS.hlsl">
@@ -660,6 +661,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\stage\skydome.h" />
     <ClInclude Include="Engine\scene\gameScene\TestScene.h" />
     <ClInclude Include="Game\stage\stageSelectUI.h" />
+    <ClInclude Include="Game\Player\TitleFloating.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">
