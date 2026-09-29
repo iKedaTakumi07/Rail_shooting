@@ -49,12 +49,12 @@ void LaserBeamBullet::Update(float deltaTime)
     }
 
     transform_.translate = {
-        (startPos_.x + endPos_.x) * 0.5f,
-        (startPos_.y + endPos_.y) * 0.5f,
-        (startPos_.z + endPos_.z) * 0.5f
+        (FromPos_.x + ToPos_.x) * 0.5f,
+        (FromPos_.y + ToPos_.y) * 0.5f,
+        (FromPos_.z + ToPos_.z) * 0.5f
     };
 
-    Vector3 dir = { endPos_.x - startPos_.x, endPos_.y - startPos_.y, endPos_.z - startPos_.z };
+    Vector3 dir = { ToPos_.x - FromPos_.x, ToPos_.y - FromPos_.y, ToPos_.z - FromPos_.z };
     float length = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
 
     if (length != 0.0f) {
@@ -125,7 +125,7 @@ AllOBB LaserBeamBullet::GetAllOBB() const
     obb.orientations[1] = trueUp;
     obb.orientations[2] = dir;
 
-    float length = std::sqrtf(std::powf(endPos_.x - startPos_.x, 2) + std::powf(endPos_.y - startPos_.y, 2) + std::powf(endPos_.z - startPos_.z, 2));
+    float length = std::sqrtf(std::powf(ToPos_.x - FromPos_.x, 2) + std::powf(ToPos_.y - FromPos_.y, 2) + std::powf(ToPos_.z - FromPos_.z, 2));
     obb.size = { laserRadius_, laserRadius_, length * 0.5f };
 
     allObb.wholeBox = obb;
@@ -145,6 +145,6 @@ void LaserBeamBullet::OnCollision(Collider* other)
 
 void LaserBeamBullet::SetPositions(const Vector3& start, const Vector3& end)
 {
-    startPos_ = start;
-    endPos_ = end;
+    FromPos_ = start;
+    ToPos_ = end;
 }

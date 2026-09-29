@@ -36,7 +36,7 @@ public:
 private:
     void MoveUpdate();
     void RoateUpdate();
-    void CheckCameraCulling(); // カリング処理
+    void CheckCameraCulling();
 
 private:
     Transform transform_;
@@ -45,8 +45,8 @@ private:
     std::unique_ptr<Model> model;
     std::unique_ptr<Object3d> object3d;
 
-    Vector3 startPos_;
-    Vector3 endPos_;
+    Vector3 FromPos_;
+    Vector3 ToPos_;
     float laserRadius_ = 0.25f;
 
     // 当たり判定

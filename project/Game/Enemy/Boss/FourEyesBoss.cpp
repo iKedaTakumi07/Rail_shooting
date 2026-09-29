@@ -257,7 +257,7 @@ void FourEyesBoss::OnCollision(Collider* other)
             isDead_ = true; // 死亡演出トリガー用
         }
     } else if (other->GetCollisionGroup() == CollisionGroup::kPlayer) {
-        // お互いダメージ処理
+        // お互いダメージ処理(接触するはずがない)
         currentHp_ -= 1;
 
         if (currentHp_ <= 0) {
@@ -304,7 +304,7 @@ void FourEyesBoss::UpdateAppearance(float deltaTime)
     object3d->Update();
 
     if (appearanceTimer_ >= kAppearanceDuration) {
-        isAppearing_ = false; // 演出終了、通常戦闘状態へ遷移
+        isAppearing_ = false; // 演出終了
     }
 }
 
@@ -425,7 +425,7 @@ void FourEyesBoss::UIUpdate()
 void FourEyesBoss::partsDamage(Collider* other)
 {
     AllOBB otherAllOBB = other->GetAllOBB();
-    AllOBB myAllOBB = GetAllOBB(); // ボス自身の現在の回転が反映されたOBB群を取得
+    AllOBB myAllOBB = GetAllOBB();
     int damage = other->GetDamage();
 
     size_t obbIndex = 0;
@@ -441,10 +441,10 @@ void FourEyesBoss::partsDamage(Collider* other)
         const OBB& partOBB = myAllOBB.dividBoxes[obbIndex++];
 
         for (const auto& otherBox : otherAllOBB.dividBoxes) {
-            // CollisionManager と同様の OBB 判定を実施 (またはヘルパー関数化)
+
             if (CollisionManager::CheckOBB(partOBB, otherBox)) {
                 part.hp = std::max(0, part.hp - damage);
-                break; // 同一フレームでの多重ヒット防止
+                break;
             }
         }
     }

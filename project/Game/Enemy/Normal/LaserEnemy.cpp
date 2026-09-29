@@ -21,61 +21,61 @@ void LaserEnemy::Initialize(Vector3 pos)
     TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
     ModelManager::GetInstance()->LoadModel("test/test.obj");
 
-    startingPointObject3d = std::make_unique<Object3d>();
-    startingPointObject3d->Initialize();
-    lastStopObject3d = std::make_unique<Object3d>();
-    lastStopObject3d->Initialize();
+    fromPointObject3d = std::make_unique<Object3d>();
+    fromPointObject3d->Initialize();
+    toStopObject3d = std::make_unique<Object3d>();
+    toStopObject3d->Initialize();
 
     model = std::make_unique<Model>();
     model->Initialize("resources/test", "test.obj");
     // model->SetEvnTexturefilePath(skydox->GetTextureFilePath()); // 反射が必要なら
-    startingPointObject3d->SetModel(model.get());
-    lastStopObject3d->SetModel(model.get());
+    fromPointObject3d->SetModel(model.get());
+    toStopObject3d->SetModel(model.get());
 
-    startingPointtransform_.scale = { 1.0f, 1.0f, 1.0f };
-    startingPointtransform_.rotate = { 0.0f, 0.0f, 0.0f };
-    startingPointtransform_.translate = pos;
+    FromPointTransform_.scale = { 1.0f, 1.0f, 1.0f };
+    FromPointTransform_.rotate = { 0.0f, 0.0f, 0.0f };
+    FromPointTransform_.translate = pos;
 
-    lastStoptransform_.scale = { 1.0f, 1.0f, 1.0f };
-    lastStoptransform_.rotate = { 0.0f, 0.0f, 0.0f };
-    lastStoptransform_.translate = pos;
+    ToStopTransform_.scale = { 1.0f, 1.0f, 1.0f };
+    ToStopTransform_.rotate = { 0.0f, 0.0f, 0.0f };
+    ToStopTransform_.translate = pos;
 
-    startisAvile_ = true; // 存在しているか
-    startisDead_ = false; // 死んでいるか
+    fromIsAvile_ = true; // 存在しているか
+    fromIsDead_ = false; // 死んでいるか
 
-    lastisAvile_ = true; // 存在しているか
-    lastisDead_ = false; // 死んでいるか
+    toIsAvile_ = true; // 存在しているか
+    toIsDead_ = false; // 死んでいるか
 
-    AllisAvile_ = true; // 両方存在しているか
-    AllisDead_ = false; // 両方死んでいるか
+    allIsAvile_ = true; // 両方存在しているか
+    allIsDead_ = false; // 両方死んでいるか
 }
 
 void LaserEnemy::Update()
 {
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
 
-    if (startingPointtransform_.translate.z <= camera_->GetTranslate().z && lastStoptransform_.translate.z <= camera_->GetTranslate().z) {
-        AllisAvile_ = false;
+    if (FromPointTransform_.translate.z <= camera_->GetTranslate().z && ToStopTransform_.translate.z <= camera_->GetTranslate().z) {
+        allIsAvile_ = false;
     }
 
     BulletUpdate();
 
-    startingPointObject3d->SetTranslate(startingPointtransform_.translate);
-    startingPointObject3d->SetRotate(startingPointtransform_.rotate);
-    startingPointObject3d->Update();
+    fromPointObject3d->SetTranslate(FromPointTransform_.translate);
+    fromPointObject3d->SetRotate(FromPointTransform_.rotate);
+    fromPointObject3d->Update();
 
-    lastStopObject3d->SetTranslate(lastStoptransform_.translate);
-    lastStopObject3d->SetRotate(lastStoptransform_.rotate);
-    lastStopObject3d->Update();
+    toStopObject3d->SetTranslate(ToStopTransform_.translate);
+    toStopObject3d->SetRotate(ToStopTransform_.rotate);
+    toStopObject3d->Update();
 }
 
 void LaserEnemy::Draw()
 {
-    if (startisAvile_) {
-        startingPointObject3d->Draw();
+    if (fromIsAvile_) {
+        fromPointObject3d->Draw();
     }
-    if (lastisAvile_) {
-        lastStopObject3d->Draw();
+    if (toIsAvile_) {
+        toStopObject3d->Draw();
     }
 
     for (auto& bullet : enemyBullet_) {
@@ -90,43 +90,43 @@ AllAABB LaserEnemy::GetAllAABB() const
     AllAABB compound;
 
     AABB whole;
-    if (startingPointtransform_.translate.x <= lastStoptransform_.translate.x) {
-        whole.min.x = startingPointtransform_.translate.x;
-        whole.max.x = lastStoptransform_.translate.x;
+    if (FromPointTransform_.translate.x <= ToStopTransform_.translate.x) {
+        whole.min.x = FromPointTransform_.translate.x;
+        whole.max.x = ToStopTransform_.translate.x;
     } else {
-        whole.max.x = startingPointtransform_.translate.x;
-        whole.min.x = lastStoptransform_.translate.x;
+        whole.max.x = FromPointTransform_.translate.x;
+        whole.min.x = ToStopTransform_.translate.x;
     }
-    if (startingPointtransform_.translate.y <= lastStoptransform_.translate.y) {
-        whole.min.y = startingPointtransform_.translate.y;
-        whole.max.y = lastStoptransform_.translate.y;
+    if (FromPointTransform_.translate.y <= ToStopTransform_.translate.y) {
+        whole.min.y = FromPointTransform_.translate.y;
+        whole.max.y = ToStopTransform_.translate.y;
     } else {
-        whole.max.y = startingPointtransform_.translate.y;
-        whole.min.y = lastStoptransform_.translate.y;
+        whole.max.y = FromPointTransform_.translate.y;
+        whole.min.y = ToStopTransform_.translate.y;
     }
-    if (startingPointtransform_.translate.z <= lastStoptransform_.translate.z) {
-        whole.min.z = startingPointtransform_.translate.z;
-        whole.max.z = lastStoptransform_.translate.z;
+    if (FromPointTransform_.translate.z <= ToStopTransform_.translate.z) {
+        whole.min.z = FromPointTransform_.translate.z;
+        whole.max.z = ToStopTransform_.translate.z;
     } else {
-        whole.max.z = startingPointtransform_.translate.z;
-        whole.min.z = lastStoptransform_.translate.z;
+        whole.max.z = FromPointTransform_.translate.z;
+        whole.min.z = ToStopTransform_.translate.z;
     }
     compound.wholeBox = whole;
     AABB box;
-    box.min.x = startingPointtransform_.translate.x - size;
-    box.min.x = startingPointtransform_.translate.x - size;
-    box.min.y = startingPointtransform_.translate.y - size;
-    box.min.y = startingPointtransform_.translate.y - size;
-    box.min.z = startingPointtransform_.translate.z - size;
-    box.min.z = startingPointtransform_.translate.z - size;
+    box.min.x = FromPointTransform_.translate.x - size;
+    box.min.x = FromPointTransform_.translate.x - size;
+    box.min.y = FromPointTransform_.translate.y - size;
+    box.min.y = FromPointTransform_.translate.y - size;
+    box.min.z = FromPointTransform_.translate.z - size;
+    box.min.z = FromPointTransform_.translate.z - size;
 
     AABB box2;
-    box2.min.x = lastStoptransform_.translate.x - size;
-    box2.min.x = lastStoptransform_.translate.x - size;
-    box2.min.y = lastStoptransform_.translate.y - size;
-    box2.min.y = lastStoptransform_.translate.y - size;
-    box2.min.z = lastStoptransform_.translate.z - size;
-    box2.min.z = lastStoptransform_.translate.z - size;
+    box2.min.x = ToStopTransform_.translate.x - size;
+    box2.min.x = ToStopTransform_.translate.x - size;
+    box2.min.y = ToStopTransform_.translate.y - size;
+    box2.min.y = ToStopTransform_.translate.y - size;
+    box2.min.z = ToStopTransform_.translate.z - size;
+    box2.min.z = ToStopTransform_.translate.z - size;
 
     compound.dividBoxes.push_back(box);
     compound.dividBoxes.push_back(box2);
@@ -140,7 +140,7 @@ AllOBB LaserEnemy::GetAllOBB() const
 
     // 始点側のOBB構築
     OBB startOBB;
-    startOBB.center = startingPointtransform_.translate;
+    startOBB.center = FromPointTransform_.translate;
     startOBB.orientations[0] = { 1.0f, 0.0f, 0.0f };
     startOBB.orientations[1] = { 0.0f, 1.0f, 0.0f };
     startOBB.orientations[2] = { 0.0f, 0.0f, 1.0f };
@@ -148,7 +148,7 @@ AllOBB LaserEnemy::GetAllOBB() const
 
     // 終点側のOBB構築
     OBB endOBB;
-    endOBB.center = lastStoptransform_.translate;
+    endOBB.center = ToStopTransform_.translate;
     endOBB.orientations[0] = { 1.0f, 0.0f, 0.0f };
     endOBB.orientations[1] = { 0.0f, 1.0f, 0.0f };
     endOBB.orientations[2] = { 0.0f, 0.0f, 1.0f };
@@ -159,9 +159,9 @@ AllOBB LaserEnemy::GetAllOBB() const
 
     // 全体範囲(AABBもどき)
     Vector3 center = {
-        (startingPointtransform_.translate.x + lastStoptransform_.translate.x) * 0.5f,
-        (startingPointtransform_.translate.y + lastStoptransform_.translate.y) * 0.5f,
-        (startingPointtransform_.translate.z + lastStoptransform_.translate.z) * 0.5f
+        (FromPointTransform_.translate.x + ToStopTransform_.translate.x) * 0.5f,
+        (FromPointTransform_.translate.y + ToStopTransform_.translate.y) * 0.5f,
+        (FromPointTransform_.translate.z + ToStopTransform_.translate.z) * 0.5f
     };
 
     compound.wholeBox.center = center;
@@ -169,9 +169,9 @@ AllOBB LaserEnemy::GetAllOBB() const
     compound.wholeBox.orientations[1] = { 0.0f, 1.0f, 0.0f };
     compound.wholeBox.orientations[2] = { 0.0f, 0.0f, 1.0f };
     compound.wholeBox.size = {
-        std::abs(startingPointtransform_.translate.x - center.x) + size,
-        std::abs(startingPointtransform_.translate.y - center.y) + size,
-        std::abs(startingPointtransform_.translate.z - center.z) + size
+        std::abs(FromPointTransform_.translate.x - center.x) + size,
+        std::abs(FromPointTransform_.translate.y - center.y) + size,
+        std::abs(FromPointTransform_.translate.z - center.z) + size
     };
 
     return compound;
@@ -191,16 +191,16 @@ void LaserEnemy::OnCollision(Collider* other)
 std::vector<Vector3> LaserEnemy::GetTargetPositions()
 {
     std::vector<Vector3> positions;
-    if (!AllisAvile_) {
+    if (!allIsAvile_) {
         // 万が一のエラー対策
-        positions.push_back(startingPointtransform_.translate);
+        positions.push_back(FromPointTransform_.translate);
     }
 
-    if (startisAvile_) {
-        positions.push_back(startingPointtransform_.translate);
+    if (fromIsAvile_) {
+        positions.push_back(FromPointTransform_.translate);
     }
-    if (lastisAvile_) {
-        positions.push_back(lastStoptransform_.translate);
+    if (toIsAvile_) {
+        positions.push_back(ToStopTransform_.translate);
     }
 
     return positions;
@@ -208,12 +208,12 @@ std::vector<Vector3> LaserEnemy::GetTargetPositions()
 
 void LaserEnemy::BulletUpdate()
 {
-    if (startisAvile_ && lastisAvile_) {
+    if (fromIsAvile_ && toIsAvile_) {
         // 両方生きているならレーザビーム発射
         if (enemyBullet_.empty()) {
             auto laser = std::make_unique<LaserBeamBullet>();
-            laser->Initialize(startingPointtransform_.translate, { 0, 0, 0 });
-            laser->SetPositions(startingPointtransform_.translate, lastStoptransform_.translate);
+            laser->Initialize(FromPointTransform_.translate, { 0, 0, 0 });
+            laser->SetPositions(FromPointTransform_.translate, ToStopTransform_.translate);
             enemyBullet_.push_back(std::move(laser));
         }
     } else {
@@ -226,10 +226,10 @@ void LaserEnemy::BulletUpdate()
         interval -= SceneManager::GetInstance()->GetDeltaTime();
         if (interval <= 0.0f) {
             Transform BulletTransform;
-            if (startisAvile_) {
-                BulletTransform = startingPointtransform_;
-            } else if (lastisAvile_) {
-                BulletTransform = lastStoptransform_;
+            if (fromIsAvile_) {
+                BulletTransform = FromPointTransform_;
+            } else if (toIsAvile_) {
+                BulletTransform = ToStopTransform_;
             } else {
                 return;
             }
@@ -257,7 +257,7 @@ void LaserEnemy::BulletUpdate()
 void LaserEnemy::partsDamage(Collider* other)
 {
     AllOBB otherAllOBB = other->GetAllOBB();
-    AllOBB myAllOBB = GetAllOBB(); // ボス自身の現在の回転が反映されたOBB群を取得
+    AllOBB myAllOBB = GetAllOBB();
     int damage = other->GetDamage();
 
     size_t obbIndex = 0;
@@ -266,14 +266,14 @@ void LaserEnemy::partsDamage(Collider* other)
 
         for (const auto& otherBox : otherAllOBB.dividBoxes) {
 
-            if (i == 0 && startisAvile_) {
+            if (i == 0 && fromIsAvile_) {
                 for (const auto& otherBox : otherAllOBB.dividBoxes) {
                     if (CollisionManager::CheckOBB(partOBB, otherBox)) {
                         starthealth_ = std::max(0, starthealth_ - damage);
                         break; // 多重ヒット防止
                     }
                 }
-            } else if (i == 1 && lastisAvile_) {
+            } else if (i == 1 && toIsAvile_) {
                 for (const auto& otherBox : otherAllOBB.dividBoxes) {
                     if (CollisionManager::CheckOBB(partOBB, otherBox)) {
                         lasthealth_ = std::max(0, lasthealth_ - damage);
@@ -284,17 +284,17 @@ void LaserEnemy::partsDamage(Collider* other)
         }
     }
 
-    // 死亡演出作るかどうかは未定
+    // 死亡演出作るかどうかは未定(爆発パーティクル)
     if (starthealth_ <= 0) {
-        startisDead_ = true;
-        startisAvile_ = false;
+        fromIsDead_ = true;
+        fromIsAvile_ = false;
     }
     if (lasthealth_ <= 0) {
-        lastisDead_ = true;
-        lastisAvile_ = false;
+        toIsDead_ = true;
+        toIsAvile_ = false;
     }
-    if (lastisDead_ && startisDead_) {
-        AllisDead_ = true;
-        AllisAvile_ = false;
+    if (toIsDead_ && fromIsDead_) {
+        allIsDead_ = true;
+        allIsAvile_ = false;
     }
 }

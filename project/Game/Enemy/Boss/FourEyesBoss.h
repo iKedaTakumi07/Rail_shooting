@@ -92,8 +92,8 @@ private:
 
     float moveTimer_ = 0.0f; // 移動計算用タイマー
     const float kMoveSpeed = 0.5f; // 8の字周回スピード
-    const float kAmplitudeX = 10.0f; // 横幅（X軸方向の振幅）
-    const float kAmplitudeY = 5.0f; // 縦幅（Y軸方向の振幅）
+    const float kAmplitudeX = 10.0f; // 横幅
+    const float kAmplitudeY = 5.0f; // 縦幅
 
     // 発射位置,耐久力、当たり判定offset(各頂点の中心位置)
     std::array<BossPart, 4> parts_;

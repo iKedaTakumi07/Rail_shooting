@@ -161,7 +161,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Game\Loder\GameScoreManager.cpp" />
-    <ClCompile Include="Game\clearUI.cpp" />
+    <ClCompile Include="Game\UI\clearUI.cpp" />
     <ClCompile Include="Game\Particle\chargeParticle.cpp" />
     <ClCompile Include="Game\Enemy\Boss\FourEyesBoss.cpp" />
     <ClCompile Include="Game\Enemy\base\baseBossEnemy.cpp" />
@@ -277,8 +277,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Game\stage\stageObject.cpp" />
     <ClCompile Include="Game\stage\stageDataLoad.cpp" />
     <ClCompile Include="Game\Enemy\Normal\threeShotsEnemy.cpp" />
-    <ClCompile Include="Game\pauseUI.cpp" />
-    <ClCompile Include="Game\ResultUI.cpp" />
+    <ClCompile Include="Game\UI\pauseUI.cpp" />
+    <ClCompile Include="Game\UI\ResultUI.cpp" />
     <ClCompile Include="Game\stage\skydome.cpp" />
     <ClCompile Include="Engine\scene\gameScene\TestScene.cpp" />
     <ClCompile Include="Game\stage\stageSelectUI.cpp" />
@@ -533,7 +533,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\Loder\GameScoreManager.h" />
-    <ClInclude Include="Game\clearUI.h" />
+    <ClInclude Include="Game\UI\clearUI.h" />
     <ClInclude Include="Game\Particle\chargeParticle.h" />
     <ClInclude Include="Game\Enemy\Boss\FourEyesBoss.h" />
     <ClInclude Include="Game\Enemy\base\baseBossEnemy.h" />
@@ -638,7 +638,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\Player\PlayerBullet.h" />
     <ClInclude Include="Game\OnCollison\Collider.h" />
     <ClInclude Include="Game\Enemy\Normal\NormalMoveEnemy.h" />
-    <ClInclude Include="Game\pauseUI.h" />
+    <ClInclude Include="Game\UI\pauseUI.h" />
     <ClInclude Include="Game\Enemy\Bullet\LaserBeamBullet.h" />
     <ClInclude Include="Game\Enemy\Normal\LaserEnemy.h" />
     <ClInclude Include="Game\SceneTransition.h" />
@@ -656,7 +656,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\stage\stageObject.h" />
     <ClInclude Include="Game\stage\stageDataLoad.h" />
     <ClInclude Include="Game\Enemy\Normal\threeShotsEnemy.h" />
-    <ClInclude Include="Game\ResultUI.h" />
+    <ClInclude Include="Game\UI\ResultUI.h" />
     <ClInclude Include="Game\stage\skydome.h" />
     <ClInclude Include="Engine\scene\gameScene\TestScene.h" />
     <ClInclude Include="Game\stage\stageSelectUI.h" />
