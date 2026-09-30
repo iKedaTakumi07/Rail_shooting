@@ -48,6 +48,7 @@ public:
 
 private:
     Transform transform_ = { 0.0f, 0.0f, 0.0f }; // 座標
+    Transform Pretransform_ = { 0.0f, 0.0f, 0.0f }; // 座標
 
     // 当たり判定
     float size = 0.5f; // OBBに移植後は知らん。
@@ -57,14 +58,11 @@ private:
     float deathTimer_ = 3.0f; // 弾の寿命（秒）
     bool isDead_ = false;
 
-    float particleTimer_ = 0.0f; // 経過時間タイマー
-    const float kParticleInterval_ = 0.025f; // パーティクル発生間隔
-
     uint32_t targetId_ = 0; // 追尾する対象
     int targetIndex_ = 0; // 追尾する部位の番号
 
     EnemyManager* enemyManager_ = nullptr;
-    float homingStrength_ = 0.01f; // 追ビ性能(ほぼ必中で良い)
+    float homingStrength_ = 0.0f; // 追ビ性能(ほぼ必中で良い)
     bool isChargeBullet = false;
     int Dameg = 2;
     int ChageDameg = 10;

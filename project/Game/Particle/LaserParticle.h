@@ -8,7 +8,7 @@ public:
     void Initialize();
 
     // 生成
-    void NewParticle(const Transform& emitterTransform);
+    void NewParticle(const Transform& emitterTransform) const;
 
     // 毎フレーム更新
     void Update();

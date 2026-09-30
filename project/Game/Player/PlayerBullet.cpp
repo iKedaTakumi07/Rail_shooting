@@ -5,6 +5,7 @@
 #include "../../Engine/3d/Object3d.h"
 #include "../../Engine/base/Math.h"
 #include "../../Engine/base/TextureManager.h"
+
 #include "../../Engine/io/Input.h"
 #include "../Enemy/EnemyManager.h"
 #include "../Enemy/base/baseEnemy.h"
@@ -57,12 +58,15 @@ void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vec
 
 void PlayerBullet::Update(float deltaTime)
 {
+    Pretransform_ = transform_;
+
     baseEnemy* target = nullptr;
     if (targetId_ != 0 && enemyManager_) {
         target = enemyManager_->GetEnemyById(targetId_);
-        float HomingUp = 0.005f; // 時間経過で追尾強化
+
         if (homingStrength_ <= 1.0f) {
-            homingStrength_ += HomingUp;
+            float HomingUp = 0.005f; // 時間経過で追尾強化
+            homingStrength_ += HomingUp * deathTimer_;
         }
     }
 
@@ -139,18 +143,13 @@ void PlayerBullet::Update(float deltaTime)
     object3d->SetRotate(transform_.rotate);
     object3d->Update();
 
-    particleTimer_ += deltaTime;
+    laserParticle_->NewParticle(transform_);
+    laserParticle_->NewParticle(Pretransform_);
 }
 
 void PlayerBullet::Draw()
 {
     object3d->Draw();
-
-    if (particleTimer_ >= kParticleInterval_) {
-        // リセット
-        particleTimer_ = 0.0f;
-        laserParticle_->NewParticle(transform_);
-    }
 }
 
 AllAABB PlayerBullet::GetAllAABB() const
@@ -235,5 +234,4 @@ int PlayerBullet::GetDamage() const
 
 void PlayerBullet::SpawnImpact()
 {
-    chargeParticle_->NewParticle(transform_);
 }
