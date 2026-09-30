@@ -16,6 +16,7 @@ class Object3d;
 class SceneTransition;
 class Sprite;
 class skydome;
+class meteorite;
 
 class TitleScene : public BaseScene {
 public:
@@ -43,6 +44,7 @@ private:
     std::unique_ptr<skydome> skydome_;
     std::unique_ptr<SceneTransition> Transition_;
     std::unique_ptr<TitleFloating> TitleFloating_;
+    std::unique_ptr<meteorite> meteorite_;
 
     std::unique_ptr<Sprite> TitleScene_;
     std::unique_ptr<Sprite> TitleScenestateUI_;

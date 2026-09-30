@@ -10,7 +10,7 @@
 void TitleFloating::Initialize()
 {
     TextureManager::getInstance()->LoadTexture("resources/player/1x1white.png");
-    ModelManager::GetInstance()->LoadModel("player/Player.obj");
+    ModelManager::GetInstance()->LoadModel("player/testPlayer.obj");
 
     pattern_ = State::kIntro;
     MovePattern_ = MoveState::knull;
@@ -22,10 +22,9 @@ void TitleFloating::Initialize()
     playerObject3d->Initialize();
 
     playerModel = std::make_unique<Model>();
-    playerModel->Initialize("resources/player", "Player.obj");
+    playerModel->Initialize("resources/player", "testPlayer.obj");
     playerObject3d->SetModel(playerModel.get());
 
-    transform_.rotate.y = std::numbers::pi_v<float> * 0.5f;
     playerObject3d->SetScale(transform_.scale);
     playerObject3d->SetRotate(transform_.rotate);
 
@@ -59,6 +58,7 @@ void TitleFloating::Update()
     playerObject3d->SetTranslate(transform_.translate);
     playerObject3d->SetRotate(transform_.rotate);
     playerObject3d->Update();
+    playerObject3d->DrawImGui("player");
 }
 
 void TitleFloating::Draw()
@@ -98,7 +98,7 @@ void TitleFloating::MoveUpdate(float deltaTime)
     // 行動変更
     patternInterval -= deltaTime;
     if (patternInterval <= 0.0f) {
-        std::uniform_int_distribution<int> dist(0, 3);
+        std::uniform_int_distribution<int> dist(0, 1);
         patternInterval = kpatternInterval;
         MovePattern_ = MoveState(dist(randomEngine));
     }
@@ -114,14 +114,6 @@ void TitleFloating::MoveUpdate(float deltaTime)
         inputDir.z -= 1.0f;
         break;
     case TitleFloating::MoveState::kRightRoll:
-        inputDir.z += 1.0f;
-        break;
-    case TitleFloating::MoveState::kLeftShiftRoll:
-        isShift = true;
-        inputDir.z -= 1.0f;
-        break;
-    case TitleFloating::MoveState::kRightShiftRoll:
-        isShift = true;
         inputDir.z += 1.0f;
         break;
     }
@@ -182,9 +174,9 @@ void TitleFloating::MoveUpdate(float deltaTime)
     localPos_.y = std::clamp(localPos_.y, minPos.y, maxPos.y);
     localPos_.z = std::clamp(localPos_.z, minPos.z, maxPos.z);
 
-    transform_.translate.x =  localPos_.x;
+    transform_.translate.x = localPos_.x;
     transform_.translate.y = localPos_.y;
-    transform_.translate.z =  localPos_.z;
+    transform_.translate.z = localPos_.z;
 
     RoateUpdate(deltaTime, currentAccel, isShift);
     BulletUpdate(deltaTime);
@@ -199,17 +191,17 @@ void TitleFloating::RoateUpdate(float deltaTime, float currentAccel, bool isShif
     float ratioZ = std::clamp(velocity_.z / maxTheoreticalSpeed, -1.0f, 1.0f);
 
     float targetRotateX = 0.0f;
-    float targetRotateY = std::numbers::pi_v<float> * 0.5f;
+    float targetRotateY = 0.0f;
     float targetRotateZ = 0.0f;
 
     if (isShift) {
-        targetRotateZ = ratioZ * kMaxRollShift;
-        targetRotateX = ratioY * kMaxPitchAngle;
-        targetRotateY += (-ratioZ * kMaxYawAngle) * kShiftYawFactor;
+        targetRotateX = -ratioY * kMaxPitchAngle;
+        targetRotateY = (ratioX * kMaxYawAngle) * kShiftYawFactor;
+        targetRotateZ = -ratioX * kMaxRollShift;
     } else {
-        targetRotateZ = ratioZ * kMaxRollNormal;
-        targetRotateX = ratioY * kMaxPitchAngle;
-        targetRotateY += -ratioZ * kMaxYawAngle;
+        targetRotateX = -ratioY * kMaxPitchAngle;
+        targetRotateY = ratioX * kMaxYawAngle;
+        targetRotateZ = -ratioX * kMaxRollNormal;
     }
 
     // 補間処理 (フレームレート非依存)

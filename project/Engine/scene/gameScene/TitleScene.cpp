@@ -24,6 +24,7 @@
 
 #include "../../../Game/Player/TitleFloating.h"
 #include "../../../Game/SceneTransition.h"
+#include "../../../Game/stage/meteorite.h"
 #include "../../../Game/stage/skydome.h"
 #include "../../3d/CameraManager.h"
 #include "math.h"
@@ -50,7 +51,7 @@ void TitleScene::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/AnimatedCube_BaseColor.png");
     TextureManager::getInstance()->LoadTexture("resources/AnimatedCube_MetallicRoughness.png");
     TextureManager::getInstance()->LoadTexture("resources/simpleSkin/uvChecker.png");
-    TextureManager::getInstance()->LoadTexture("resources/human/white.png");
+    // TextureManager::getInstance()->LoadTexture("resources/human/white.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/Title.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/TitleUI.png");
 
@@ -82,6 +83,9 @@ void TitleScene::Initialize()
     TitleFloating_->Initialize();
     TitleFloating_->SetStartPos(Vector3(-20.0f, 0.0f, 0.0f));
     TitleFloating_->SetEndPos(Vector3(0.0f, 0.0f, 0.0f));
+
+    meteorite_ = std::make_unique<meteorite>();
+    meteorite_->Initialize();
 
     Transition_->Start(SceneTransition::State::In, 0.1f);
 }
@@ -124,7 +128,7 @@ void TitleScene::Update()
 
     skydome_->Update();
     TitleFloating_->Update();
-
+    meteorite_->Update();
     Transition_->Update(deltaTime);
     TitleScene_->Update();
     TitleScenestateUI_->Update();
@@ -139,6 +143,7 @@ void TitleScene::Draw()
 
     skydome_->Draw();
     TitleFloating_->Draw();
+    meteorite_->Draw();
 
 #ifdef USE_IMGUI
 

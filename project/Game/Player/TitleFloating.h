@@ -77,7 +77,7 @@ private:
     const float kMaxRollNormal = 0.35f; // 非shift時、横移動時の回転
     const float kMaxPitchAngle = 0.45f; // 上下移動時の回転
     const float kMaxYawAngle = 0.35f; // 横移動時の回転
-    const float kShiftYawFactor = 0.2f; // shift時にy回転を抑える減衰係数
+    const float kShiftYawFactor = 0.05f; // shift時にy回転を抑える減衰係数
 
     Transform transform_ = { { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } }; // モデル座標
     Vector3 localPos_ = { 0.0f, 0.0f, 0.0f };
@@ -85,8 +85,8 @@ private:
     Vector3 velocity_ = { 0.0f, 0.0f, 0.0f }; // 移動速度
     Vector3 StartPos = { 0.0f, 0.0f, 0.0f }; // イージング開始座標
     Vector3 EndPos = { 0.0f, 0.0f, 0.0f }; // 終了座標
-    Vector3 minPos = { -10.0f, -4.0f, -8.0f }; // 動ける範囲(x:進行方向 y:上下 z:左右)
-    Vector3 maxPos = { 2.0f, 4.0f, 8.0f }; // 動ける範囲(x:進行方向 y:上下 z:左右)
+    Vector3 minPos = { -8.0f, -4.0f, -10.0f }; // 動ける範囲(x:進行方向 y:上下 z:左右)
+    Vector3 maxPos = { 2.0f, 4.0f, 5.0f }; // 動ける範囲(x:進行方向 y:上下 z:左右)
 
     // 3dモデル
     std::unique_ptr<Model> playerModel;
