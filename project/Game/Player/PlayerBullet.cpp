@@ -205,7 +205,7 @@ AllOBB PlayerBullet::GetAllOBB() const
 void PlayerBullet::OnCollision(Collider* other)
 {
     // 当たったもの次第で分岐
-    if (other->GetCollisionGroup() == CollisionGroup::kEnenmy) {
+    if (other->GetCollisionGroup() == CollisionGroup::kEnemy) {
         SpawnImpact();
         isDead_ = true;
     } else if (other->GetCollisionGroup() == CollisionGroup::kStageObject) {

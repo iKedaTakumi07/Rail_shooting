@@ -1,23 +1,12 @@
 #pragma once
-
 #include "../../Engine/base/Math.h"
 
 enum class CollisionGroup {
     kPlayer,
     kPlayerBullet,
-    kEnenmy,
+    kEnemy,
     kEnemyBullet,
     kStageObject,
-};
-
-struct AllOBB {
-    OBB wholeBox; // 分割しないオブジェクト自体の大きさ
-    std::vector<OBB> dividBoxes; // 分割した詳細判定用OBB
-};
-
-struct AllAABB {
-    AABB wholeBox; // 分割しないオブジェクト自体の大きさ
-    std::vector<AABB> dividBoxes; // 分割した判定
 };
 
 class Collider {
@@ -44,6 +33,4 @@ public:
     virtual int GetDamage() const { return 0; }
 
 private:
-    // 衝突半径
-    float radius_ = 5.0f;
 };

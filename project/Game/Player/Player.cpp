@@ -194,7 +194,7 @@ void Player::OnCollision(Collider* other)
         return;
 
     // 当たったもの次第で分岐
-    if (other->GetCollisionGroup() == CollisionGroup::kEnemyBullet || other->GetCollisionGroup() == CollisionGroup::kEnenmy) {
+    if (other->GetCollisionGroup() == CollisionGroup::kEnemyBullet || other->GetCollisionGroup() == CollisionGroup::kEnemy) {
         int damege = other->GetDamage();
         hp_ -= damege;
 

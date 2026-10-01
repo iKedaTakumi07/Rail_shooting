@@ -28,16 +28,12 @@ public:
     int GetDamage() const override { return dameg_; }
 
     // Set関数
-    void SetTargetPosition(Vector3 Pos);
     void SetIsDead(bool num) { isDead_ = num; }
     void SetPlayerPos(Vector3 pos) override { pos; }
     void SetPositions(const Vector3& start, const Vector3& end);
 
 private:
-    void MoveUpdate();
-    void RoateUpdate();
-    void CheckCameraCulling();
-
+    // 移動更新するならここに書く
 private:
     Transform transform_;
 

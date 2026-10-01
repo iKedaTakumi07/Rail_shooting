@@ -181,7 +181,7 @@ AllOBB stageObject::GetAllOBB() const
 void stageObject::OnCollision(Collider* other)
 {
     // 当たったもの次第で分岐
-    if (other->GetCollisionGroup() == CollisionGroup::kEnemyBullet || other->GetCollisionGroup() == CollisionGroup::kEnenmy) {
+    if (other->GetCollisionGroup() == CollisionGroup::kEnemyBullet || other->GetCollisionGroup() == CollisionGroup::kEnemy) {
 
         // 無敵時間のフラグ実行
     }
