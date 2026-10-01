@@ -283,13 +283,13 @@ void Player::MoveUpdate()
     float targetRotateZ = 0.0f; // Roll  (Z軸回転)
 
     if (isShift) {
-        targetRotateZ = -ratioX * kMaxRollShift;
         targetRotateX = -ratioY * kMaxPitchAngle;
         targetRotateY = (ratioX * kMaxYawAngle) * kShiftYawFactor;
+        targetRotateZ = -ratioX * kMaxRollShift;
     } else {
-        targetRotateZ = -ratioX * kMaxRollNormal;
         targetRotateX = -ratioY * kMaxPitchAngle;
         targetRotateY = ratioX * kMaxYawAngle;
+        targetRotateZ = -ratioX * kMaxRollNormal;
     }
 
     // 補間処理 (フレームレート非依存)

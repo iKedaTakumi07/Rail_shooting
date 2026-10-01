@@ -11,19 +11,25 @@ void LaserParticle::Initialize()
     EndColor = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
 }
 
-void LaserParticle::NewParticle(const Transform& emitterTransform)
+void LaserParticle::NewParticle(const Transform& emitterTransform) const
 {
     EmitterParam laserfireParam;
     for (int i = 0; i < 3; ++i) {
         float rotY = std::numbers::pi_v<float> / 2.0f;
         float rotZ = (std::numbers::pi_v<float> / 3.0f) * (float)i;
 
-        laserfireParam.SetRotate({ 0.0f, rotY, rotZ });
-        laserfireParam.SetScale({ 1.0f, 0.5f, 1.0f });
+        Vector3 finalRotate = {
+            emitterTransform.rotate.x,
+            emitterTransform.rotate.y + rotY,
+            emitterTransform.rotate.z + rotZ,
+        };
+
+        laserfireParam.SetRotate(finalRotate);
+        laserfireParam.SetScale({ 1.0f, 0.5f, 5.0f });
         laserfireParam.SetStartColor({ StartColor });
         laserfireParam.SetEndColor({ EndColor });
         laserfireParam.SetVelocity({ 0.0f, 0.0f, 0.0f }); // 残像なのでその場に固定
-        laserfireParam.SetLifeTime(0.6f);
+        laserfireParam.SetLifeTime(0.10f);
 
         // えせトレイル
         CPUParticleManager::getInstance()->Emit("laser", emitterTransform, 1, laserfireParam);

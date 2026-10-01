@@ -381,16 +381,6 @@ Vector3& operator-=(Vector3& lhv, const Vector3& rhv)
     return lhv;
 }
 
-inline Vector3 operator+(const Vector3& lhv, const Vector3& rhv)
-{
-    return Vector3(lhv.x + rhv.x, lhv.y + rhv.y, lhv.z + rhv.z);
-}
-
-inline Vector3 operator-(const Vector3& lhv, const Vector3& rhv)
-{
-    return Vector3(lhv.x - rhv.x, lhv.y - rhv.y, lhv.z - rhv.z);
-}
-
 Matrix4x4 MakeScaleMatrix(const Vector3& scale)
 {
 
@@ -406,7 +396,7 @@ Matrix4x4 MakeTranslateMatrix(const Vector3& translate)
     return result;
 }
 
-float EaseOutCubic(float t) 
+float EaseOutCubic(float t)
 {
     float f = 1.0f - t;
     return 1.0f - (f * f * f);

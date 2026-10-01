@@ -2,8 +2,8 @@
 #include "../Engine/base/TextureManager.h"
 #include "../Engine/base/WinApp.h"
 #include "../Game/stage/stageDataLoad.h"
+#include "../Loder/GameScoreManager.h"
 #include "../resources/nlohmann/json.hpp"
-#include "Loder/GameScoreManager.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>

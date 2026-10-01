@@ -97,7 +97,7 @@ void SelectScene::Update()
         PostProcess::GetInstance()->SetRadialBlur(true);
         PostProcess::GetInstance()->SetRadialBlurParam(Center, Blur);
 
-        if (GameChangeTimer <= 0.0f) {
+        if (GameChangeTimer <= 0.0f && Transition_->IsFinished()) {
             GameChangeTimer = 0.0f;
             SceneManager::GetInstance()->ChangeScene("GAMEPLAY");
         }

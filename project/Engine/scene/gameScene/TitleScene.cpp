@@ -22,7 +22,9 @@
 
 #include "../../io/Input.h"
 
+#include "../../../Game/Player/TitleFloating.h"
 #include "../../../Game/SceneTransition.h"
+#include "../../../Game/stage/meteorite.h"
 #include "../../../Game/stage/skydome.h"
 #include "../../3d/CameraManager.h"
 #include "math.h"
@@ -36,7 +38,7 @@ TitleScene::~TitleScene() = default;
 void TitleScene::Initialize()
 {
     Camera* mainCamera = CameraManager::GetInstance()->CreateCamera("PlayMain");
-    mainCamera->SetTranslate({ 0.0f, 2.0f, -15.0f });
+    mainCamera->SetTranslate({ 0.0f, 0.0f, -30.0f });
 
     Camera* subCamera = CameraManager::GetInstance()->CreateCamera("SubView");
     subCamera->SetTranslate({ 0.0f, 10.0f, -40.0f });
@@ -49,7 +51,7 @@ void TitleScene::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/AnimatedCube_BaseColor.png");
     TextureManager::getInstance()->LoadTexture("resources/AnimatedCube_MetallicRoughness.png");
     TextureManager::getInstance()->LoadTexture("resources/simpleSkin/uvChecker.png");
-    TextureManager::getInstance()->LoadTexture("resources/human/white.png");
+    // TextureManager::getInstance()->LoadTexture("resources/human/white.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/Title.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/TitleUI.png");
 
@@ -77,6 +79,14 @@ void TitleScene::Initialize()
     TitleScenestateUI_->SetPosition(Vector2(WinApp::KClientWidth / 2.0f, WinApp::KClientHeight / 8.0f * 7.0f)); // 中心位置
     TitleScenestateUI_->SetAnchorPoint(Vector2(0.5f, 0.5f));
 
+    TitleFloating_ = std::make_unique<TitleFloating>();
+    TitleFloating_->Initialize();
+    TitleFloating_->SetStartPos(Vector3(-20.0f, 0.0f, 0.0f));
+    TitleFloating_->SetEndPos(Vector3(0.0f, 0.0f, 0.0f));
+
+    meteorite_ = std::make_unique<meteorite>();
+    meteorite_->Initialize();
+
     Transition_->Start(SceneTransition::State::In, 0.1f);
 }
 
@@ -89,12 +99,13 @@ void TitleScene::Update()
 
     auto* input = Input::getInstance();
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    Camera* camera = GetCamera();
 
     if (!isChange) {
         if (input->TriggerKey(DIK_RETURN)) {
             isChange = true;
             Transition_->Start(SceneTransition::State::Out, 0.5f);
+            TitleFloating_->SetEndPos(Vector3(20.0f, 0.0f, 0.0f));
+            TitleFloating_->SetSortie(true);
         }
     } else {
         SceneChangeTimer -= deltaTime;
@@ -116,6 +127,8 @@ void TitleScene::Update()
 #endif // USE_IMGUI
 
     skydome_->Update();
+    TitleFloating_->Update();
+    meteorite_->Update();
     Transition_->Update(deltaTime);
     TitleScene_->Update();
     TitleScenestateUI_->Update();
@@ -129,6 +142,8 @@ void TitleScene::Draw()
     Object3dCommon::GetInstance()->PrepareObjectDraw();
 
     skydome_->Draw();
+    TitleFloating_->Draw();
+    meteorite_->Draw();
 
 #ifdef USE_IMGUI
 

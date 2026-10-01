@@ -46,7 +46,7 @@ void NormalMoveEnemy::Update()
 
     BulletUpdate();
     if (isRanAway_) {
-        withdrawalUpdate();
+        WithdrawalUpdate();
         return;
     }
 
@@ -73,9 +73,7 @@ void NormalMoveEnemy::Draw()
 {
     object3d->Draw();
 
-    for (auto& bullet : enemyBullet_) {
-        bullet->Draw();
-    }
+    DrawBullets();
 }
 
 AllAABB NormalMoveEnemy::GetAllAABB() const
@@ -151,32 +149,26 @@ void NormalMoveEnemy::BulletUpdate()
             newBulletEnemy->Initialize(transform_.translate, transform_.rotate);
             newBulletEnemy->SetTargetPosition(player_->GetTranslate());
 
-            enemyBullet_.push_back(std::move(newBulletEnemy));
+            AddBullet(std::move(newBulletEnemy));
             interval = maxInterval;
         } else if (useBullet == 1) {
             std::unique_ptr<EnemyHomingBullet> newBulletEnemy = std::make_unique<EnemyHomingBullet>();
             newBulletEnemy->Initialize(transform_.translate, transform_.rotate);
             newBulletEnemy->SetTargetPosition(player_->GetTranslate());
 
-            enemyBullet_.push_back(std::move(newBulletEnemy));
+            AddBullet(std::move(newBulletEnemy));
             interval = maxInterval;
         }
     }
 
     float currentDeltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    // 更新処理
-    for (auto& bullet : enemyBullet_) {
-        bullet->SetPlayerPos(player_->GetTranslate());
-        bullet->Update(currentDeltaTime);
+    // 更新処理,削除
+    if (player_) {
+        UpdateBullets(currentDeltaTime, player_->GetTranslate());
     }
-
-    // 弾の削除
-    std::erase_if(enemyBullet_, [](const std::unique_ptr<baseEnemyBullet>& bullet) {
-        return bullet->GetIsDead(); // GetIsDead が true なら削除
-    });
 }
 
-void NormalMoveEnemy::withdrawalUpdate()
+void NormalMoveEnemy::WithdrawalUpdate()
 {
     float DeltaTime = SceneManager::GetInstance()->GetDeltaTime();
     // 逃げる

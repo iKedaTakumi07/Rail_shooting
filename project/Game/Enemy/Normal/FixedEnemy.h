@@ -37,15 +37,15 @@ public:
 
 private:
     void BulletUpdate();
-    void withdrawalUpdate() override;
+    void WithdrawalUpdate() override;
 
 private:
     Camera* camera_ = nullptr; // カメラ(ポインタ)
     Player* player_ = nullptr;
 
     // 3dモデル
-    std::unique_ptr<Model> model;
-    std::unique_ptr<Object3d> object3d;
+    std::unique_ptr<Model> fixedEnemyModel;
+    std::unique_ptr<Object3d> fixedEnemyObject3d;
 
     // 当たり判定
     float size = 0.5f; // OBBに移植後は知らん。
@@ -59,10 +59,6 @@ private:
 
     float interval = 2.0f; // 弾を発射する間隔
     static inline const float maxInterval = 2.0f; // 間隔
-
-    // 削除予定 //
-    Vector3 move = { 0.0f };
-    // 移動地点はjson形式予定。 //
 
     bool isAvile_ = true; // 存在しているか
     bool isDead_ = false; // 死んでいるか

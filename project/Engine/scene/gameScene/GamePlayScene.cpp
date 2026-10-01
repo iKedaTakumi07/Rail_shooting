@@ -28,8 +28,8 @@
 #include "../../../Game/OnCollison/CollisionManager.h"
 #include "../../../Game/Player/Player.h"
 #include "../../../Game/SceneTransition.h"
-#include "../../../Game/clearUI.h"
-#include "../../../Game/pauseUI.h"
+#include "../../../Game/UI/clearUI.h"
+#include "../../../Game/UI/pauseUI.h"
 #include "../../../Game/stage/StageManager.h"
 #include "../../../Game/stage/skydome.h"
 #include "../../../Game/stage/stageDataLoad.h"
@@ -286,7 +286,8 @@ void GamePlayScene::Draw()
     stageObject_->Draw();
 
     SkyBoxCommon::GetInstance()->PrepareObjectDraw();
-    // skydox->Draw();
+
+    CPUParticleManager::getInstance()->Draw();
 
     //
     // 2d/スプライト
@@ -296,6 +297,4 @@ void GamePlayScene::Draw()
     enemyManager_->SpriteDraw();
     ClearUI_->SpritDraw();
     PauseUI_->SpritDraw();
-
-    CPUParticleManager::getInstance()->Draw();
 }

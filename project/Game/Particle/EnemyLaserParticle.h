@@ -1,14 +1,15 @@
 #pragma once
 #include "../../Engine/base/Math.h"
+#include <array>
 #include <vector>
 
-class LaserParticle {
+class EnemyLaserParticle {
 public:
     // 初期化
     void Initialize();
 
     // 生成
-    void NewParticle(const Transform& emitterTransform) const;
+    void NewParticle(const Vector3& emitterTransformA, const Vector3& emitterTransformB, const Transform& BulletTransform) const;
 
     // 毎フレーム更新
     void Update();

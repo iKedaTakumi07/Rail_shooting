@@ -82,6 +82,7 @@ private:
     Vector3 centerPos_ = { 0.0f }; // 中心位置
 
     int dameg_ = 5;
+
     bool isAvile_ = true; // 存在しているか
     bool isDead_ = false; // 死んでいるか
     bool isDeadMoveCompletion_ = false;
@@ -92,9 +93,15 @@ private:
 
     float moveTimer_ = 0.0f; // 移動計算用タイマー
     const float kMoveSpeed = 0.5f; // 8の字周回スピード
-    const float kAmplitudeX = 10.0f; // 横幅（X軸方向の振幅）
-    const float kAmplitudeY = 5.0f; // 縦幅（Y軸方向の振幅）
+    const float kAmplitudeX = 10.0f; // 横幅
+    const float kAmplitudeY = 5.0f; // 縦幅
 
     // 発射位置,耐久力、当たり判定offset(各頂点の中心位置)
     std::array<BossPart, 4> parts_;
+
+    int maxHp_ = 1000;
+    int currentHp_ = 1000;
+    int currentPhase_ = 1;
+    bool isAppearing_ = true;
+    bool isDeathProdiction_ = false;
 };

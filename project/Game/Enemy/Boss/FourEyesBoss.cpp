@@ -90,11 +90,7 @@ void FourEyesBoss::Draw()
 {
     object3d->Draw();
 
-    for (const auto& bullet : enemyBullet_) {
-        if (bullet) {
-            bullet->Draw();
-        }
-    }
+    DrawBullets();
 }
 
 void FourEyesBoss::SpriteDraw()
@@ -257,7 +253,7 @@ void FourEyesBoss::OnCollision(Collider* other)
             isDead_ = true; // 死亡演出トリガー用
         }
     } else if (other->GetCollisionGroup() == CollisionGroup::kPlayer) {
-        // お互いダメージ処理
+        // お互いダメージ処理(接触するはずがない)
         currentHp_ -= 1;
 
         if (currentHp_ <= 0) {
@@ -304,7 +300,7 @@ void FourEyesBoss::UpdateAppearance(float deltaTime)
     object3d->Update();
 
     if (appearanceTimer_ >= kAppearanceDuration) {
-        isAppearing_ = false; // 演出終了、通常戦闘状態へ遷移
+        isAppearing_ = false; // 演出終了
     }
 }
 
@@ -376,21 +372,15 @@ void FourEyesBoss::FireFourWayBullets()
             newBulletEnemy->Initialize(pos, transform_.rotate);
             newBulletEnemy->SetTargetPosition(player_->GetTranslate());
 
-            enemyBullet_.push_back(std::move(newBulletEnemy));
+            AddBullet(std::move(newBulletEnemy));
         }
         interval = maxInterval;
     }
 
-    // 更新処理
-    for (auto& bullet : enemyBullet_) {
-        bullet->SetPlayerPos(player_->GetTranslate());
-        bullet->Update(currentDeltaTime);
+    // 更新処理,削除
+    if (player_) {
+        UpdateBullets(currentDeltaTime, player_->GetTranslate());
     }
-
-    // 弾の削除
-    std::erase_if(enemyBullet_, [](const std::unique_ptr<baseEnemyBullet>& bullet) {
-        return bullet->GetIsDead(); // GetIsDead が true なら削除
-    });
 }
 
 void FourEyesBoss::MoveUpdate()
@@ -425,7 +415,7 @@ void FourEyesBoss::UIUpdate()
 void FourEyesBoss::partsDamage(Collider* other)
 {
     AllOBB otherAllOBB = other->GetAllOBB();
-    AllOBB myAllOBB = GetAllOBB(); // ボス自身の現在の回転が反映されたOBB群を取得
+    AllOBB myAllOBB = GetAllOBB();
     int damage = other->GetDamage();
 
     size_t obbIndex = 0;
@@ -441,10 +431,10 @@ void FourEyesBoss::partsDamage(Collider* other)
         const OBB& partOBB = myAllOBB.dividBoxes[obbIndex++];
 
         for (const auto& otherBox : otherAllOBB.dividBoxes) {
-            // CollisionManager と同様の OBB 判定を実施 (またはヘルパー関数化)
+
             if (CollisionManager::CheckOBB(partOBB, otherBox)) {
                 part.hp = std::max(0, part.hp - damage);
-                break; // 同一フレームでの多重ヒット防止
+                break;
             }
         }
     }
