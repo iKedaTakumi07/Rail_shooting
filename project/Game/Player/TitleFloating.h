@@ -85,7 +85,7 @@ private:
     Vector3 velocity_ = { 0.0f, 0.0f, 0.0f }; // 移動速度
     Vector3 StartPos = { 0.0f, 0.0f, 0.0f }; // イージング開始座標
     Vector3 EndPos = { 0.0f, 0.0f, 0.0f }; // 終了座標
-    Vector3 minPos = { -8.0f, -4.0f, -10.0f }; // 動ける範囲(x:進行方向 y:上下 z:左右)
+    Vector3 minPos = { -6.0f, -4.0f, -10.0f }; // 動ける範囲(x:進行方向 y:上下 z:左右)
     Vector3 maxPos = { 2.0f, 4.0f, 5.0f }; // 動ける範囲(x:進行方向 y:上下 z:左右)
 
     // 3dモデル

@@ -60,7 +60,13 @@ void meteorite::Update()
         transform_[i].translate.y += Speed[i].y * deltaTime;
         transform_[i].translate.z += Speed[i].z * deltaTime;
 
+        // それっぽく回転もさせとく
+        transform_[i].rotate.x += Speed[i].x * deltaTime;
+        transform_[i].rotate.y += Speed[i].y * deltaTime;
+        transform_[i].rotate.z += Speed[i].z * deltaTime;
+
         Object3d_[i]->SetTranslate(transform_[i].translate);
+        Object3d_[i]->SetRotate(transform_[i].rotate);
         Object3d_[i]->Update();
     }
 }

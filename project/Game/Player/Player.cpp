@@ -170,7 +170,7 @@ void Player::SpritDraw()
     PlayerMaxHpUI->Draw();
     PlayerHpUI->Draw();
 
-    if (ChageLook_) {
+    if (isChargeLocked_) {
         ChargeReticleSprite->Draw();
     }
 }
@@ -200,14 +200,14 @@ void Player::OnCollision(Collider* other)
 
         // 無敵時間のフラグ実行
         isinvincible = true;
-        invincibleTime = KinvincibleTime;
+        invincibleTime = kInvincibleTime;
     } else if (other->GetCollisionGroup() == CollisionGroup::kStageObject) {
         int damege = other->GetDamage();
         hp_ -= damege;
 
         // 無敵時間のフラグ実行
         isinvincible = true;
-        invincibleTime = KinvincibleTime;
+        invincibleTime = kInvincibleTime;
     }
 }
 
@@ -415,13 +415,13 @@ void Player::BulletUpdate()
 
         // ロックオン対象の更新
         if (bestCandidateId != 0) {
-            ChageLookId_ = bestCandidateId;
-            ChageLookIndex_ = bestCandidateIndex;
+            keepLookOnId_ = bestCandidateId;
+            keepLookOnIndex_ = bestCandidateIndex;
             lockonTargetId_ = bestCandidateId;
             lockonTargetIndex_ = bestCandidateIndex;
         } else {
-            lockonTargetId_ = ChageLookId_;
-            lockonTargetIndex_ = ChageLookIndex_;
+            lockonTargetId_ = keepLookOnId_;
+            lockonTargetIndex_ = keepLookOnIndex_;
         }
 
         BulletCharge();
@@ -448,8 +448,8 @@ void Player::BulletUpdate()
         // リセット
         chargeTimer_ = 0.0f;
         lockonTargetId_ = 0;
-        ChageLookId_ = 0;
-        ChageLook_ = false;
+        keepLookOnId_ = 0;
+        isChargeLocked_ = false;
     }
 
     // クールタイム
@@ -469,33 +469,33 @@ void Player::BulletUpdate()
 void Player::BulletCharge()
 {
     // ロックオンをした敵がいるか
-    if (ChageLookId_ != 0 && enemyManager_ != nullptr) {
-        baseEnemy* target = enemyManager_->GetEnemyById(ChageLookId_);
+    if (keepLookOnId_ != 0 && enemyManager_ != nullptr) {
+        baseEnemy* target = enemyManager_->GetEnemyById(keepLookOnId_);
 
         // 対象が生きているなら
         if (target != nullptr && target->GetIsAvile_()) {
             std::vector<Vector3> targetPositions = target->GetTargetPositions();
             Vector3 pos = target->GetTranslate();
-            if (ChageLookIndex_ >= 0 && ChageLookIndex_ < static_cast<int>(targetPositions.size())) {
-                pos = targetPositions[ChageLookIndex_];
+            if (keepLookOnIndex_ >= 0 && keepLookOnIndex_ < static_cast<int>(targetPositions.size())) {
+                pos = targetPositions[keepLookOnIndex_];
             }
 
             Vector2 screenPos = WorldToScreen(pos, CameraManager::GetInstance()->GetActiveCamera());
             ChargeReticleSprite->SetPosition(screenPos);
-            ChageLook_ = true;
+            isChargeLocked_ = true;
         } else {
 
-            ChageLook_ = false;
-            ChageLookId_ = 0;
+            isChargeLocked_ = false;
+            keepLookOnId_ = 0;
             lockonTargetId_ = 0;
         }
     } else {
 
-        ChageLook_ = false;
+        isChargeLocked_ = false;
     }
 
     // イージングもどき
-    if (ChageLook_) {
+    if (isChargeLocked_) {
         float progress = chargeTimer_ / kChargeTime;
 
         if (progress > 1.0f)
@@ -523,7 +523,7 @@ void Player::BulletCharge()
                 ChargeReticleSprite->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
             }
         } else {
-            ChageLook_ = false;
+            isChargeLocked_ = false;
         }
     }
 
@@ -533,7 +533,7 @@ void Player::BulletCharge()
 
 void Player::UIUpdate()
 {
-    float hpRate = static_cast<float>(hp_) / static_cast<float>(Maxhp_);
+    float hpRate = static_cast<float>(hp_) / static_cast<float>(maxHp_);
     hpRate = std::clamp(hpRate, 0.0f, 1.0f);
 
     PlayerHpUI->SetGaugeRateRight(hpRate);
