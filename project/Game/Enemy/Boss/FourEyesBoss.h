@@ -35,7 +35,7 @@ public:
 
     AllAABB GetAllAABB() const override;
     AllOBB GetAllOBB() const override;
-    CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kEnenmy; }
+    CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kEnemy; }
     std::vector<Vector3> GetTargetPositions() override; // ホーミング用の座標渡し
     void OnCollision(Collider* other) override;
     int GetDamage() const override { return dameg_; }

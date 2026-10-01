@@ -81,7 +81,7 @@ void LaserBeamBullet::Update(float deltaTime)
 
 void LaserBeamBullet::Draw()
 {
-    //object3d->Draw();
+    // object3d->Draw();
 }
 
 AllAABB LaserBeamBullet::GetAllAABB() const

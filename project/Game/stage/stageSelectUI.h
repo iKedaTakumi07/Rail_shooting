@@ -27,7 +27,7 @@ public:
     // Set関数
     void SetStageNumber(int num) { stageNumber_ = num; }
     void SetisSortie(bool num) { isSortie = num; }
-    bool GetisMoving() { return isMoving_; }
+    bool GetisMoving() const { return isMoving_; }
 
 private:
     void MoveUpdate(float deltaTime);

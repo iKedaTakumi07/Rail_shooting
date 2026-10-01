@@ -31,20 +31,34 @@ struct Matrix4x4 {
 struct LineVertex {
     Vector4 position;
 };
-struct AABB {
-    Vector3 min;
-    Vector3 max;
-};
+
 struct Transform {
     Vector3 scale;
     Vector3 rotate;
     Vector3 translate;
 };
+
+struct AABB {
+    Vector3 min;
+    Vector3 max;
+};
+
+struct AllAABB {
+    AABB wholeBox; // 分割しないオブジェクト自体の大きさ
+    std::vector<AABB> dividBoxes; // 分割した判定
+};
+
 struct OBB {
     Vector3 center; // OBBの中心座標 (ワールド座標)
     Vector3 orientations[3]; // ローカルのX, Y, Z軸の方向ベクトル (正規化済み)
     Vector3 size; // 各ローカル軸方向の半径 (幅/2, 高さ/2, 奥行き/2)
 };
+
+struct AllOBB {
+    OBB wholeBox; // 分割しないオブジェクト自体の大きさ
+    std::vector<OBB> dividBoxes; // 分割した詳細判定用OBB
+};
+
 struct QuaternionTransform {
     Vector3 scale;
     Vector4 rotate;
