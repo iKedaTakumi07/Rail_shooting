@@ -37,7 +37,7 @@ public:
 
 private:
     void BulletUpdate();
-    void withdrawalUpdate() override;
+    void WithdrawalUpdate() override;
 
 private:
     Camera* camera_ = nullptr; // カメラ(ポインタ)

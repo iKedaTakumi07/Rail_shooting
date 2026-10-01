@@ -13,7 +13,7 @@
 
 CPUParticle MakeNewParticle(std::mt19937& randomEngine, const Transform& translate, const EmitterParam& param)
 {
-    // [後日]emitter側に細かい指定を保存させて、任意で入力できるようにする。。
+    // GPU実用化優先
 
     auto randomFloat = [&](float min, float max) {
         std::uniform_real_distribution<float> dist(min, max);
@@ -277,8 +277,6 @@ void CPUParticleManager::RootSignatureInitialize(DirectXCommon* dxcommon)
     rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
     rootParameters[3].Descriptor.ShaderRegister = 1;
 
-    // [後日]U,V,M,個別で設定できるようにしたい。(可能なら)
-
     D3D12_STATIC_SAMPLER_DESC staticSamplers[2] = { };
     // [0] WRAP用 (主にPlane用) -> register(s0)
     staticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
@@ -287,7 +285,7 @@ void CPUParticleManager::RootSignatureInitialize(DirectXCommon* dxcommon)
     staticSamplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
     staticSamplers[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
     staticSamplers[0].MaxLOD = D3D12_FLOAT32_MAX;
-    staticSamplers[0].ShaderRegister = 0; // ⭐️ s0
+    staticSamplers[0].ShaderRegister = 0;
     staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
     // [1] CLAMP用 (主にRing用) -> register(s1)
@@ -297,7 +295,7 @@ void CPUParticleManager::RootSignatureInitialize(DirectXCommon* dxcommon)
     staticSamplers[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
     staticSamplers[1].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
     staticSamplers[1].MaxLOD = D3D12_FLOAT32_MAX;
-    staticSamplers[1].ShaderRegister = 1; // ⭐️ s1
+    staticSamplers[1].ShaderRegister = 1;
     staticSamplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
     descriptionRootSignature.pStaticSamplers = staticSamplers;

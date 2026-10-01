@@ -90,11 +90,7 @@ void FourEyesBoss::Draw()
 {
     object3d->Draw();
 
-    for (const auto& bullet : enemyBullet_) {
-        if (bullet) {
-            bullet->Draw();
-        }
-    }
+    DrawBullets();
 }
 
 void FourEyesBoss::SpriteDraw()
@@ -376,21 +372,15 @@ void FourEyesBoss::FireFourWayBullets()
             newBulletEnemy->Initialize(pos, transform_.rotate);
             newBulletEnemy->SetTargetPosition(player_->GetTranslate());
 
-            enemyBullet_.push_back(std::move(newBulletEnemy));
+            AddBullet(std::move(newBulletEnemy));
         }
         interval = maxInterval;
     }
 
-    // 更新処理
-    for (auto& bullet : enemyBullet_) {
-        bullet->SetPlayerPos(player_->GetTranslate());
-        bullet->Update(currentDeltaTime);
+    // 更新処理,削除
+    if (player_) {
+        UpdateBullets(currentDeltaTime, player_->GetTranslate());
     }
-
-    // 弾の削除
-    std::erase_if(enemyBullet_, [](const std::unique_ptr<baseEnemyBullet>& bullet) {
-        return bullet->GetIsDead(); // GetIsDead が true なら削除
-    });
 }
 
 void FourEyesBoss::MoveUpdate()

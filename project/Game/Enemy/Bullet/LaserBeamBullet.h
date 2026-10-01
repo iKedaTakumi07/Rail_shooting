@@ -5,7 +5,7 @@
 #include "../../../Engine/3d/Object3d.h"
 #include "../../../Engine/base/Math.h"
 #include "../../OnCollison/Collider.h"
-#include "../../Particle/LaserParticle.h"
+#include "../../Particle/EnemyLaserParticle.h"
 #include <memory>
 
 class Player;
@@ -57,5 +57,5 @@ private:
     int dameg_ = 2;
 
     // 3dモデル(オブジェクトを出さずトレイルエフェクトを利用して描画する予定)
-    std::unique_ptr<LaserParticle> laserParticle_;
+    std::unique_ptr<EnemyLaserParticle> enemyLaserParticle_;
 };

@@ -26,11 +26,10 @@ void LaserEnemy::Initialize(Vector3 pos)
     toStopObject3d = std::make_unique<Object3d>();
     toStopObject3d->Initialize();
 
-    model = std::make_unique<Model>();
-    model->Initialize("resources/test", "test.obj");
-    // model->SetEvnTexturefilePath(skydox->GetTextureFilePath()); // 反射が必要なら
-    fromPointObject3d->SetModel(model.get());
-    toStopObject3d->SetModel(model.get());
+    laserModel = std::make_unique<Model>();
+    laserModel->Initialize("resources/test", "test.obj");
+    fromPointObject3d->SetModel(laserModel.get());
+    toStopObject3d->SetModel(laserModel.get());
 
     FromPointTransform_.scale = { 1.0f, 1.0f, 1.0f };
     FromPointTransform_.rotate = { 0.0f, 0.0f, 0.0f };
@@ -78,9 +77,7 @@ void LaserEnemy::Draw()
         toStopObject3d->Draw();
     }
 
-    for (auto& bullet : enemyBullet_) {
-        bullet->Draw();
-    }
+    DrawBullets();
 }
 
 AllAABB LaserEnemy::GetAllAABB() const
@@ -210,17 +207,20 @@ void LaserEnemy::BulletUpdate()
 {
     if (fromIsAvile_ && toIsAvile_) {
         // 両方生きているならレーザビーム発射
-        if (enemyBullet_.empty()) {
+        if (isBulletEmpty()) {
             auto laser = std::make_unique<LaserBeamBullet>();
             laser->Initialize(FromPointTransform_.translate, { 0, 0, 0 });
             laser->SetPositions(FromPointTransform_.translate, ToStopTransform_.translate);
-            enemyBullet_.push_back(std::move(laser));
+            AddBullet(std::move(laser));
         }
     } else {
-        // 片方死んだらレーザビームを消してただの弾にする
-        std::erase_if(enemyBullet_, [](const std::unique_ptr<baseEnemyBullet>& bullet) {
-            return dynamic_cast<LaserBeamBullet*>(bullet.get()) != nullptr; // レーザーなら消す
-        });
+        // 片方死んだらレーザビームを消してただの弾にする(1度きりの実行)
+        if (!isLaserCleared_) {
+            RemoveBulletsIf([](const baseEnemyBullet* bullet) {
+                return dynamic_cast<const LaserBeamBullet*>(bullet) != nullptr;
+            });
+            isLaserCleared_ = true;
+        }
 
         // 既存の弾発射ロジック
         interval -= SceneManager::GetInstance()->GetDeltaTime();
@@ -237,21 +237,17 @@ void LaserEnemy::BulletUpdate()
             newBulletEnemy->Initialize(BulletTransform.translate, BulletTransform.rotate);
             newBulletEnemy->SetTargetPosition(player_->GetTranslate());
 
-            enemyBullet_.push_back(std::move(newBulletEnemy));
+            AddBullet(std::move(newBulletEnemy));
             interval = maxInterval;
         }
     }
 
     float currentDeltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    for (auto& bullet : enemyBullet_) {
-        bullet->SetPlayerPos(player_->GetTranslate());
-        bullet->Update(currentDeltaTime);
-    }
 
-    // 弾の削除
-    std::erase_if(enemyBullet_, [](const std::unique_ptr<baseEnemyBullet>& bullet) {
-        return bullet->GetIsDead(); // GetIsDead が true なら削除
-    });
+    // 更新、削除
+    if (player_) {
+        UpdateBullets(currentDeltaTime, player_->GetTranslate());
+    }
 }
 
 void LaserEnemy::partsDamage(Collider* other)

@@ -308,9 +308,15 @@ Vector3 operator*(const Vector3& m1, const float& m2);
 Vector3& operator+=(Vector3& lhv, const Vector3& rhv);
 Vector3& operator-=(Vector3& lhv, const Vector3& rhv);
 
-inline Vector3 operator+(const Vector3& lhv, const Vector3& rhv);
+inline Vector3 operator+(const Vector3& lhv, const Vector3& rhv)
+{
+    return Vector3 { lhv.x + rhv.x, lhv.y + rhv.y, lhv.z + rhv.z };
+}
 
-inline Vector3 operator-(const Vector3& lhv, const Vector3& rhv);
+inline Vector3 operator-(const Vector3& lhv, const Vector3& rhv)
+{
+    return Vector3 { lhv.x - rhv.x, lhv.y - rhv.y, lhv.z - rhv.z };
+}
 
 Matrix4x4 MakeTranslateMatrix(const Vector3& translate);
 

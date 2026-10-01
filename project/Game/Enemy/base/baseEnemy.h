@@ -7,6 +7,7 @@ class Camera;
 class Player;
 
 #include "../../OnCollison/Collider.h"
+#include <functional>
 
 class baseEnemy : public Collider {
 public:
@@ -18,8 +19,22 @@ public:
 
     virtual void SpriteDraw() { }; // (ほぼ)ボス専用
 
-    virtual void withdrawalUpdate() { };
+    virtual void WithdrawalUpdate() { };
 
+public:
+    // 弾の追加
+    void AddBullet(std::unique_ptr<baseEnemyBullet> bullet);
+
+    bool isBulletEmpty() const { return enemyBullet_.empty(); } // レーザビーム用
+    void RemoveBulletsIf(const std::function<bool(const baseEnemyBullet*)>& predicate); // 特定の要素を削除する
+
+    // 弾の更新
+    void UpdateBullets(float deltaTime, const Vector3& playerPos);
+
+    // 描画
+    void DrawBullets() const;
+
+public:
     /* Set関数 */
     virtual void SetTargetPlayer(Player* target) { }; // 対象に向かわせる
     virtual void SetHp(int num) { };
@@ -37,7 +52,7 @@ public:
     virtual uint32_t GetId() const { return id_; }
     virtual std::vector<Vector3> GetTargetPositions() { return { GetTranslate() }; }
 
-protected:
+private:
     // 弾
     std::vector<std::unique_ptr<baseEnemyBullet>> enemyBullet_;
     uint32_t id_ = 0;

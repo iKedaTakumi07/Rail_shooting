@@ -160,6 +160,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Game\Particle\EnemyLaserParticle.cpp" />
     <ClCompile Include="Game\Loder\GameScoreManager.cpp" />
     <ClCompile Include="Game\UI\clearUI.cpp" />
     <ClCompile Include="Game\Particle\chargeParticle.cpp" />
@@ -534,6 +535,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game\Particle\EnemyLaserParticle.h" />
     <ClInclude Include="Game\Loder\GameScoreManager.h" />
     <ClInclude Include="Game\UI\clearUI.h" />
     <ClInclude Include="Game\Particle\chargeParticle.h" />

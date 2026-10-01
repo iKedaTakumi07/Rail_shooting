@@ -16,16 +16,15 @@ void FixedEnemy::Initialize(Vector3 pos)
     TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
     ModelManager::GetInstance()->LoadModel("test/test.obj");
 
-    object3d = std::make_unique<Object3d>();
-    object3d->Initialize();
+    fixedEnemyObject3d = std::make_unique<Object3d>();
+    fixedEnemyObject3d->Initialize();
 
     isAvile_ = true;
     isDead_ = false;
 
-    model = std::make_unique<Model>();
-    model->Initialize("resources/test", "test.obj");
-    // model->SetEvnTexturefilePath(skydox->GetTextureFilePath()); // 反射が必要なら
-    object3d->SetModel(model.get());
+    fixedEnemyModel = std::make_unique<Model>();
+    fixedEnemyModel->Initialize("resources/test", "test.obj");
+    fixedEnemyObject3d->SetModel(fixedEnemyModel.get());
 
     transform_.scale = { 1.0f, 1.0f, 1.0f };
     transform_.rotate = { 0.0f, 0.0f, 0.0f };
@@ -43,22 +42,20 @@ void FixedEnemy::Update()
 
     BulletUpdate();
     if (isRanAway_) {
-        withdrawalUpdate();
+        WithdrawalUpdate();
         return;
     }
 
-    object3d->SetTranslate(transform_.translate);
-    object3d->SetRotate(transform_.rotate);
-    object3d->Update();
+    fixedEnemyObject3d->SetTranslate(transform_.translate);
+    fixedEnemyObject3d->SetRotate(transform_.rotate);
+    fixedEnemyObject3d->Update();
 }
 
 void FixedEnemy::Draw()
 {
-    object3d->Draw();
+    fixedEnemyObject3d->Draw();
 
-    for (auto& bullet : enemyBullet_) {
-        bullet->Draw();
-    }
+    DrawBullets();
 }
 
 AllAABB FixedEnemy::GetAllAABB() const
@@ -127,32 +124,27 @@ void FixedEnemy::BulletUpdate()
             newBulletEnemy->Initialize(transform_.translate, transform_.rotate);
             newBulletEnemy->SetTargetPosition(player_->GetTranslate());
 
-            enemyBullet_.push_back(std::move(newBulletEnemy));
+            AddBullet(std::move(newBulletEnemy));
             interval = maxInterval;
         } else if (useBullet == 1) {
             std::unique_ptr<EnemyHomingBullet> newBulletEnemy = std::make_unique<EnemyHomingBullet>();
             newBulletEnemy->Initialize(transform_.translate, transform_.rotate);
             newBulletEnemy->SetTargetPosition(player_->GetTranslate());
 
-            enemyBullet_.push_back(std::move(newBulletEnemy));
+            AddBullet(std::move(newBulletEnemy));
             interval = maxInterval;
         }
     }
 
     float currentDeltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    // 更新処理
-    for (auto& bullet : enemyBullet_) {
-        bullet->SetPlayerPos(player_->GetTranslate());
-        bullet->Update(currentDeltaTime);
-    }
 
-    // 弾の削除
-    std::erase_if(enemyBullet_, [](const std::unique_ptr<baseEnemyBullet>& bullet) {
-        return bullet->GetIsDead(); // GetIsDead が true なら削除
-    });
+    // 更新処理
+    if (player_) {
+        UpdateBullets(currentDeltaTime, player_->GetTranslate());
+    }
 }
 
-void FixedEnemy::withdrawalUpdate()
+void FixedEnemy::WithdrawalUpdate()
 {
     float DeltaTime = SceneManager::GetInstance()->GetDeltaTime();
     // 逃げる
@@ -169,7 +161,7 @@ void FixedEnemy::withdrawalUpdate()
     if (transform_.translate.y >= 40.0f) {
         isAvile_ = false;
     }
-    object3d->SetTranslate(transform_.translate);
-    object3d->SetRotate(transform_.rotate);
-    object3d->Update();
+    fixedEnemyObject3d->SetTranslate(transform_.translate);
+    fixedEnemyObject3d->SetRotate(transform_.rotate);
+    fixedEnemyObject3d->Update();
 }

@@ -9,6 +9,7 @@
 #include "../../Player/Player.h"
 
 class Model;
+class Camera;
 
 class LaserEnemy : public baseEnemy {
 public:
@@ -52,9 +53,11 @@ private:
     Player* player_ = nullptr;
 
     // 3dモデル
-    std::unique_ptr<Model> model;
+    std::unique_ptr<Model> laserModel;
     std::unique_ptr<Object3d> fromPointObject3d; // 始点側のオブジェ
     std::unique_ptr<Object3d> toStopObject3d; // 終点側のオブジェ
+
+    bool isLaserCleared_ = false;
 
     // 当たり判定
     float size = 0.5f; // OBBに移植後は知らん。

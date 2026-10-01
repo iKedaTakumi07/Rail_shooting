@@ -286,7 +286,8 @@ void GamePlayScene::Draw()
     stageObject_->Draw();
 
     SkyBoxCommon::GetInstance()->PrepareObjectDraw();
-    // skydox->Draw();
+
+    CPUParticleManager::getInstance()->Draw();
 
     //
     // 2d/スプライト
@@ -296,6 +297,4 @@ void GamePlayScene::Draw()
     enemyManager_->SpriteDraw();
     ClearUI_->SpritDraw();
     PauseUI_->SpritDraw();
-
-    CPUParticleManager::getInstance()->Draw();
 }
