@@ -285,6 +285,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Game\stage\stageSelectUI.cpp" />
     <ClCompile Include="Game\Player\TitleFloating.cpp" />
     <ClCompile Include="Game\stage\meteorite.cpp" />
+    <ClCompile Include="Game\Particle\PlayerPowerUnitLaser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\EmitParticle.CS.hlsl">
@@ -647,6 +648,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\Enemy\Normal\LaserEnemy.h" />
     <ClInclude Include="Game\SceneTransition.h" />
     <ClInclude Include="Game\stage\meteorite.h" />
+    <ClInclude Include="Game\Particle\PlayerPowerUnitLaser.h" />
     <ClInclude Include="resources\nlohmann\json.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

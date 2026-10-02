@@ -23,7 +23,6 @@ void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vec
 
     model = std::make_unique<Model>();
     model->Initialize("resources/test", "test.obj");
-    // model->SetEvnTexturefilePath(skydox->GetTextureFilePath()); // 反射が必要なら
     object3d->SetModel(model.get());
 
     // 座標セット

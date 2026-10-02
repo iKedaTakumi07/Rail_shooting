@@ -16,6 +16,8 @@
 #include "../Enemy/EnemyManager.h"
 #include "../Enemy/base/baseEnemy.h"
 #include "../Enemy/base/baseEnemyBullet.h"
+
+#include "../../Engine/base/WinApp.h"
 #include "PlayerBullet.h"
 
 #include "../../Engine/base/WinApp.h"
@@ -43,7 +45,6 @@ void Player::Initialize()
     playerModel->Initialize("resources/player", "Player.obj");
     playerObject3d->SetModel(playerModel.get());
     playerObject3d->SetScale(basetransform_.scale);
-    // model->SetEvnTexturefilePath(skydox->GetTextureFilePath()); // 反射が必要なら
 
     ShortReticleObject3d = std::make_unique<Object3d>();
     ShortReticleObject3d->Initialize();
@@ -64,11 +65,14 @@ void Player::Initialize()
 
     PlayerMaxHpUI = std::make_unique<Sprite>();
     PlayerMaxHpUI->Initialize("resources/player/playerHpUI2.png");
-    PlayerMaxHpUI->SetPosition(Vector2(0.0f, 0.0f));
+    PlayerMaxHpUI->SetPosition(Vector2(WinApp::KClientWidth / 1280.0f, WinApp::KClientHeight / 720.0f));
 
     PlayerHpUI = std::make_unique<Sprite>();
     PlayerHpUI->Initialize("resources/player/playerHpUI3.png");
-    PlayerHpUI->SetPosition(Vector2(8.0f, 0.0f));
+    PlayerHpUI->SetPosition(Vector2(WinApp::KClientWidth / 1280.0f, WinApp::KClientHeight / 720.0f));
+
+    playerPowerUnitLaser_ = std::make_unique<PlayerPowerUnitLaser>();
+    playerPowerUnitLaser_->Initialize();
 }
 
 void Player::Update()
@@ -96,6 +100,8 @@ void Player::Update()
     MoveUpdate();
     BulletUpdate();
     ReticleUpdate();
+
+    playerPowerUnitLaser_->NewParticle(transform_, kPowerUnitPos);
 
     playerObject3d->SetTranslate(transform_.translate);
     playerObject3d->SetRotate(transform_.rotate);

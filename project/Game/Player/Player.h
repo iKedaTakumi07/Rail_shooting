@@ -9,6 +9,7 @@
 
 #include "../OnCollison/Collider.h"
 
+#include "../Particle/PlayerPowerUnitLaser.h"
 #include "PlayerBullet.h"
 #include <numbers>
 class EnemyManager;
@@ -71,6 +72,7 @@ private:
     // 当たり判定
     float size = 0.8f; // AABB
     static constexpr Vector3 kModelExtents = { 2.8f, 0.6f, 2.3f }; // objの大きさ
+    static constexpr Vector3 kPowerUnitPos = { 0.0f, 0.185f, -1.127f }; // 動力射出位置
 
     // クリアフラグ(無敵当)
     bool isClear = false;
@@ -149,4 +151,5 @@ private:
 
     // 弾
     std::list<std::unique_ptr<PlayerBullet>> playerBullets_;
+    std::unique_ptr<PlayerPowerUnitLaser> playerPowerUnitLaser_;
 };
