@@ -7,6 +7,9 @@
 #include "base/baseEnemy.h"
 #include "boss/FourEyesBoss.h"
 
+#include "../../../Engine/3d/ModelManager.h"
+#include "../../../Engine/base/TextureManager.h"
+
 #include "../../Engine/3d/CameraManager.h"
 #include "../../resources/nlohmann/json.hpp"
 #include "../Loder/GameScoreManager.h"
@@ -19,6 +22,9 @@ using json = nlohmann::json;
 
 void EnemyManager::Initialize(Player* player, const std::string& filePath)
 {
+    TextureManager::getInstance()->LoadTexture("resources/baseEnemy/FixedEnemy.png");
+    ModelManager::GetInstance()->LoadModel("baseEnemy/FixedEnemy.obj");
+
     player_ = player;
     PopEnemyFilePath_ = filePath;
     currentSpawnIndex_ = 0;

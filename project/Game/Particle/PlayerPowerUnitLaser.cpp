@@ -27,9 +27,9 @@ void PlayerPowerUnitLaser::NewParticle(const Vector3& prePos, const Transform& e
     };
 
     Vector3 dir = {
-        prePos.x - emitterTransform.translate.x,
-        prePos.y - emitterTransform.translate.y,
-        prePos.z - emitterTransform.translate.z,
+        emitterTransform.translate.x - prePos.x,
+        emitterTransform.translate.y - prePos.y,
+        emitterTransform.translate.z - prePos.z,
     };
 
     float length = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
@@ -86,7 +86,7 @@ void PlayerPowerUnitLaser::NewParticle(const Vector3& prePos, const Transform& e
         TagetTransfrom.rotate.y = rotateY;
         TagetTransfrom.rotate.z = rotateZ;
 
-        float laserRadius = 0.25f;
+        float laserRadius = 0.3f;
         TagetTransfrom.scale = { length * 0.5f, laserRadius, laserRadius };
         EndScale.x = TagetTransfrom.scale.x;
 

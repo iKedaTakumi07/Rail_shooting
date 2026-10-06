@@ -114,6 +114,8 @@ void Player::Update()
 
 void Player::UpdateIntro()
 {
+    PrePos_ = basetransform_.translate;
+
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     idleTimer_ += deltaTime;
 
@@ -124,6 +126,8 @@ void Player::UpdateIntro()
 
     HoverUpdate(length); // 揺れ処理のみ適用
     ReticleUpdate();
+
+    playerPowerUnitLaser_->NewParticle(PrePos_, transform_, kPowerUnitPos);
 
     playerObject3d->SetTranslate(transform_.translate);
     playerObject3d->SetRotate(transform_.rotate);

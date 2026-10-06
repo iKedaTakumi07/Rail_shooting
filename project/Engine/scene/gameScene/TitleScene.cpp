@@ -106,6 +106,9 @@ void TitleScene::Update()
             Transition_->Start(SceneTransition::State::Out, SceneChangeTimer);
 
             Vector3 pos = TitleFloating_->GetPosition();
+            if (TitleFloating_->GetIntro()) {
+                pos = Vector3(0.0f, 0.0f, 0.0f);
+            }
             float offsetX = 20.0f;
             pos.x += offsetX;
             TitleFloating_->SetEndPos(Vector3(pos.x, 0.0f, 0.0f));
@@ -161,13 +164,13 @@ void TitleScene::Draw()
 
 #endif // USE_IMGUI
 
+    CPUParticleManager::getInstance()->Draw();
+
     SkyBoxCommon::GetInstance()->PrepareObjectDraw();
 
     SpriteCommon::GetInstance()->PrepareSpriteDraw();
     TitleScene_->Draw();
     TitleScenestateUI_->Draw();
-
-    CPUParticleManager::getInstance()->Draw();
 
     // GPUParticleManager::getInstance()->Draw();
 }

@@ -1,39 +1,57 @@
 {
   "enemies": [
     {
-      "type": "LaserEnemy",
-      "spawn_z": 0.0,
-      "pos": { "x": 3.0, "y": -1.0, "z":10.0 },
-      "UseBullet" : "HomingBullet",
-      "MoveDirection": { "x": -6.0, "y": 0.0, "z": 0.0},
-      "homingPower": 0.1,
+      "type": "FixedEnemy",
+      "spawn_z": 50.0,
+      "pos": { "x": 3.0, "y": -6.5, "z":90.0 },
+      "UseBullet" : "TargetBullet",
+      "hp": 5
+    },
+     {
+      "type": "FixedEnemy",
+      "spawn_z": 50.0,
+      "pos": { "x": -3.0, "y": -6.5, "z":90.0 },
+      "UseBullet" : "TargetBullet",
       "hp": 5
     },
     {
-      "type": "LaserEnemy",
-      "spawn_z": 0.0,
-      "pos": { "x": 3.0, "y": -1.0, "z":25.0 },
-      "UseBullet" : "HomingBullet",
-      "MoveDirection": { "x": -6.0, "y": 0.0, "z": 0.0},
-      "homingPower": 0.1,
+      "type": "NormalMoveEnemy",
+      "spawn_z": 70.0,
+      "pos": { "x": 5.0, "y": 0.5, "z":110.0 },
+      "MoveDirection": { "x": 0.0, "y": -6.0, "z": 0.0},
+      "UseBullet" : "TargetBullet",
       "hp": 5
     },
     {
-      "type": "LaserEnemy",
-      "spawn_z": 10.0,
-      "pos": { "x": 3.0, "y": 0.0, "z":60.0 },
-      "UseBullet" : "HomingBullet",
-      "MoveDirection": { "x": -6.0, "y": 6.0, "z": 0.0},
-      "homingPower": 0.1,
+      "type": "NormalMoveEnemy",
+      "spawn_z": 70.0,
+      "pos": { "x": -5.0, "y": 0.5, "z":110.0 },
+      "MoveDirection": { "x": 0.0, "y": -6.0, "z": 0.0},
+      "UseBullet" : "TargetBullet",
       "hp": 5
     },
     {
-      "type": "LaserEnemy",
-      "spawn_z": 10.0,
-      "pos": { "x": -3.0, "y": 0.0, "z":80.0 },
+      "type": "CircleMoveEnemy",
+      "spawn_z": 70.0,
+      "pos": { "x": 0.0, "y": 0.0, "z":120.0 },
+      "MoveDirection": { "x": 1.0, "y": 0.0, "z": 0.0},
       "UseBullet" : "HomingBullet",
-      "MoveDirection": { "x": 6.0, "y": -6.0, "z": 0.0},
-      "homingPower": 0.1,
+      "hp": 5
+    },
+    {
+      "type": "threeShotsEnemy",
+      "spawn_z": 80.0,
+      "pos": { "x": -5.0, "y": 1.0, "z":150.0 },
+      "MoveDirection": { "x": 0.0, "y": -6.0, "z": 0.0},
+      "UseBullet" : "TargetBullet",
+      "hp": 5
+    },
+    {
+      "type": "threeShotsEnemy",
+      "spawn_z": 80.0,
+      "pos": { "x": 5.0, "y": 1.0, "z":150.0 },
+      "MoveDirection": { "x": 0.0, "y": 6.0, "z": 0.0},
+      "UseBullet" : "TargetBullet",
       "hp": 5
     }
   ]

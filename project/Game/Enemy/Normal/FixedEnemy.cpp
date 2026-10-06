@@ -13,8 +13,8 @@
 
 void FixedEnemy::Initialize(Vector3 pos)
 {
-    TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
-    ModelManager::GetInstance()->LoadModel("test/test.obj");
+    TextureManager::getInstance()->LoadTexture("resources/baseEnemy/FixedEnemy.png");
+    ModelManager::GetInstance()->LoadModel("baseEnemy/FixedEnemy.obj");
 
     fixedEnemyObject3d = std::make_unique<Object3d>();
     fixedEnemyObject3d->Initialize();
@@ -23,7 +23,7 @@ void FixedEnemy::Initialize(Vector3 pos)
     isDead_ = false;
 
     fixedEnemyModel = std::make_unique<Model>();
-    fixedEnemyModel->Initialize("resources/test", "test.obj");
+    fixedEnemyModel->Initialize("resources/baseEnemy", "FixedEnemy.obj");
     fixedEnemyObject3d->SetModel(fixedEnemyModel.get());
 
     transform_.scale = { 1.0f, 1.0f, 1.0f };
