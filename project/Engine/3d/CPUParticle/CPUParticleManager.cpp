@@ -28,6 +28,13 @@ CPUParticle MakeNewParticle(std::mt19937& randomEngine, const Transform& transla
         randomFloat(param.minScale.y, param.maxScale.y),
         randomFloat(param.minScale.z, param.maxScale.z)
     };
+    particle.startScale = particle.transform.scale;
+
+    particle.endScale = {
+        randomFloat(param.minEndScale.x, param.maxEndScale.x),
+        randomFloat(param.minEndScale.y, param.maxEndScale.y),
+        randomFloat(param.minEndScale.z, param.maxEndScale.z)
+    };
 
     // 回転
     particle.transform.rotate = {
@@ -172,6 +179,8 @@ void CPUParticleManager::Update()
 
                 // スタート色からエンド色へ補間
                 finalColor = Lerp(particle.startColor, particle.endColor, t);
+                particle.transform.scale = Lerp(particle.startScale, particle.endScale, t);
+
             } else {
                 // 後に経過時間で変化できるようにする
                 finalColor = particle.startColor;

@@ -46,21 +46,31 @@ void meteorite::Initialize()
 void meteorite::Update()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+    if (camera_ != CameraManager::GetInstance()->GetActiveCamera()) {
+        camera_ = CameraManager::GetInstance()->GetActiveCamera();
+    }
 
     // 移動ナウ
     for (int i = 0; i < maxMetrorite; i++) {
         if (ChangePos.x >= transform_[i].translate.x) {
+            Vector3 cameraPos = camera_->GetTranslate();
             std::uniform_real_distribution<float> PosXdist(20.0f, 40.0f);
             std::uniform_real_distribution<float> PosYdist(-20.0f, 20.0f);
             std::uniform_real_distribution<float> PosZdist(-30.0f, 30.0f);
-            transform_[i].translate = { PosXdist(randomEngine), PosYdist(randomEngine), PosZdist(randomEngine) };
+            transform_[i].translate = { PosXdist(randomEngine) + cameraPos.x, PosYdist(randomEngine), PosZdist(randomEngine) };
         }
 
         transform_[i].translate.x += Speed[i].x * deltaTime;
         transform_[i].translate.y += Speed[i].y * deltaTime;
         transform_[i].translate.z += Speed[i].z * deltaTime;
 
+        // それっぽく回転もさせとく
+        transform_[i].rotate.x += Speed[i].x * deltaTime;
+        transform_[i].rotate.y += Speed[i].y * deltaTime;
+        transform_[i].rotate.z += Speed[i].z * deltaTime;
+
         Object3d_[i]->SetTranslate(transform_[i].translate);
+        Object3d_[i]->SetRotate(transform_[i].rotate);
         Object3d_[i]->Update();
     }
 }

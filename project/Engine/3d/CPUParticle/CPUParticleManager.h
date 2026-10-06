@@ -27,6 +27,8 @@ struct EmitterParam {
     // スケールの最小・最大
     Vector3 minScale = { 1.0f, 1.0f, 1.0f };
     Vector3 maxScale = { 1.0f, 1.0f, 1.0f };
+    Vector3 minEndScale = { 1.0f, 1.0f, 1.0f };
+    Vector3 maxEndScale = { 1.0f, 1.0f, 1.0f };
 
     // 回転の最小・最大 (ラジアン)
     Vector3 minRotate = { 0.0f, 0.0f, 0.0f };
@@ -50,6 +52,7 @@ struct EmitterParam {
 
     // 固定値で運用可能にするため
     void SetScale(const Vector3& scale) { minScale = maxScale = scale; }
+    void SetEndScale(const Vector3& scale) { minEndScale = maxEndScale = scale; }
     void SetRotate(const Vector3& rotate) { minRotate = maxRotate = rotate; }
     void SetVelocity(const Vector3& velocity) { minVelocity = maxVelocity = velocity; }
     void SetStartColor(const Vector4& color) { minStartColor = maxStartColor = color; }

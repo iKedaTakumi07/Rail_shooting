@@ -1,20 +1,15 @@
 #pragma once
 #include "../../Engine/base/Math.h"
+#include <random>
 #include <vector>
 
-class LaserParticle {
+class PlayerPowerUnitLaser {
 public:
     // 初期化
     void Initialize();
 
     // 生成
-    void NewParticle(const Transform& emitterTransform) const;
-
-    // 毎フレーム更新
-    void Update();
-
-    // 描画
-    void Draw();
+    void NewParticle(const Vector3& prePos, const Transform& emitterTransform, const Vector3& localPos);
 
 public:
     void SetStartColor(Vector4 color) { StartColor = color; }
@@ -24,5 +19,7 @@ private:
     // ステータス設定。
     Vector4 StartColor;
     Vector4 EndColor;
-    Vector3 EndScale = { 0.1f, 0.1f, 1.0f };
+    Vector3 EndScale = { 1.0f, 0.1f, 0.1f };
+
+    std::mt19937 randomEngine;
 };

@@ -9,6 +9,7 @@
 
 #include "../OnCollison/Collider.h"
 
+#include "../Particle/PlayerPowerUnitLaser.h"
 #include "PlayerBullet.h"
 #include <numbers>
 class EnemyManager;
@@ -34,17 +35,18 @@ public:
     const std::list<std::unique_ptr<PlayerBullet>>& GetBullets() const { return playerBullets_; } // 弾の入手
     float GetLimitX() const { return kMoveLimitX; }
     float GetLimitY() const { return kMoveLimitY; }
-
     AllAABB GetAllAABB() const override;
     AllOBB GetAllOBB() const override;
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kPlayer; }
-    void OnCollision(Collider* other) override;
-    int GetDamage() const override { return dameg_; }
+    int GetDamage() const override { return damage_; }
 
     // set
     void SetBasePosition(const Vector3& pos) { railBasePos_ = pos; }
     void SetEnemyManager(EnemyManager* enemyManager) { enemyManager_ = enemyManager; }
     void SetisClear(bool num) { isClear = num; }
+
+    // その他
+    void OnCollision(Collider* other) override;
 
 private:
     // 更新系列
@@ -60,38 +62,43 @@ private:
     void UIUpdate();
     Vector2 WorldToScreen(const Vector3& worldPos, Camera* camera);
 
+    // 押し出し処理
+    void ColliderUpdate(Collider* other);
+
 private:
+    // 座標
     Transform transform_ = { { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } }; // モデル座標
     Transform basetransform_ = { { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } }; // 揺れ成分を含まない座標他
     Vector3 localPos_ = { 0.0f, 0.0f, 0.0f }; // レール中心位置からの座標
     Vector3 railBasePos_ = { 0.0f, 0.0f, 0.0f }; // レール座標
-
-    // 移動速度
-    Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
+    Vector3 PrePos_ = { 0.0f, 0.0f, 0.0f };
 
     // 当たり判定
-    float size = 0.8f; // OBBに移植後は知らん。
-
+    float size = 0.8f; // AABB
     static constexpr Vector3 kModelExtents = { 2.8f, 0.6f, 2.3f }; // objの大きさ
+    static constexpr Vector3 kPowerUnitPos = { 0.0f, 0.05f, -1.0f }; // 動力射出位置
 
+    // クリアフラグ(無敵当)
     bool isClear = false;
 
     // 体力
     int hp_ = 100; // 現体力
-    int Maxhp_ = 100; // 最大体力
+    int maxHp_ = 100; // 最大体力
+    int damage_ = 2; // 接触ダメージ
 
     // 被弾時の無敵時間
-    const float KinvincibleTime = 1.0f;
+    const float kInvincibleTime = 1.0f;
     float invincibleTime = 1.0f;
     bool isinvincible = false;
 
-    // 移動系パラメータ
+    // 移動系パラメータ,移動速度
+    Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
     const float kCharacterSpeed = 0.4f; // 最高速度
     const float kAcceleration = 0.02f; // 加速度
     const float shiftUpSpeed = 1.25f; // シフト(高速旋回)乗算倍率
     const float kFriction = 0.87f; // 摩擦抵抗
 
-    // 移動限界座標(仮定)
+    // 移動限界座標(暫定)
     const float kMoveLimitX = 8.0f;
     const float kMoveLimitY = 5.0f;
 
@@ -102,7 +109,7 @@ private:
     const float kMaxYawAngle = 0.35f; // 横移動時の回転
     const float kShiftYawFactor = 0.2f; // shift時にy回転を抑える減衰係数
 
-    // 静止時の揺れ
+    // 静止時の揺れ(当たり判定に関係しない)
     const float kHoverSpeed = 2.5f; // 浮遊の速さ
     const float kHoverAmount = 0.015f; // 浮遊の揺れ幅
     const float kSwaySpeed = 4.0f; // 揺れる速さ
@@ -110,25 +117,21 @@ private:
     const float kSwayAmountX = 0.015f; // Pitchの揺れ幅
     float idleTimer_ = 0.0f; // 揺れタイマー
 
-    // 弾の詳細設定(チャージショット一連の操作、チュートリアルを作成後作成)
+    // 弾の詳細設定
     const float kCoolTime = 0.20f;
     float coolTime = 0.0f;
-    int dameg_ = 10;
-    int chargeDameg_ = 15;
-
     // チャージショット
     float chargeTimer_ = 0.0f; // チャージ時間
     const float kChargeTime = 1.0f; // チャージ完了までの時間
     const float kLockonAngleThreshold = 0.99f; // ロックオン範囲(円錐)<0.0fが90°,0.99fが約11°>
     uint32_t lockonTargetId_ = 0; // ロックオン対象
     int lockonTargetIndex_ = 0; // ロックオン対象のパーツ番号
-    uint32_t ChageLookId_ = 0; // ロックオン対象
-    int ChageLookIndex_ = 0; // ロックオン対象のパーツ番号
-
+    uint32_t keepLookOnId_ = 0; // ロックオン範囲内に敵がいない時の最後にロックオンした敵
+    int keepLookOnIndex_ = 0; // ロックオン範囲内に敵がいない時の最後にロックオンした敵のパーツ番号
     // 3d照準の距離
-    const float kLongDistancePlayerTo3DReticle = 50.0f; // 最長射程
+    const float kLongDistancePlayerTo3DReticle = 50.0f; // 長距離射程(実際は70.0fぐらい飛ぶ)
     const float kShortDistancePlayerTo3DReticle = 25.0f; // 半分ぐらいの距離
-    bool ChageLook_ = false;
+    bool isChargeLocked_ = false;
 
     // 3dモデル
     std::unique_ptr<Model> playerModel;
@@ -152,4 +155,5 @@ private:
 
     // 弾
     std::list<std::unique_ptr<PlayerBullet>> playerBullets_;
+    std::unique_ptr<PlayerPowerUnitLaser> playerPowerUnitLaser_;
 };
