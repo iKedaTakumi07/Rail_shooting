@@ -52,6 +52,8 @@ void TitleFloating::Update()
         IntroUpdate(deltaTime);
         if (isSortie) {
             pattern_ = State::kSortie;
+            isIntro = false;
+            transform_.translate = Vector3(0.0f, 0.0f, 0.0f);
             StartPos = transform_.translate;
             startRotate = transform_.rotate;
             PrePos_ = transform_.translate;
@@ -108,7 +110,7 @@ void TitleFloating::SortieUpdate(float deltaTime)
         transform_.translate = PrePos_;
 
         // 溜2.0f~1.0f
-        std::uniform_real_distribution<float> Posdist(-0.2f, 0.2f);
+        std::uniform_real_distribution<float> Posdist(-0.1f, 0.1f);
         transform_.translate += { Posdist(randomEngine), Posdist(randomEngine), Posdist(randomEngine) };
 
         // 回転を戻す

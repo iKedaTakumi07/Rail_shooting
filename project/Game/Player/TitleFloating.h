@@ -94,7 +94,7 @@ private:
     Vector3 EndPos = { 0.0f, 0.0f, 0.0f }; // 終了座標
     Vector3 minPos = { 0.0f, -4.0f, -10.0f }; // 動ける範囲(x:進行方向 y:上下 z:左右)
     Vector3 maxPos = { 0.0f, 4.0f, 5.0f }; // 動ける範囲(x:進行方向 y:上下 z:左右)
-    static constexpr Vector3 kPowerUnitPos = { -1.5f, 0.05f, 0.0f };
+    static constexpr Vector3 kPowerUnitPos = { -1.0f, 0.05f, 0.0f };
 
     // 3dモデル
     std::unique_ptr<Model> playerModel;
