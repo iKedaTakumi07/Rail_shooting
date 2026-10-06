@@ -101,7 +101,7 @@ void Player::Update()
     BulletUpdate();
     ReticleUpdate();
 
-    playerPowerUnitLaser_->NewParticle(transform_, kPowerUnitPos);
+    playerPowerUnitLaser_->NewParticle(PrePos_, transform_, kPowerUnitPos);
 
     playerObject3d->SetTranslate(transform_.translate);
     playerObject3d->SetRotate(transform_.rotate);
@@ -219,6 +219,7 @@ void Player::OnCollision(Collider* other)
 
 void Player::MoveUpdate()
 {
+    PrePos_ = transform_.translate;
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     idleTimer_ += deltaTime;
 

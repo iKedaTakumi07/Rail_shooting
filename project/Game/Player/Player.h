@@ -68,6 +68,7 @@ private:
     Transform basetransform_ = { { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } }; // 揺れ成分を含まない座標他
     Vector3 localPos_ = { 0.0f, 0.0f, 0.0f }; // レール中心位置からの座標
     Vector3 railBasePos_ = { 0.0f, 0.0f, 0.0f }; // レール座標
+    Vector3 PrePos_ = { 0.0f, 0.0f, 0.0f };
 
     // 当たり判定
     float size = 0.8f; // AABB

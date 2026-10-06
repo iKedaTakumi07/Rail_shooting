@@ -103,8 +103,12 @@ void TitleScene::Update()
     if (!isChange) {
         if (input->TriggerKey(DIK_RETURN)) {
             isChange = true;
-            Transition_->Start(SceneTransition::State::Out, 0.5f);
-            TitleFloating_->SetEndPos(Vector3(20.0f, 0.0f, 0.0f));
+            Transition_->Start(SceneTransition::State::Out, SceneChangeTimer);
+
+            Vector3 pos = TitleFloating_->GetPosition();
+            float offsetX = 20.0f;
+            pos.x += offsetX;
+            TitleFloating_->SetEndPos(Vector3(pos.x, 0.0f, 0.0f));
             TitleFloating_->SetSortie(true);
         }
     } else {
@@ -132,6 +136,14 @@ void TitleScene::Update()
     Transition_->Update(deltaTime);
     TitleScene_->Update();
     TitleScenestateUI_->Update();
+
+    // x座標だけ追尾
+    if (!TitleFloating_->GetIntro() && !TitleFloating_->GetSortie()) {
+        auto camera = CameraManager::GetInstance()->GetActiveCamera();
+        CameraPos = camera->GetTranslate();
+        CameraPos.x = TitleFloating_->GetPosition().x;
+        CameraManager::GetInstance()->GetActiveCamera()->SetTranslate(CameraPos);
+    }
 }
 
 void TitleScene::Draw()

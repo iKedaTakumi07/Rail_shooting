@@ -16,12 +16,87 @@ void PlayerPowerUnitLaser::Initialize()
     EndColor = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
 }
 
-void PlayerPowerUnitLaser::NewParticle(const Transform& emitterTransform, const Vector3& localPos)
+void PlayerPowerUnitLaser::NewParticle(const Vector3& prePos, const Transform& emitterTransform, const Vector3& localPos)
 {
+    EmitterParam laserfireParam;
+    Transform TagetTransfrom;
+
     auto randomFloat = [&](float min, float max) {
         std::uniform_real_distribution<float> dist(min, max);
         return dist(randomEngine);
     };
+
+    Vector3 dir = {
+        prePos.x - emitterTransform.translate.x,
+        prePos.y - emitterTransform.translate.y,
+        prePos.z - emitterTransform.translate.z,
+    };
+
+    float length = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
+
+    if (length == 0.0f) {
+        return;
+    }
+
+    dir.x /= length;
+    dir.y /= length;
+    dir.z /= length;
+
+    Vector3 xAxis = dir;
+
+    Vector3 up = { 0.0f, 1.0f, 0.0f };
+
+    if (std::abs(Dot(xAxis, up)) > 0.999f) {
+        up = { 0.0f, 0.0f, 1.0f };
+    }
+
+    Vector3 yAxis = Normalize(
+        up - xAxis * Dot(up, xAxis));
+
+    Vector3 zAxis = Cross(xAxis, yAxis);
+
+    for (int i = 0; i < 3; ++i) {
+
+        float roll = (std::numbers::pi_v<float> / 3.0f) * i;
+
+        Vector3 y = yAxis * std::cos(roll) + zAxis * std::sin(roll);
+        Vector3 z = { -yAxis.x * std::sin(roll) + zAxis.x * std::cos(roll), -yAxis.y * std::sin(roll) + zAxis.y * std::cos(roll), -yAxis.z * std::sin(roll) + zAxis.z * std::cos(roll) };
+
+        float rotateY = std::asin(-xAxis.z);
+        float cosY = std::cos(rotateY);
+
+        float rotateZ;
+        float rotateX;
+
+        if (std::abs(cosY) > 0.0001f) {
+            rotateZ = std::atan2(xAxis.y, xAxis.x);
+            rotateX = std::atan2(y.z, z.z);
+        } else {
+            rotateZ = 0.0f;
+            rotateX = std::atan2(-y.x, y.y);
+        }
+
+        TagetTransfrom = emitterTransform;
+        // objの中心位置を修正
+        TagetTransfrom.translate.z -= emitterTransform.scale.z;
+
+        TagetTransfrom.rotate.x = rotateX;
+        TagetTransfrom.rotate.y = rotateY;
+        TagetTransfrom.rotate.z = rotateZ;
+
+        float laserRadius = 0.5f;
+        TagetTransfrom.scale = { length * 0.5f, laserRadius, laserRadius };
+
+        laserfireParam.SetRotate(TagetTransfrom.rotate);
+        laserfireParam.SetScale({ TagetTransfrom.scale });
+        laserfireParam.SetStartColor({ StartColor });
+        laserfireParam.SetEndColor({ EndColor });
+        laserfireParam.SetVelocity({ 0.0f, 0.0f, 0.0f }); // 一応レーザ痕扱いになるはず?
+        laserfireParam.SetLifeTime(0.1f);
+
+        // えせトレイル
+        CPUParticleManager::getInstance()->Emit("laser", TagetTransfrom, 1, laserfireParam);
+    }
 
     Vector3 localOffset = {
         localPos.x * emitterTransform.scale.x,
@@ -44,40 +119,10 @@ void PlayerPowerUnitLaser::NewParticle(const Transform& emitterTransform, const 
         localOffset.x * worldAxisX.z + localOffset.y * worldAxisY.z + localOffset.z * worldAxisZ.z
     };
 
-    Vector3 TragetPos = {
-        emitterTransform.translate.x + worldOffset.x,
-        emitterTransform.translate.y + worldOffset.y,
-        emitterTransform.translate.z + worldOffset.z
-    };
-
-    EmitterParam laserfireParam;
-    Transform EmitTransform = emitterTransform;
-    EmitTransform.translate.z -= worldAxisZ.z;
-
-    for (int i = 0; i < 3; ++i) {
-        float rotY = std::numbers::pi_v<float> / 2.0f;
-        float rotZ = (std::numbers::pi_v<float> / 3.0f) * (float)i;
-
-        Vector3 finalRotate = {
-            emitterTransform.rotate.x,
-            emitterTransform.rotate.y + rotY,
-            emitterTransform.rotate.z + rotZ,
-        };
-
-        laserfireParam.SetRotate(finalRotate);
-        laserfireParam.SetScale({ 0.25f, 0.25f, 0.5f });
-        laserfireParam.SetStartColor({ StartColor });
-        laserfireParam.SetEndColor({ EndColor });
-        laserfireParam.SetVelocity({ 0.0f, 0.0f, 0.0f }); // 残像なのでその場に固定
-        laserfireParam.SetLifeTime(0.10f);
-
-        // えせトレイル
-        CPUParticleManager::getInstance()->Emit("laser", EmitTransform, 1, laserfireParam);
-    }
-
     laserfireParam.SetRotate(emitterTransform.rotate);
     laserfireParam.SetScale({ 0.1f, 0.1f, 0.1f });
     laserfireParam.SetVelocity({ -(worldAxisX.x + randomFloat(0.0f, 1.0f)), -(worldAxisY.y + randomFloat(0.0f, 1.0f)), -(worldAxisZ.z + randomFloat(0.0f, 1.0f)) }); // 逆ベクトル
+    Transform EmitTransform = emitterTransform;
 
     EmitTransform.translate.x += randomFloat(-0.1f, 0.1f);
     EmitTransform.translate.y += randomFloat(-0.1f, 0.1f);

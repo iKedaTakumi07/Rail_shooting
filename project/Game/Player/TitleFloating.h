@@ -1,5 +1,6 @@
 #pragma once
 #include "../../../Engine/base/Math.h"
+#include "../Particle/PlayerPowerUnitLaser.h"
 #include "PlayerBullet.h"
 #include <numbers>
 
@@ -19,6 +20,8 @@ public:
     void SetSortie(bool num) { isSortie = num; }
     // Get関数
     Vector3 GetPosition() const { return transform_.translate; }
+    bool GetIntro() const { return isIntro; }
+    bool GetSortie() const { return isSortie; }
 
 private:
     // その他
@@ -40,8 +43,8 @@ private:
         knull = -1, // なんもしない
         kLeftRoll, // 左旋回
         kRightRoll, // 右旋回
-        kLeftShiftRoll, // 左旋回
-        kRightShiftRoll, // 右旋回
+        kLeftShiftRoll, // shift左旋回(向きが安定しないため一時停止)
+        kRightShiftRoll, // shift右旋回(向きが安定しないため一時停止)
     };
 
     std::list<std::unique_ptr<PlayerBullet>> playerBullets_; // 弾
@@ -53,11 +56,12 @@ private:
     const float kAttackTimer = 10.0f; // オート射撃間隔
     bool isAttack = false; // 発射フラグ
     bool isSortie = false; // シーンチェンジ演出
+    bool isIntro = true;
 
     float IntroTimer = 1.0f;
     float kIntroTimer = 1.0f;
-    float SortieTimer = 1.0f;
-    float kSortieTimer = 1.0f;
+    float SortieTimer = 2.0f;
+    float kSortieTimer = 2.0f;
     float patternInterval = 2.0f; // stat切り替え時間
     const float kpatternInterval = 2.0f;
 
@@ -81,7 +85,10 @@ private:
 
     Transform transform_ = { { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } }; // モデル座標
     Vector3 localPos_ = { 0.0f, 0.0f, 0.0f };
+    Vector3 PrePos_ = { 0.0f, 0.0f, 0.0f };
 
+    Vector3 startRotate = { 0.0f, 0.0f, 0.0f };
+    Vector3 endRotate = { 0.0f, 0.0f, 0.0f };
     Vector3 velocity_ = { 0.0f, 0.0f, 0.0f }; // 移動速度
     Vector3 StartPos = { 0.0f, 0.0f, 0.0f }; // イージング開始座標
     Vector3 EndPos = { 0.0f, 0.0f, 0.0f }; // 終了座標
@@ -91,4 +98,5 @@ private:
     // 3dモデル
     std::unique_ptr<Model> playerModel;
     std::unique_ptr<Object3d> playerObject3d;
+    std::unique_ptr<PlayerPowerUnitLaser> playerPowerUnitLaser_;
 };

@@ -1,7 +1,7 @@
 #pragma once
 #include "../../Engine/base/Math.h"
-#include <vector>
 #include <random>
+#include <vector>
 
 class PlayerPowerUnitLaser {
 public:
@@ -9,7 +9,7 @@ public:
     void Initialize();
 
     // 生成
-    void NewParticle(const Transform& emitterTransform, const Vector3& localPos);
+    void NewParticle(const Vector3& prePos, const Transform& emitterTransform, const Vector3& localPos);
 
 public:
     void SetStartColor(Vector4 color) { StartColor = color; }

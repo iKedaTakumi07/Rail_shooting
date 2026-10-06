@@ -15,7 +15,7 @@ using json = nlohmann::json;
 
 void stageObjectManager::Initialize(const std::string& filePath, Player* player)
 {
-    TextureManager::getInstance()->LoadTexture("resources/stage/uvChecker.png");
+    TextureManager::getInstance()->LoadTexture("resources/stage/stageGraunod.png");
     ModelManager::GetInstance()->LoadModel("stage/stageGraunod.obj");
 
     PopObjFilePath_ = filePath;
@@ -62,9 +62,10 @@ void stageObjectManager::ClearUpdate()
 
 void stageObjectManager::Draw()
 {
-    grauond3d->Draw();
-    grauond3d2->Draw();
+    // 奥から描画
     grauond3d3->Draw();
+    grauond3d2->Draw();
+    grauond3d->Draw();
 
     for (auto& obj : stageObjects_) {
         obj->Draw();
@@ -157,11 +158,9 @@ void stageObjectManager::GrauondUpdate()
 {
     Vector3 pos = player_->GetTranslate();
     if (pos.z >= grauondtransform_.translate.z + grauondSize) {
-        grauondtransform_.translate.z = grauondtransform3_.translate.z + grauondSize;
-    } else if (pos.z >= grauondtransform2_.translate.z + grauondSize) {
-        grauondtransform2_.translate.z = grauondtransform_.translate.z + grauondSize;
-    } else if (pos.z >= grauondtransform3_.translate.z + grauondSize) {
-        grauondtransform3_.translate.z = grauondtransform2_.translate.z + grauondSize;
+        grauondtransform_.translate.z = grauondtransform2_.translate.z + grauondSize;
+        grauondtransform2_.translate.z = grauondtransform3_.translate.z + grauondSize;
+        grauondtransform3_.translate.z = grauondtransform3_.translate.z + grauondSize * 2;
     }
 
     grauond3d->SetTranslate(grauondtransform_.translate);
