@@ -62,6 +62,9 @@ private:
     void UIUpdate();
     Vector2 WorldToScreen(const Vector3& worldPos, Camera* camera);
 
+    // 押し出し処理
+    void ColliderUpdate(Collider* other);
+
 private:
     // 座標
     Transform transform_ = { { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } }; // モデル座標

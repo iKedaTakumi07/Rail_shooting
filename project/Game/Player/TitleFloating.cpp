@@ -45,6 +45,7 @@ void TitleFloating::Update()
             pattern_ = State::kSortie;
             StartPos = transform_.translate;
             startRotate = transform_.rotate;
+            PrePos_ = transform_.translate;
         }
         break;
     case TitleFloating::State::kIntro:
@@ -53,6 +54,7 @@ void TitleFloating::Update()
             pattern_ = State::kSortie;
             StartPos = transform_.translate;
             startRotate = transform_.rotate;
+            PrePos_ = transform_.translate;
         }
         break;
     case TitleFloating::State::kSortie:
