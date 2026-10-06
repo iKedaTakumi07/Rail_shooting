@@ -24,4 +24,5 @@ private:
     // ステータス設定。
     Vector4 StartColor;
     Vector4 EndColor;
+    Vector3 EndScale = { 0.1f, 0.1f, 1.0f };
 };

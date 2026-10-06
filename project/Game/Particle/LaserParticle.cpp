@@ -25,6 +25,7 @@ void LaserParticle::NewParticle(const Transform& emitterTransform) const
         };
 
         laserfireParam.SetRotate(finalRotate);
+        laserfireParam.SetEndScale(EndScale);
         laserfireParam.SetScale({ 1.0f, 0.5f, 5.0f });
         laserfireParam.SetStartColor({ StartColor });
         laserfireParam.SetEndColor({ EndColor });

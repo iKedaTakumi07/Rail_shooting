@@ -19,6 +19,7 @@ private:
     // ステータス設定。
     Vector4 StartColor;
     Vector4 EndColor;
+    Vector3 EndScale = { 1.0f, 0.1f, 0.1f };
 
     std::mt19937 randomEngine;
 };

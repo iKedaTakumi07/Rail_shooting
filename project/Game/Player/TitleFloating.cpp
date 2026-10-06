@@ -77,6 +77,7 @@ void TitleFloating::IntroUpdate(float deltaTime)
     if (IntroTimer <= 0.0f) {
         pattern_ = State::kStay;
         isIntro = false;
+        localPos_ = transform_.translate;
     }
 
     float progress = 1.0f - (IntroTimer / kIntroTimer);
@@ -90,10 +91,11 @@ void TitleFloating::IntroUpdate(float deltaTime)
 void TitleFloating::SortieUpdate(float deltaTime)
 {
     SortieTimer -= deltaTime;
-    transform_.translate = PrePos_;
 
     // 発進
     if (SortieTimer <= 1.0f) {
+        PrePos_ = transform_.translate;
+
         float progress = 1.0f - (SortieTimer / (kSortieTimer / 2.0f));
         progress = std::clamp(progress, 0.0f, 1.0f);
 
@@ -101,6 +103,8 @@ void TitleFloating::SortieUpdate(float deltaTime)
 
         transform_.translate = Lerp(StartPos, EndPos, easeT);
     } else {
+        transform_.translate = PrePos_;
+
         // 溜2.0f~1.0f
         std::uniform_real_distribution<float> Posdist(-0.2f, 0.2f);
         transform_.translate += { Posdist(randomEngine), Posdist(randomEngine), Posdist(randomEngine) };
@@ -113,6 +117,8 @@ void TitleFloating::SortieUpdate(float deltaTime)
 
         transform_.rotate = Lerp(startRotate, endRotate, easeT);
     }
+
+    playerPowerUnitLaser_->NewParticle(PrePos_, transform_, kPowerUnitPos);
 }
 
 void TitleFloating::MoveUpdate(float deltaTime)
@@ -206,7 +212,7 @@ void TitleFloating::MoveUpdate(float deltaTime)
     RoateUpdate(deltaTime, currentAccel, isShift);
     BulletUpdate(deltaTime);
 
-    playerPowerUnitLaser_->NewParticle(PrePos_, transform_, localPos_);
+    playerPowerUnitLaser_->NewParticle(PrePos_, transform_, kPowerUnitPos);
 }
 
 void TitleFloating::RoateUpdate(float deltaTime, float currentAccel, bool isShift)

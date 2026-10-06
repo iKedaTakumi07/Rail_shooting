@@ -40,7 +40,7 @@ private:
     float SceneChangeTimer = 2.0f;
     bool isChange = false;
     Vector3 CameraPos = { 0.0f, 0.0f, 0.0f };
-
+ 
     // 3dモデル
     std::unique_ptr<skydome> skydome_;
     std::unique_ptr<SceneTransition> Transition_;

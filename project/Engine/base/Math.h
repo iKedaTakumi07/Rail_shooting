@@ -90,7 +90,7 @@ struct ParticleMaterial {
     Matrix4x4 uvTransform;
     Vector4 color;
     int32_t enableLighting;
-    int32_t useClampSampler; // ⭐️ 追加 (0: WRAP, 1: CLAMP)
+    int32_t useClampSampler;
     float padding[2];
 };
 struct TransformationMatrix {
@@ -207,6 +207,8 @@ struct AccelerationField {
 };
 struct CPUParticle {
     Transform transform;
+    Vector3 endScale;
+    Vector3 startScale;
     Vector3 velocity;
     Vector4 startColor;
     Vector4 endColor;

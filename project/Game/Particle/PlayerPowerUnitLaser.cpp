@@ -77,17 +77,21 @@ void PlayerPowerUnitLaser::NewParticle(const Vector3& prePos, const Transform& e
         }
 
         TagetTransfrom = emitterTransform;
-        // objの中心位置を修正
-        TagetTransfrom.translate.z -= emitterTransform.scale.z;
+        // 推進位置に配置
+        TagetTransfrom.translate.x += localPos.x;
+        TagetTransfrom.translate.y += localPos.y;
+        TagetTransfrom.translate.z += localPos.z;
 
         TagetTransfrom.rotate.x = rotateX;
         TagetTransfrom.rotate.y = rotateY;
         TagetTransfrom.rotate.z = rotateZ;
 
-        float laserRadius = 0.5f;
+        float laserRadius = 0.25f;
         TagetTransfrom.scale = { length * 0.5f, laserRadius, laserRadius };
+        EndScale.x = TagetTransfrom.scale.x;
 
         laserfireParam.SetRotate(TagetTransfrom.rotate);
+        laserfireParam.SetEndScale(EndScale);
         laserfireParam.SetScale({ TagetTransfrom.scale });
         laserfireParam.SetStartColor({ StartColor });
         laserfireParam.SetEndColor({ EndColor });
@@ -120,9 +124,12 @@ void PlayerPowerUnitLaser::NewParticle(const Vector3& prePos, const Transform& e
     };
 
     laserfireParam.SetRotate(emitterTransform.rotate);
-    laserfireParam.SetScale({ 0.1f, 0.1f, 0.1f });
+    laserfireParam.SetScale({ 0.05f, 0.05f, 0.05f });
+    laserfireParam.SetEndScale({ 0.01f, 0.01f, 0.01f });
+    laserfireParam.SetLifeTime(0.5f);
     laserfireParam.SetVelocity({ -(worldAxisX.x + randomFloat(0.0f, 1.0f)), -(worldAxisY.y + randomFloat(0.0f, 1.0f)), -(worldAxisZ.z + randomFloat(0.0f, 1.0f)) }); // 逆ベクトル
     Transform EmitTransform = emitterTransform;
+    EmitTransform.translate += worldOffset;
 
     EmitTransform.translate.x += randomFloat(-0.1f, 0.1f);
     EmitTransform.translate.y += randomFloat(-0.1f, 0.1f);
