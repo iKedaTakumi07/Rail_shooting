@@ -84,7 +84,7 @@ void TitleScene::Initialize()
     TitleFloating_->SetStartPos(Vector3(-20.0f, 0.0f, 0.0f));
     TitleFloating_->SetEndPos(Vector3(0.0f, 0.0f, 0.0f));
 
-    meteorite_ = std::make_unique<meteorite>();
+    meteorite_ = std::make_unique<Meteorite>();
     meteorite_->Initialize();
 
     Transition_->Start(SceneTransition::State::In, 0.1f);
@@ -96,7 +96,6 @@ void TitleScene::Finalize()
 
 void TitleScene::Update()
 {
-
     auto* input = Input::getInstance();
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
 

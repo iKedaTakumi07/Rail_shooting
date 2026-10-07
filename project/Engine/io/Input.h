@@ -3,6 +3,7 @@
 
 #include "../base/WinApp.h"
 #include <Windows.h>
+#include <Xinput.h>
 #include <dinput.h>
 #include <wrl.h>
 #include <wrl/client.h>
