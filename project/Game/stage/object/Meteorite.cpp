@@ -1,11 +1,11 @@
 #include "Meteorite.h"
 
-#include "../../Engine/3d/CameraManager.h"
-#include "../../Engine/3d/ModelManager.h"
-#include "../../Engine/3d/Object3d.h"
-#include "../../Engine/base/Math.h"
-#include "../../Engine/base/TextureManager.h"
-#include "../../Engine/scene/SceneManager.h"
+#include "../../../Engine/3d/CameraManager.h"
+#include "../../../Engine/3d/ModelManager.h"
+#include "../../../Engine/3d/Object3d.h"
+#include "../../../Engine/base/Math.h"
+#include "../../../Engine/base/TextureManager.h"
+#include "../../../Engine/scene/SceneManager.h"
 
 void Meteorite::Initialize()
 {

@@ -15,9 +15,9 @@ public:
 public:
     void SetStage(int loadstage);
 
-    std::string GetStageObjectData() { return loadStageObjectData; };
-    std::string GetStageData() { return loadStageData; };
-    std::string GetEnemyPopData() { return loadEnemyPopDat; };
+    std::string GetStageObjectData() const { return loadStageObjectData; };
+    std::string GetStageData() const { return loadStageData; };
+    std::string GetEnemyPopData() const { return loadEnemyPopDat; };
 
 private:
     stageDataLoad() = default;

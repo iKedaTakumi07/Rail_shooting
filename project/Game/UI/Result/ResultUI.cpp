@@ -1,8 +1,8 @@
 #include "ResultUI.h"
 #include "../Engine/base/TextureManager.h"
 #include "../Engine/base/WinApp.h"
-#include "../Game/stage/stageDataLoad.h"
-#include "../Loder/GameScoreManager.h"
+#include "../Game/Loder/stageDataLoad.h"
+#include "../../Loder/GameScoreManager.h"
 #include "../resources/nlohmann/json.hpp"
 #include <algorithm>
 #include <fstream>

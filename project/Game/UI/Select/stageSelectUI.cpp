@@ -1,10 +1,10 @@
 #include "stageSelectUI.h"
-#include "../../Engine/2d/Sprite.h"
-#include "../../Engine/3d/Camera.h"
-#include "../../Engine/3d/CameraManager.h"
-#include "../../Engine/3d/ModelManager.h"
-#include "../../Engine/base/TextureManager.h"
-#include "../../Engine/base/WinApp.h"
+#include "../../../Engine/2d/Sprite.h"
+#include "../../../Engine/3d/Camera.h"
+#include "../../../Engine/3d/CameraManager.h"
+#include "../../../Engine/3d/ModelManager.h"
+#include "../../../Engine/base/TextureManager.h"
+#include "../../../Engine/base/WinApp.h"
 
 void stageSelectUI::Initialize()
 {

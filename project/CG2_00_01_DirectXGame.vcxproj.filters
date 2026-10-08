@@ -267,7 +267,7 @@
     <ClCompile Include="Game\stage\stageObject.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Game\stage\stageDataLoad.cpp">
+    <ClCompile Include="Game\Loder\stageDataLoad.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\Enemy\base\baseBossEnemy.cpp">
@@ -282,7 +282,7 @@
     <ClCompile Include="Game\Particle\chargeParticle.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Game\UI\pauseUI.cpp">
+    <ClCompile Include="Game\UI\Game\pauseUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\Enemy\Bullet\LaserBeamBullet.cpp">
@@ -291,13 +291,13 @@
     <ClCompile Include="Game\Enemy\Normal\LaserEnemy.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Game\UI\clearUI.cpp">
+    <ClCompile Include="Game\UI\Result\clearUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\SceneTransition.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Game\UI\ResultUI.cpp">
+    <ClCompile Include="Game\UI\Result\ResultUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\Loder\GameScoreManager.cpp">
@@ -309,19 +309,22 @@
     <ClCompile Include="Engine\scene\gameScene\TestScene.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Game\stage\stageSelectUI.cpp">
+    <ClCompile Include="Game\UI\Select\stageSelectUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\Player\TitleFloating.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Game\stage\Meteorite.cpp">
+    <ClCompile Include="Game\stage\object\Meteorite.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\Particle\EnemyLaserParticle.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\Particle\PlayerPowerUnitLaser.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\UI\Title\TitleUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -569,7 +572,7 @@
     <ClInclude Include="Game\stage\stageObject.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Game\stage\stageDataLoad.h">
+    <ClInclude Include="Game\Loder\stageDataLoad.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Enemy\base\baseBossEnemy.h">
@@ -584,7 +587,7 @@
     <ClInclude Include="Game\Particle\chargeParticle.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Game\UI\pauseUI.h">
+    <ClInclude Include="Game\UI\Game\pauseUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Enemy\Bullet\LaserBeamBullet.h">
@@ -593,13 +596,13 @@
     <ClInclude Include="Game\Enemy\Normal\LaserEnemy.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Game\UI\clearUI.h">
+    <ClInclude Include="Game\UI\Result\clearUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\SceneTransition.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Game\UI\ResultUI.h">
+    <ClInclude Include="Game\UI\Result\ResultUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Loder\GameScoreManager.h">
@@ -611,19 +614,22 @@
     <ClInclude Include="Engine\scene\gameScene\TestScene.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Game\stage\stageSelectUI.h">
+    <ClInclude Include="Game\UI\Select\stageSelectUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Player\TitleFloating.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Game\stage\Meteorite.h">
+    <ClInclude Include="Game\stage\object\Meteorite.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Particle\EnemyLaserParticle.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Particle\PlayerPowerUnitLaser.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\UI\Title\TitleUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

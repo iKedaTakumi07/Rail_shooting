@@ -1,10 +1,10 @@
 #include "SelectScene.h"
 #include "../SceneManager.h"
 
+#include "../../../Game/Loder/stageDataLoad.h"
 #include "../../../Game/SceneTransition.h"
+#include "../../../Game/UI/Select/stageSelectUI.h"
 #include "../../../Game/stage/skydome.h"
-#include "../../../Game/stage/stageDataLoad.h"
-#include "../../../Game/stage/stageSelectUI.h"
 #include "../../2d/SpriteCommon.h"
 #include "../../3d/CPUParticle/CPUParticleManager.h"
 #include "../../3d/Camera.h"

@@ -1,6 +1,6 @@
 #pragma once
-#include "../../Engine/3d/Object3d.h"
-#include "../../Engine/base/Math.h"
+#include "../../../Engine/3d/Object3d.h"
+#include "../../../Engine/base/Math.h"
 #include <array>
 #include <memory>
 #include <random>

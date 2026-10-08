@@ -17,7 +17,7 @@ public:
     void CSDraw(const SkinCluster& skinCluster);
 
     // Get
-    Material* GetmaterialData() { return materialData; }
+    Material* GetmaterialData() const { return materialData; }
     const ModelData& GetModelData() const { return modelData; }
 
     // Set

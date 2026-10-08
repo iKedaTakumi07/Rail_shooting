@@ -24,7 +24,7 @@
 
 #include "../../../Game/Player/TitleFloating.h"
 #include "../../../Game/SceneTransition.h"
-#include "../../../Game/stage/meteorite.h"
+#include "../../../Game/stage//object/Meteorite.h"
 #include "../../../Game/stage/skydome.h"
 #include "../../3d/CameraManager.h"
 #include "math.h"

@@ -28,7 +28,7 @@
 #include "../../../Game/Particle/HitParticle.h"
 #include "../../../Game/Particle/LaserParticle.h"
 #include "../../../Game/Player/Player.h"
-#include "../../../Game/UI/ResultUI.h"
+#include "../../../Game/UI//Result/ResultUI.h"
 #include "../../../Game/SceneTransition.h"
 #include "../../../Game/stage/skydome.h"
 #include "../../3d/CameraManager.h"
