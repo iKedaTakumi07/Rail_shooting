@@ -24,6 +24,7 @@
 
 #include "../../../Game/Player/TitleFloating.h"
 #include "../../../Game/SceneTransition.h"
+#include "../../../Game/UI/Title/TitleUI.h"
 #include "../../../Game/stage//object/Meteorite.h"
 #include "../../../Game/stage/skydome.h"
 #include "../../3d/CameraManager.h"
@@ -52,8 +53,6 @@ void TitleScene::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/AnimatedCube_MetallicRoughness.png");
     TextureManager::getInstance()->LoadTexture("resources/simpleSkin/uvChecker.png");
     // TextureManager::getInstance()->LoadTexture("resources/human/white.png");
-    TextureManager::getInstance()->LoadTexture("resources/UI/Title.png");
-    TextureManager::getInstance()->LoadTexture("resources/UI/TitleUI.png");
 
     ModelManager::GetInstance()->LoadModel("axis.obj");
     ModelManager::GetInstance()->LoadModel("terrain.obj");
@@ -66,18 +65,11 @@ void TitleScene::Initialize()
     Transition_ = std::make_unique<SceneTransition>();
     Transition_->Initialize("resources/noise2.png");
 
+    titleUI_ = std::make_unique<TitleUI>();
+    titleUI_->Initialize();
+
     skydome_ = std::make_unique<skydome>();
     skydome_->Initialize();
-
-    TitleScene_ = std::make_unique<Sprite>();
-    TitleScene_->Initialize("resources/UI/Title.png");
-    TitleScene_->SetPosition(Vector2(WinApp::KClientWidth / 2.0f, WinApp::KClientHeight / 8.0f * 1.0f));
-    TitleScene_->SetAnchorPoint(Vector2(0.5f, 0.5f));
-
-    TitleScenestateUI_ = std::make_unique<Sprite>();
-    TitleScenestateUI_->Initialize("resources/UI/TitleUI.png");
-    TitleScenestateUI_->SetPosition(Vector2(WinApp::KClientWidth / 2.0f, WinApp::KClientHeight / 8.0f * 7.0f)); // 中心位置
-    TitleScenestateUI_->SetAnchorPoint(Vector2(0.5f, 0.5f));
 
     TitleFloating_ = std::make_unique<TitleFloating>();
     TitleFloating_->Initialize();
@@ -99,13 +91,32 @@ void TitleScene::Update()
     auto* input = Input::GetInstance();
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
 
-    if (input->TriggerKey(DIK_ESCAPE)) {
+#ifdef USE_IMGUI
+    if (input->TriggerKey(DIK_9)) {
+        CameraManager::GetInstance()->SetActiveCamera("PlayMain");
+    }
+    if (input->TriggerKey(DIK_0)) {
+        CameraManager::GetInstance()->SetActiveCamera("SubView");
+    }
+    if (input->TriggerKey(DIK_1)) {
+        SceneManager::GetInstance()->ChangeScene("TEST");
+    }
+#endif // USE_IMGUI
+
+    titleUI_->Update();
+    skydome_->Update();
+    TitleFloating_->Update();
+    meteorite_->Update();
+    Transition_->Update(deltaTime);
+
+    if (titleUI_->GetIsEndGame()) {
         SceneManager::GetInstance()->RequestEnd();
         return;
     }
 
+    // ゲームスタート処理
     if (!isChange) {
-        if (input->TriggerKey(DIK_RETURN)) {
+        if (titleUI_->GetIsStartGame()) {
             isChange = true;
             Transition_->Start(SceneTransition::State::Out, SceneChangeTimer);
 
@@ -124,25 +135,6 @@ void TitleScene::Update()
             SceneManager::GetInstance()->ChangeScene("SELECT");
         }
     }
-
-#ifdef USE_IMGUI
-    if (input->TriggerKey(DIK_9)) {
-        CameraManager::GetInstance()->SetActiveCamera("PlayMain");
-    }
-    if (input->TriggerKey(DIK_0)) {
-        CameraManager::GetInstance()->SetActiveCamera("SubView");
-    }
-    if (input->TriggerKey(DIK_1)) {
-        SceneManager::GetInstance()->ChangeScene("TEST");
-    }
-#endif // USE_IMGUI
-
-    skydome_->Update();
-    TitleFloating_->Update();
-    meteorite_->Update();
-    Transition_->Update(deltaTime);
-    TitleScene_->Update();
-    TitleScenestateUI_->Update();
 
     // x座標だけ追尾
     if (!TitleFloating_->GetIntro() && !TitleFloating_->GetSortie()) {
@@ -173,8 +165,7 @@ void TitleScene::Draw()
     SkyBoxCommon::GetInstance()->PrepareObjectDraw();
 
     SpriteCommon::GetInstance()->PrepareSpriteDraw();
-    TitleScene_->Draw();
-    TitleScenestateUI_->Draw();
+    titleUI_->SpriteDraw();
 
     // GPUParticleManager::getInstance()->Draw();
 }

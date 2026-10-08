@@ -10,6 +10,7 @@ class Player;
 class LaserParticle;
 class HitParticle;
 class TitleFloating;
+class TitleUI;
 
 class Model;
 class Object3d;
@@ -40,13 +41,11 @@ private:
     float SceneChangeTimer = 2.0f;
     bool isChange = false;
     Vector3 CameraPos = { 0.0f, 0.0f, 0.0f };
- 
+
     // 3dモデル
     std::unique_ptr<skydome> skydome_;
+    std::unique_ptr<TitleUI> titleUI_;
     std::unique_ptr<SceneTransition> Transition_;
     std::unique_ptr<TitleFloating> TitleFloating_;
     std::unique_ptr<Meteorite> meteorite_;
-
-    std::unique_ptr<Sprite> TitleScene_;
-    std::unique_ptr<Sprite> TitleScenestateUI_;
 };
