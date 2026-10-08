@@ -42,6 +42,4 @@ private:
 
     bool isTitile = false; // タイトルバック
     float titleChangeTimer = 1.0f;
-
-    std::unique_ptr<SceneTransition> Transition_;
 };

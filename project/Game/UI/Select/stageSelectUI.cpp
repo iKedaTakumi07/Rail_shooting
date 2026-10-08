@@ -3,8 +3,13 @@
 #include "../../../Engine/3d/Camera.h"
 #include "../../../Engine/3d/CameraManager.h"
 #include "../../../Engine/3d/ModelManager.h"
+#include "../../../Engine/base/PostProcess.h"
 #include "../../../Engine/base/TextureManager.h"
 #include "../../../Engine/base/WinApp.h"
+#include "../../../Engine/io/Input.h"
+#include "../../../Game/Loder/stageDataLoad.h"
+#include "../../../Game/SceneTransition.h"
+#include <algorithm>
 
 void stageSelectUI::Initialize()
 {
@@ -13,10 +18,16 @@ void stageSelectUI::Initialize()
 
     TextureManager::getInstance()->LoadTexture("resources/UI/SelectUIStage1.png"); // ステージ名
     TextureManager::getInstance()->LoadTexture("resources/UI/SelectUIStage2.png");
+
     TextureManager::getInstance()->LoadTexture("resources/UI/SelectUI1.png");
 
     ModelManager::GetInstance()->LoadModel("player/Player.obj");
     ModelManager::GetInstance()->LoadModel("skydone/Selectskydome.obj");
+
+    // フェード
+    transition_ = std::make_unique<SceneTransition>();
+    transition_->Initialize("resources/noise3.png");
+    transition_->Start(SceneTransition::State::In, 1.0f);
 
     // 惑星の座標
     stagePos[0] = { 0.0f, 0.0f, 10.0f };
@@ -25,20 +36,19 @@ void stageSelectUI::Initialize()
     ObjectModel = std::make_unique<Model>();
     ObjectModel->Initialize("resources/skydone", "Selectskydome.obj"); // 指定したパターンに
     for (int i = 0; i < maxStage; i++) {
-        Object3d_[i] = std::make_unique<Object3d>();
-        Object3d_[i]->Initialize();
-        Object3d_[i]->SetModel(ObjectModel.get());
+        object3d_[i] = std::make_unique<Object3d>();
+        object3d_[i]->Initialize();
+        object3d_[i]->SetModel(ObjectModel.get());
 
-        Object3d_[i]->SetTranslate(stagePos[i]);
-        Object3d_[i]->SetScale(Vector3(3.0f, 3.0f, 3.0f));
-        Object3d_[i]->SetRotate(Vector3(0.0f, 0.0f, 0.0f));
+        object3d_[i]->SetTranslate(stagePos[i]);
+        object3d_[i]->SetScale(Vector3(3.0f, 3.0f, 3.0f));
+        object3d_[i]->SetRotate(Vector3(0.0f, 0.0f, 0.0f));
     }
 
-    // プレイヤーの機体
+    // プレイヤーの機体/初期位置最初の惑星
     playerObject3d_ = std::make_unique<Object3d>();
     playerObject3d_->Initialize();
 
-    // 最初の惑星
     currentPlanetPos_ = Vector3(stagePos[0].x, stagePos[0].y, 0.0f);
     currentPlanetPos_ = Vector3(stagePos[0].x, stagePos[0].y, 0.0f);
     targetPlanetPos_ = currentPlanetPos_;
@@ -51,7 +61,7 @@ void stageSelectUI::Initialize()
     playerObject3d_->SetScale(Vector3(1.0f, 1.0f, 1.0f));
     playerObject3d_->SetRotate(Vector3(0.0f, 0.0f, 0.0f));
 
-    // スプライトを表示↓後で
+    // ステージスプライトを表示
     std::array<std::string, maxStage> stageTexturePaths = {
         "resources/UI/SelectUIStage1.png",
         "resources/UI/SelectUIStage2.png"
@@ -65,6 +75,7 @@ void stageSelectUI::Initialize()
         stageSpriteBaseSize_[i] = stageSprite[i]->GetSize();
     }
 
+    // 操作ガイド
     UI = std::make_unique<Sprite>();
     UI->Initialize("resources/UI/SelectUI1.png");
     UI->SetPosition(Vector2(0.0f, WinApp::KClientHeight / 8.0f * 6.0f)); // 中心位置
@@ -72,17 +83,31 @@ void stageSelectUI::Initialize()
 
     stageNumber_ = 1;
     uiAnimTimer_ = 0.0f;
+    state_ = State::kSelect;
 }
 
 void stageSelectUI::Update(float deltaTime)
 {
+    switch (state_) {
+    case State::kSelect:
+        SelectUpdate(deltaTime);
+        break;
+    case State::kSortie:
+        SortieUpdate(deltaTime);
+        break;
+    case State::kTitleBack:
+        TitleBackUpdate(deltaTime);
+        break;
+    }
+
     MoveUpdate(deltaTime);
     UIAnimationUpdate(deltaTime);
+    transition_->Update(deltaTime);
 
     playerObject3d_->Update();
     UI->Update();
     for (int i = 0; i < maxStage; i++) {
-        Object3d_[i]->Update();
+        object3d_[i]->Update();
         stageSprite[i]->Update();
     }
 }
@@ -93,7 +118,7 @@ void stageSelectUI::Draw()
     playerObject3d_->Draw();
 
     for (int i = 0; i < maxStage; i++) {
-        Object3d_[i]->Draw();
+        object3d_[i]->Draw();
     }
 }
 
@@ -119,7 +144,6 @@ void stageSelectUI::ChangeStage(int stageIndex)
     moveTimer_ = 0.0f;
     moveDuration_ = kmoveDuration_;
     isMoving_ = true;
-    isSortie = false;
 }
 
 void stageSelectUI::StartSortie(int stageIndex, float duration)
@@ -133,15 +157,124 @@ void stageSelectUI::StartSortie(int stageIndex, float duration)
 
     moveTimer_ = 0.0f;
     moveDuration_ = duration; // シーン遷移時間と同期
-    isSortie = true;
     isMoving_ = false;
+}
+
+void stageSelectUI::SelectUpdate(float deltaTime)
+{
+    if (isMoving_) {
+        return;
+    }
+
+    auto* input = Input::GetInstance();
+    int prevStage = stageNumber_;
+
+    bool isRightTriggered = false;
+    bool isLeftTriggered = false;
+
+    // コントローラー判定
+    if (input->IsControllerConnected()) {
+        Vector2 leftStick = input->GetLeftStick();
+
+        // 左スティック左右のトリガー（ワンショット）判定
+        if (leftStick.x > 0.5f && prevStickX_ <= 0.5f) {
+            isRightTriggered = true;
+        }
+
+        if (leftStick.x < -0.5f && prevStickX_ >= -0.5f) {
+            isLeftTriggered = true;
+        }
+        prevStickX_ = leftStick.x;
+
+        // 十字キー左右
+        if (input->TriggerButton(XINPUT_GAMEPAD_DPAD_RIGHT)) {
+            isRightTriggered = true;
+        }
+        if (input->TriggerButton(XINPUT_GAMEPAD_DPAD_LEFT)) {
+            isLeftTriggered = true;
+        }
+
+        // Aボタン：ステージ決定
+        if (input->TriggerButton(XINPUT_GAMEPAD_A)) {
+            state_ = State::kSortie;
+            gameChangeTimer_ = kGameChangeTimer_;
+            StartSortie(stageNumber_, gameChangeTimer_);
+            stageDataLoad::GetInstance()->SetStage(stageNumber_);
+            return;
+        }
+
+        // Bボタン：タイトルへ戻る
+        if (input->TriggerButton(XINPUT_GAMEPAD_B)) {
+            state_ = State::kTitleBack;
+            titleChangeTimer_ = 1.0f;
+            transition_->Start(SceneTransition::State::Out, 1.0f);
+            return;
+        }
+    }
+
+    // キーボード入力
+    if (input->TriggerKey(DIK_D) || input->TriggerKey(DIK_RIGHTARROW)) { 
+        isRightTriggered = true;
+    }
+    if (input->TriggerKey(DIK_A) || input->TriggerKey(DIK_LEFTARROW)) { 
+        isLeftTriggered = true;
+    }
+
+    if (isRightTriggered && stageNumber_ < maxStage) {
+        stageNumber_++;
+    }
+    if (isLeftTriggered && stageNumber_ > minStageNumber_) {
+        stageNumber_--;
+    }
+
+    if (stageNumber_ != prevStage) {
+        ChangeStage(stageNumber_);
+    }
+
+    if (input->TriggerKey(DIK_SPACE) || input->TriggerKey(DIK_RETURN)) {
+        state_ = State::kSortie;
+        gameChangeTimer_ = kGameChangeTimer_;
+        StartSortie(stageNumber_, gameChangeTimer_);
+        stageDataLoad::GetInstance()->SetStage(stageNumber_);
+        return;
+    }
+
+    if (input->TriggerKey(DIK_BACKSPACE) || input->TriggerKey(DIK_ESCAPE)) {
+        state_ = State::kTitleBack;
+        titleChangeTimer_ = 1.0f;
+        transition_->Start(SceneTransition::State::Out, 1.0f);
+        return;
+    }
+}
+
+void stageSelectUI::SortieUpdate(float deltaTime)
+{
+    gameChangeTimer_ -= deltaTime;
+
+    Vector2 center = { 0.5f, 0.5f };
+    float blur = 1.0f - (gameChangeTimer_ / kGameChangeTimer_);
+
+    PostProcess::GetInstance()->SetRadialBlur(true);
+    PostProcess::GetInstance()->SetRadialBlurParam(center, blur);
+
+    if (gameChangeTimer_ <= 0.0f && transition_->IsFinished()) {
+        gameChangeTimer_ = 0.0f;
+        isGameChangeFinished_ = true;
+    }
+}
+
+void stageSelectUI::TitleBackUpdate(float deltaTime)
+{
+    titleChangeTimer_ -= deltaTime;
+    if (titleChangeTimer_ <= 0.0f) {
+        isTitleBackFinished_ = true;
+    }
 }
 
 void stageSelectUI::MoveUpdate(float deltaTime)
 {
-    auto* camere = CameraManager::GetInstance()->GetActiveCamera();
+    auto* camera = CameraManager::GetInstance()->GetActiveCamera();
 
-    // イージング移動処理
     if (isMoving_) {
         moveTimer_ += deltaTime;
         float t = std::clamp(moveTimer_ / moveDuration_, 0.0f, 1.0f);
@@ -153,27 +286,25 @@ void stageSelectUI::MoveUpdate(float deltaTime)
         if (t >= 1.0f) {
             isMoving_ = false;
         }
-    } else if (isSortie) {
+    } else if (state_ == State::kSortie) {
         moveTimer_ += deltaTime;
         float t = std::clamp(moveTimer_ / moveDuration_, 0.0f, 1.0f);
-        float easedT = EaseOutCubic(t); // 奥へ向かって加速
+        float easedT = EaseOutCubic(t);
 
         currentPlanetPos_ = Lerp(startPlanetPos_, targetPlanetPos_, easedT);
         playerObject3d_->SetTranslate(currentPlanetPos_);
     }
 
-    // 惑星の時点
     for (int i = 0; i < maxStage; i++) {
-        Vector3 rot = Object3d_[i]->GetRotate();
+        Vector3 rot = object3d_[i]->GetRotate();
         rot.y += 0.5f * deltaTime;
-        Object3d_[i]->SetRotate(rot);
+        object3d_[i]->SetRotate(rot);
     }
 
-    // 座標セット
     Vector3 cameraPos = currentPlanetPos_;
     cameraPos.z += -15.0f;
     cameraPos.y += 1.0f;
-    camere->SetTranslate(cameraPos);
+    camera->SetTranslate(cameraPos);
 }
 
 void stageSelectUI::UIAnimationUpdate(float deltaTime)
