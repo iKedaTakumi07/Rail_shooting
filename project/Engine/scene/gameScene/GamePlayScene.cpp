@@ -114,7 +114,7 @@ void GamePlayScene::Initialize()
 
 void GamePlayScene::Update()
 {
-    auto* input = Input::getInstance();
+    auto* input = Input::GetInstance();
 
     if (isSceneFinished_) {
         return;

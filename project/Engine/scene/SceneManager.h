@@ -33,6 +33,10 @@ public:
     float GetDeltaTime() const { return deltaTime_; }
 
 public:
+    void RequestEnd() { isEndRequested_ = true; }
+    bool IsEndRequested() const { return isEndRequested_; }
+
+public:
     /// <summary>
     /// 次シーン予約
     /// </summary>
@@ -51,6 +55,8 @@ private:
     ~SceneManager() = default;
 
 private:
+    bool isEndRequested_ = false;
+
     std::unique_ptr<BaseScene> nextScene_ = nullptr;
     std::unique_ptr<BaseScene> scene_ = nullptr;
     std::unique_ptr<AbstractSceneFactory> sceneFactory_ = nullptr;

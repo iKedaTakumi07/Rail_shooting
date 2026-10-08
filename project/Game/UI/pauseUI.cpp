@@ -43,7 +43,7 @@ void pauseUI::Initialize()
 
 void pauseUI::Update()
 {
-    auto* input = Input::getInstance();
+    auto* input = Input::GetInstance();
 
     if (input->TriggerKey(DIK_ESCAPE)) {
         // ポーズ画面ON,OFF
@@ -81,7 +81,7 @@ void pauseUI::SpritDraw()
 
 void pauseUI::PauseUpdate()
 {
-    auto* input = Input::getInstance();
+    auto* input = Input::GetInstance();
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
 
     Size += Speed * deltaTime;

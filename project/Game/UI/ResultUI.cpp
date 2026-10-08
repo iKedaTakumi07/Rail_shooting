@@ -64,7 +64,7 @@ void ResultUI::Initialize()
 
 void ResultUI::Update()
 {
-    auto* input = Input::getInstance();
+    auto* input = Input::GetInstance();
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
 
     switch (nowChoice) {
@@ -258,7 +258,7 @@ void ResultUI::NumberUpdate()
 void ResultUI::skipUpdate()
 {
     // 押した場合即刻リザルト表記
-    auto* input = Input::getInstance();
+    auto* input = Input::GetInstance();
     if (input->TriggerKey(DIK_RETURN)) {
         nowChoice = State::kResult;
         isAllAnimationEnd = true;

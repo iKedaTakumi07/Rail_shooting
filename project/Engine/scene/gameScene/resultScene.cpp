@@ -69,7 +69,7 @@ void resultScene::Finalize()
 void resultScene::Update()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    auto* input = Input::getInstance();
+    auto* input = Input::GetInstance();
 
     Transition_->Update(deltaTime);
 

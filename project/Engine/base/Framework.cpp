@@ -64,7 +64,7 @@ void Framework::Initialize()
     dxCommon = std::make_unique<DirectXCommon>();
     dxCommon->Initialize();
 
-    Input::getInstance()->Initialize();
+    Input::GetInstance()->Initialize();
 
     srvManager = std::make_unique<SrvManager>();
     srvManager->Initialize(dxCommon.get());
@@ -138,7 +138,7 @@ void Framework::Update()
         endRequst_ = true;
     }
 
-    Input::getInstance()->Update();
+    Input::GetInstance()->Update();
 
     Camera* camera = CameraManager::GetInstance()->GetActiveCamera();
     Vector3 cameraPos = camera->GetTranslate();
@@ -177,4 +177,9 @@ void Framework::Finalize()
     CPUParticleManager::getInstance()->Finalize();
 
     imguiManager->Finalize();
+}
+
+bool Framework::IsEndRequst()
+{
+    return endRequst_ || SceneManager::GetInstance()->IsEndRequested();
 }

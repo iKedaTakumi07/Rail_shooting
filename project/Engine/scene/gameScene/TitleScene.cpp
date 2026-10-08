@@ -96,8 +96,13 @@ void TitleScene::Finalize()
 
 void TitleScene::Update()
 {
-    auto* input = Input::getInstance();
+    auto* input = Input::GetInstance();
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+
+    if (input->TriggerKey(DIK_ESCAPE)) {
+        SceneManager::GetInstance()->RequestEnd();
+        return;
+    }
 
     if (!isChange) {
         if (input->TriggerKey(DIK_RETURN)) {

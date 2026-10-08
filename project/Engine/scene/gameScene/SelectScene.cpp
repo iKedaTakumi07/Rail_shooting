@@ -50,7 +50,7 @@ void SelectScene::Initialize()
 
 void SelectScene::Update()
 {
-    auto* input = Input::getInstance();
+    auto* input = Input::GetInstance();
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
 
     if (!selectStop && !stageSelectUI_->GetisMoving()) {
