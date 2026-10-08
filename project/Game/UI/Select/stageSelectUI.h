@@ -1,15 +1,22 @@
 #pragma once
-#include "../../Engine/3d/Object3d.h"
-#include "../../Engine/base/Math.h"
+#include "../../../Engine/3d/Object3d.h"
+#include "../../../Engine/base/Math.h"
 #include <memory>
 #include <string>
 
 class Model;
 class Camera;
 class Sprite;
+class SceneTransition;
 
 class stageSelectUI {
 public:
+    enum class State {
+        kSelect, // ステージ選択中（入力受付）
+        kSortie, // 出撃モーション中
+        kTitleBack, // タイトルへ戻る演出中
+    };
+
     // 初期化
     void Initialize();
 
@@ -23,23 +30,39 @@ public:
     void ChangeStage(int stageIndex);
     void StartSortie(int stageIndex, float duration);
 
-public:
-    // Set関数
-    void SetStageNumber(int num) { stageNumber_ = num; }
-    void SetisSortie(bool num) { isSortie = num; }
-    bool GetisMoving() const { return isMoving_; }
+    bool IsGameChangeFinished() const { return isGameChangeFinished_; }
+    bool IsTitleBackFinished() const { return isTitleBackFinished_; }
+    State GetState() const { return state_; }
 
+public:
 private:
+    // Stateパターン用更新メソッド
+    void SelectUpdate(float deltaTime);
+    void SortieUpdate(float deltaTime);
+    void TitleBackUpdate(float deltaTime);
+
     void MoveUpdate(float deltaTime);
     void UIAnimationUpdate(float deltaTime);
 
 private:
     static inline const int maxStage = 2; // ステージ文
+    const int minStageNumber_ = 1;
     int stageNumber_ = 0;
-    bool isSortie = false; // 出撃モーションに変えるかどうか
 
+    float prevStickX_ = 0.0f;
+
+    State state_ = State::kSelect;
+
+    // タイマー・フラグ類
+    float gameChangeTimer_ = 0.0f;
+    const float kGameChangeTimer_ = 0.5f;
+    float titleChangeTimer_ = 1.0f;
+    bool isGameChangeFinished_ = false;
+    bool isTitleBackFinished_ = false;
+
+    std::unique_ptr<SceneTransition> transition_;
     std::unique_ptr<Model> ObjectModel; // 惑星テクすちゃ増やすならarray化か?
-    std::array<std::unique_ptr<Object3d>, maxStage> Object3d_; // 惑星オブジェクト
+    std::array<std::unique_ptr<Object3d>, maxStage> object3d_; // 惑星オブジェクト
 
     std::array<std::unique_ptr<Sprite>, maxStage> stageSprite; // 惑星名スプライトを表示
     std::array<Vector2, maxStage> stageSpriteBaseSize_;

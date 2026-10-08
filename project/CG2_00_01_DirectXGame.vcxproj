@@ -162,7 +162,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClCompile Include="Game\Particle\EnemyLaserParticle.cpp" />
     <ClCompile Include="Game\Loder\GameScoreManager.cpp" />
-    <ClCompile Include="Game\UI\clearUI.cpp" />
+    <ClCompile Include="Game\UI\Result\clearUI.cpp" />
     <ClCompile Include="Game\Particle\chargeParticle.cpp" />
     <ClCompile Include="Game\Enemy\Boss\FourEyesBoss.cpp" />
     <ClCompile Include="Game\Enemy\base\baseBossEnemy.cpp" />
@@ -276,16 +276,17 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Game\stage\stageObjectManager.cpp" />
     <ClCompile Include="Game\stage\StageManager.cpp" />
     <ClCompile Include="Game\stage\stageObject.cpp" />
-    <ClCompile Include="Game\stage\stageDataLoad.cpp" />
+    <ClCompile Include="Game\Loder\stageDataLoad.cpp" />
     <ClCompile Include="Game\Enemy\Normal\threeShotsEnemy.cpp" />
-    <ClCompile Include="Game\UI\pauseUI.cpp" />
-    <ClCompile Include="Game\UI\ResultUI.cpp" />
+    <ClCompile Include="Game\UI\Game\pauseUI.cpp" />
+    <ClCompile Include="Game\UI\Result\ResultUI.cpp" />
     <ClCompile Include="Game\stage\skydome.cpp" />
     <ClCompile Include="Engine\scene\gameScene\TestScene.cpp" />
-    <ClCompile Include="Game\stage\stageSelectUI.cpp" />
+    <ClCompile Include="Game\UI\Select\stageSelectUI.cpp" />
     <ClCompile Include="Game\Player\TitleFloating.cpp" />
-    <ClCompile Include="Game\stage\meteorite.cpp" />
+    <ClCompile Include="Game\stage\object\Meteorite.cpp" />
     <ClCompile Include="Game\Particle\PlayerPowerUnitLaser.cpp" />
+    <ClCompile Include="Game\UI\Title\TitleUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\EmitParticle.CS.hlsl">
@@ -538,7 +539,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClInclude Include="Game\Particle\EnemyLaserParticle.h" />
     <ClInclude Include="Game\Loder\GameScoreManager.h" />
-    <ClInclude Include="Game\UI\clearUI.h" />
+    <ClInclude Include="Game\UI\Result\clearUI.h" />
     <ClInclude Include="Game\Particle\chargeParticle.h" />
     <ClInclude Include="Game\Enemy\Boss\FourEyesBoss.h" />
     <ClInclude Include="Game\Enemy\base\baseBossEnemy.h" />
@@ -643,11 +644,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\Player\PlayerBullet.h" />
     <ClInclude Include="Game\OnCollison\Collider.h" />
     <ClInclude Include="Game\Enemy\Normal\NormalMoveEnemy.h" />
-    <ClInclude Include="Game\UI\pauseUI.h" />
+    <ClInclude Include="Game\UI\Game\pauseUI.h" />
     <ClInclude Include="Game\Enemy\Bullet\LaserBeamBullet.h" />
     <ClInclude Include="Game\Enemy\Normal\LaserEnemy.h" />
     <ClInclude Include="Game\SceneTransition.h" />
-    <ClInclude Include="Game\stage\meteorite.h" />
+    <ClInclude Include="Game\stage\object\Meteorite.h" />
     <ClInclude Include="Game\Particle\PlayerPowerUnitLaser.h" />
     <ClInclude Include="resources\nlohmann\json.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
@@ -661,13 +662,14 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\stage\stageObjectManager.h" />
     <ClInclude Include="Game\stage\StageManager.h" />
     <ClInclude Include="Game\stage\stageObject.h" />
-    <ClInclude Include="Game\stage\stageDataLoad.h" />
+    <ClInclude Include="Game\Loder\stageDataLoad.h" />
     <ClInclude Include="Game\Enemy\Normal\threeShotsEnemy.h" />
-    <ClInclude Include="Game\UI\ResultUI.h" />
+    <ClInclude Include="Game\UI\Result\ResultUI.h" />
     <ClInclude Include="Game\stage\skydome.h" />
     <ClInclude Include="Engine\scene\gameScene\TestScene.h" />
-    <ClInclude Include="Game\stage\stageSelectUI.h" />
+    <ClInclude Include="Game\UI\Select\stageSelectUI.h" />
     <ClInclude Include="Game\Player\TitleFloating.h" />
+    <ClInclude Include="Game\UI\Title\TitleUI.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">

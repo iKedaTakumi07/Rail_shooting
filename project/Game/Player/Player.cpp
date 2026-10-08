@@ -233,16 +233,16 @@ void Player::MoveUpdate()
     Vector3 inputDir = { 0, 0, 0 };
 
     // 押した方向でベクトル変更
-    if (Input::getInstance()->PushKey(DIK_A)) {
+    if (Input::GetInstance()->PushKey(DIK_A)) {
         inputDir.x -= 1.0f;
     }
-    if (Input::getInstance()->PushKey(DIK_D)) {
+    if (Input::GetInstance()->PushKey(DIK_D)) {
         inputDir.x += 1.0f;
     }
-    if (Input::getInstance()->PushKey(DIK_W)) {
+    if (Input::GetInstance()->PushKey(DIK_W)) {
         inputDir.y += 1.0f;
     }
-    if (Input::getInstance()->PushKey(DIK_S)) {
+    if (Input::GetInstance()->PushKey(DIK_S)) {
         inputDir.y -= 1.0f;
     }
 
@@ -254,7 +254,7 @@ void Player::MoveUpdate()
     }
 
     // 高速旋回
-    bool isShift = Input::getInstance()->PushKey(DIK_LSHIFT) || Input::getInstance()->PushKey(DIK_RSHIFT);
+    bool isShift = Input::GetInstance()->PushKey(DIK_LSHIFT) || Input::GetInstance()->PushKey(DIK_RSHIFT);
 
     float currentAccel = isShift ? kAcceleration * shiftUpSpeed : kAcceleration; // 加速度
     float currentMaxSpeed = isShift ? kCharacterSpeed * shiftUpSpeed : kCharacterSpeed; // 速度
@@ -378,7 +378,7 @@ void Player::BulletUpdate()
     forwardDir.y = -std::sin(basetransform_.rotate.x);
     forwardDir.z = std::cos(basetransform_.rotate.z);
 
-    bool isSpacePushed = Input::getInstance()->PushKey(DIK_SPACE);
+    bool isSpacePushed = Input::GetInstance()->PushKey(DIK_SPACE);
     if (isSpacePushed) {
         // チャージ
         chargeTimer_ += deltaTime;

@@ -24,9 +24,9 @@ public:
     // getter
     const Vector2& GetPosition() const { return position; }
     float GetRotation() const { return rotation; }
-    const Vector4& GetColor() { return materialData->color; }
+    const Vector4& GetColor() const { return materialData->color; }
     const Vector2& GetSize() const { return size; }
-    const uint32_t GettextureIndex() { return textureIndex; }
+    const uint32_t GettextureIndex() const { return textureIndex; }
     const Vector2& GetAnchorPoint() const { return anchorPoint; }
     bool GetisFlipX_() const { return isFlipX_; }
     bool GetisFlipY_() const { return isFlipY_; }

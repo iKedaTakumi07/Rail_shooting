@@ -145,7 +145,7 @@ void TestScene::Finalize()
 void TestScene::Update()
 {
 
-    auto* input = Input::getInstance();
+    auto* input = Input::GetInstance();
     Camera* camera = GetCamera();
 
     // skydox->SetCamera(camera);

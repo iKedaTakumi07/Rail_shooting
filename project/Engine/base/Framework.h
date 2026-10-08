@@ -36,7 +36,8 @@ public:
     // 終了
     virtual void Finalize();
 
-    virtual bool IsEndRequst() { return endRequst_; }
+    virtual bool IsEndRequst();
+    void RequestEnd() { endRequst_ = true; }
 
     // get
     BaseScene* GetBaseScene() { return baseScene.get(); }

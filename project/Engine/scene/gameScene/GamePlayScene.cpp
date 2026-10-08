@@ -28,11 +28,11 @@
 #include "../../../Game/OnCollison/CollisionManager.h"
 #include "../../../Game/Player/Player.h"
 #include "../../../Game/SceneTransition.h"
-#include "../../../Game/UI/clearUI.h"
-#include "../../../Game/UI/pauseUI.h"
+#include "../../../Game/UI/Game/pauseUI.h"
+#include "../../../Game/UI/Result/clearUI.h"
 #include "../../../Game/stage/StageManager.h"
 #include "../../../Game/stage/skydome.h"
-#include "../../../Game/stage/stageDataLoad.h"
+#include "../../../Game/Loder/stageDataLoad.h"
 #include "../../../Game/stage/stageObjectManager.h"
 
 #include "math.h"
@@ -114,7 +114,7 @@ void GamePlayScene::Initialize()
 
 void GamePlayScene::Update()
 {
-    auto* input = Input::getInstance();
+    auto* input = Input::GetInstance();
 
     if (isSceneFinished_) {
         return;
