@@ -15,6 +15,7 @@ void stageSelectUI::Initialize()
 {
     TextureManager::getInstance()->LoadTexture("resources/skydone/sky_sphere.png");
     TextureManager::getInstance()->LoadTexture("resources/player/1x1white.png");
+    TextureManager::getInstance()->LoadTexture("resources/stage/uvChecker.png");
 
     TextureManager::getInstance()->LoadTexture("resources/UI/SelectUIStage1.png"); // ステージ名
     TextureManager::getInstance()->LoadTexture("resources/UI/SelectUIStage2.png");
@@ -23,6 +24,7 @@ void stageSelectUI::Initialize()
 
     ModelManager::GetInstance()->LoadModel("player/Player.obj");
     ModelManager::GetInstance()->LoadModel("skydone/Selectskydome.obj");
+    ModelManager::GetInstance()->LoadModel("stage/baseLab.obj");
 
     // フェード
     transition_ = std::make_unique<SceneTransition>();
@@ -30,8 +32,8 @@ void stageSelectUI::Initialize()
     transition_->Start(SceneTransition::State::In, 1.0f);
 
     // 惑星の座標
-    stagePos[0] = { 0.0f, 0.0f, 10.0f };
-    stagePos[1] = { 15.0f, 0.0f, 10.0f };
+    stagePos[0] = { 0.0f, 0.0f, 20.0f };
+    stagePos[1] = { 15.0f, 0.0f, 20.0f };
 
     ObjectModel = std::make_unique<Model>();
     ObjectModel->Initialize("resources/skydone", "Selectskydome.obj"); // 指定したパターンに
@@ -49,8 +51,8 @@ void stageSelectUI::Initialize()
     playerObject3d_ = std::make_unique<Object3d>();
     playerObject3d_->Initialize();
 
-    currentPlanetPos_ = Vector3(stagePos[0].x, stagePos[0].y, 0.0f);
-    currentPlanetPos_ = Vector3(stagePos[0].x, stagePos[0].y, 0.0f);
+    currentPlanetPos_ = Vector3(stagePos[0].x, stagePos[0].y - 1.0f, 0.0f);
+    currentPlanetPos_ = Vector3(stagePos[0].x, stagePos[0].y - 1.0f, 0.0f);
     targetPlanetPos_ = currentPlanetPos_;
 
     playerObjectModel = std::make_unique<Model>();
@@ -60,6 +62,18 @@ void stageSelectUI::Initialize()
     playerObject3d_->SetTranslate(currentPlanetPos_);
     playerObject3d_->SetScale(Vector3(1.0f, 1.0f, 1.0f));
     playerObject3d_->SetRotate(Vector3(0.0f, 0.0f, 0.0f));
+
+    // 拠点
+    baseLabObject3d_ = std::make_unique<Object3d>();
+    baseLabObject3d_->Initialize();
+
+    baseLabObjectModel_ = std::make_unique<Model>();
+    baseLabObjectModel_->Initialize("resources/stage", "baseLab.obj"); // 指定したパターンに
+    baseLabObject3d_->SetModel(baseLabObjectModel_.get());
+
+    baseLabObject3d_->SetTranslate(currentPlanetPos_);
+    baseLabObject3d_->SetScale(Vector3(1.0f, 1.0f, 1.0f));
+    baseLabObject3d_->SetRotate(Vector3(0.0f, 0.0f, 0.0f));
 
     // ステージスプライトを表示
     std::array<std::string, maxStage> stageTexturePaths = {
@@ -105,6 +119,7 @@ void stageSelectUI::Update(float deltaTime)
     transition_->Update(deltaTime);
 
     playerObject3d_->Update();
+    baseLabObject3d_->Update();
     UI->Update();
     for (int i = 0; i < maxStage; i++) {
         object3d_[i]->Update();
@@ -116,6 +131,7 @@ void stageSelectUI::Draw()
 {
 
     playerObject3d_->Draw();
+    baseLabObject3d_->Draw();
 
     for (int i = 0; i < maxStage; i++) {
         object3d_[i]->Draw();
@@ -124,7 +140,9 @@ void stageSelectUI::Draw()
 
 void stageSelectUI::SpriteDraw()
 {
-
+    if (state_ != State::kSelect) {
+        return;
+    }
     int idx = std::clamp(stageNumber_ - 1, 0, maxStage - 1);
     stageSprite[idx]->Draw();
 
@@ -138,7 +156,7 @@ void stageSelectUI::ChangeStage(int stageIndex)
 
     startPlanetPos_ = currentPlanetPos_;
     // 選択された惑星の手前に機体を移動させる
-    targetPlanetPos_ = Vector3(stagePos[idx].x, stagePos[idx].y, -2.0f);
+    targetPlanetPos_ = Vector3(stagePos[idx].x, stagePos[idx].y - 1.0f, -2.0f);
 
     uiAnimTimer_ = 0.0f;
     moveTimer_ = 0.0f;
@@ -213,10 +231,10 @@ void stageSelectUI::SelectUpdate(float deltaTime)
     }
 
     // キーボード入力
-    if (input->TriggerKey(DIK_D) || input->TriggerKey(DIK_RIGHTARROW)) { 
+    if (input->TriggerKey(DIK_D) || input->TriggerKey(DIK_RIGHTARROW)) {
         isRightTriggered = true;
     }
-    if (input->TriggerKey(DIK_A) || input->TriggerKey(DIK_LEFTARROW)) { 
+    if (input->TriggerKey(DIK_A) || input->TriggerKey(DIK_LEFTARROW)) {
         isLeftTriggered = true;
     }
 
@@ -282,6 +300,7 @@ void stageSelectUI::MoveUpdate(float deltaTime)
 
         currentPlanetPos_ = Lerp(startPlanetPos_, targetPlanetPos_, easedT);
         playerObject3d_->SetTranslate(currentPlanetPos_);
+        baseLabObject3d_->SetTranslate(currentPlanetPos_);
 
         if (t >= 1.0f) {
             isMoving_ = false;
@@ -293,6 +312,7 @@ void stageSelectUI::MoveUpdate(float deltaTime)
 
         currentPlanetPos_ = Lerp(startPlanetPos_, targetPlanetPos_, easedT);
         playerObject3d_->SetTranslate(currentPlanetPos_);
+        
     }
 
     for (int i = 0; i < maxStage; i++) {

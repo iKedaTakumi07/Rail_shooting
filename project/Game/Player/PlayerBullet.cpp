@@ -30,9 +30,12 @@ void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vec
     transform_.rotate = rotation;
     transform_.scale = { 1.0f, 1.0f, 1.0f };
 
-    velocity_.x = -std::sin(transform_.rotate.z) * speed_;
+    speed_ = normalSpeed_;
+    deathTimer_ = normalDeathTimer_;
+
+    velocity_.x = std::sin(transform_.rotate.y) * std::cos(transform_.rotate.x) * speed_;
     velocity_.y = -std::sin(transform_.rotate.x) * speed_;
-    velocity_.z = std::cos(transform_.rotate.z) * speed_;
+    velocity_.z = std::cos(transform_.rotate.y) * std::cos(transform_.rotate.x) * speed_;
 
     // 進行方向ベクトルからモデルの向きを計算
     transform_.rotate.y = std::atan2(velocity_.x, velocity_.z);
@@ -233,4 +236,11 @@ int PlayerBullet::GetDamage() const
 
 void PlayerBullet::SpawnImpact()
 {
+}
+
+void PlayerBullet::UpdateVelocity()
+{
+    velocity_.x = std::sin(transform_.rotate.y) * std::cos(transform_.rotate.x) * speed_;
+    velocity_.y = -std::sin(transform_.rotate.x) * speed_;
+    velocity_.z = std::cos(transform_.rotate.y) * std::cos(transform_.rotate.x) * speed_;
 }

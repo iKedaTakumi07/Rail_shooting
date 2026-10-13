@@ -74,6 +74,9 @@ private:
     std::unique_ptr<Model> playerObjectModel; // プレイヤー
     std::unique_ptr<Object3d> playerObject3d_; // プレイヤー
 
+    std::unique_ptr<Model> baseLabObjectModel_; // 拠点
+    std::unique_ptr<Object3d> baseLabObject3d_; // 拠点
+
     Vector3 currentPlanetPos_ { 0.0f, 0.0f, 0.0f }; // 現在座標
     Vector3 startPlanetPos_ { 0.0f, 0.0f, 0.0f }; // 補間開始座標
     Vector3 targetPlanetPos_ { 0.0f, 0.0f, 0.0f }; // 補間目標座標

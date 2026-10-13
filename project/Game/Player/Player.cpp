@@ -307,7 +307,6 @@ void Player::MoveUpdate()
 
     float maxTheoreticalSpeed = currentAccel / (1.0f - kFriction);
 
-
     // 機体の回転量
     float ratioX = std::clamp(velocity_.x / maxTheoreticalSpeed, -1.0f, 1.0f);
     float ratioY = std::clamp(velocity_.y / maxTheoreticalSpeed, -1.0f, 1.0f);
@@ -371,9 +370,17 @@ void Player::HoverUpdate(float length)
 void Player::ReticleUpdate()
 {
     Vector3 forwardDir;
-    forwardDir.x = -std::sin(basetransform_.rotate.z);
+    forwardDir.x = std::sin(basetransform_.rotate.y) * std::cos(basetransform_.rotate.x);
     forwardDir.y = -std::sin(basetransform_.rotate.x);
-    forwardDir.z = std::cos(basetransform_.rotate.z);
+    forwardDir.z = std::cos(basetransform_.rotate.y) * std::cos(basetransform_.rotate.x);
+
+    // ベクトルの正規化
+    float len = std::sqrt(forwardDir.x * forwardDir.x + forwardDir.y * forwardDir.y + forwardDir.z * forwardDir.z);
+    if (len > 0.0f) {
+        forwardDir.x /= len;
+        forwardDir.y /= len;
+        forwardDir.z /= len;
+    }
 
     Vector3 shortPos;
     shortPos.x = basetransform_.translate.x + (forwardDir.x * kShortDistancePlayerTo3DReticle);
@@ -398,11 +405,19 @@ void Player::BulletUpdate()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
 
-    // べく鳥
+    // バクとる
     Vector3 forwardDir;
-    forwardDir.x = -std::sin(basetransform_.rotate.z);
+    forwardDir.x = std::sin(basetransform_.rotate.y) * std::cos(basetransform_.rotate.x);
     forwardDir.y = -std::sin(basetransform_.rotate.x);
-    forwardDir.z = std::cos(basetransform_.rotate.z);
+    forwardDir.z = std::cos(basetransform_.rotate.y) * std::cos(basetransform_.rotate.x);
+
+    // ベクトルの正規化
+    float len = std::sqrt(forwardDir.x * forwardDir.x + forwardDir.y * forwardDir.y + forwardDir.z * forwardDir.z);
+    if (len > 0.0f) {
+        forwardDir.x /= len;
+        forwardDir.y /= len;
+        forwardDir.z /= len;
+    }
 
     bool isChargePushed = Input::GetInstance()->PushKey(DIK_SPACE) || (Input::GetInstance()->GetRightTrigger() > kTriggerThreshold);
     if (isChargePushed) {
