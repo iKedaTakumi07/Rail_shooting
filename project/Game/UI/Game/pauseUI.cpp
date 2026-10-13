@@ -45,7 +45,7 @@ void pauseUI::Update()
 {
     auto* input = Input::GetInstance();
 
-    if (input->TriggerKey(DIK_ESCAPE)) {
+    if (input->TriggerKey(DIK_ESCAPE) || input->TriggerButton(XINPUT_GAMEPAD_START)) {
         // ポーズ画面ON,OFF
         isPause = !isPause;
         nowChoice = isPause ? State::kGameReturn : State::kNull;
@@ -98,9 +98,19 @@ void pauseUI::PauseUpdate()
         ReturnSelect->SetSize(returnSelectBaseSize_);
 
         // ポーズ解除又は移動キー
-        if (input->TriggerKey(DIK_S)) {
+        if (input->IsControllerConnected()) {
+            Vector2 leftStick = input->GetLeftStick();
+
+            bool isStickDown = (leftStick.y < -0.5f) && (prevStickY_ >= -0.5f);
+            prevStickY_ = leftStick.y;
+            if (isStickDown) {
+                nowChoice = State::kReset;
+            }
+        }
+
+        if (input->TriggerKey(DIK_S) || input->TriggerButton(XINPUT_GAMEPAD_DPAD_DOWN)) {
             nowChoice = State::kReset;
-        } else if (input->TriggerKey(DIK_RETURN)) {
+        } else if (input->TriggerKey(DIK_RETURN) || input->TriggerButton(XINPUT_GAMEPAD_A)) {
             isPause = false;
             nowChoice = State::kNull;
         }
@@ -111,11 +121,25 @@ void pauseUI::PauseUpdate()
         ReturnSelect->SetSize(returnSelectBaseSize_);
 
         // 再トライ
-        if (input->TriggerKey(DIK_W)) {
+        if (input->IsControllerConnected()) {
+            Vector2 leftStick = input->GetLeftStick();
+
+            bool isStickDown = (leftStick.y < -0.5f) && (prevStickY_ >= -0.5f);
+            bool isStickUp = (leftStick.y > 0.5f) && (prevStickY_ <= 0.5f);
+
+            prevStickY_ = leftStick.y;
+            if (isStickDown) {
+                nowChoice = State::kReturnSelect;
+            } else if (isStickUp) {
+                nowChoice = State::kGameReturn;
+            }
+        }
+
+        if (input->TriggerKey(DIK_W) || input->TriggerButton(XINPUT_GAMEPAD_DPAD_UP)) {
             nowChoice = State::kGameReturn;
-        } else if (input->TriggerKey(DIK_RETURN)) {
+        } else if (input->TriggerKey(DIK_RETURN) || input->TriggerButton(XINPUT_GAMEPAD_A)) {
             isResetOrder = true;
-        } else if (input->TriggerKey(DIK_S)) {
+        } else if (input->TriggerKey(DIK_S) || input->TriggerButton(XINPUT_GAMEPAD_DPAD_DOWN)) {
             nowChoice = State::kReturnSelect;
         }
         break;
@@ -125,9 +149,20 @@ void pauseUI::PauseUpdate()
         ReturnSelect->SetSize(Vector2(returnSelectBaseSize_.x * Size, returnSelectBaseSize_.y * Size));
 
         // ステージ選択
-        if (input->TriggerKey(DIK_W)) {
+        if (input->IsControllerConnected()) {
+            Vector2 leftStick = input->GetLeftStick();
+
+            bool isStickUp = (leftStick.y > 0.5f) && (prevStickY_ <= 0.5f);
+
+            prevStickY_ = leftStick.y;
+            if (isStickUp) {
+                nowChoice = State::kReset;
+            }
+        }
+
+        if (input->TriggerKey(DIK_W) || input->TriggerButton(XINPUT_GAMEPAD_DPAD_UP)) {
             nowChoice = State::kReset;
-        } else if (input->TriggerKey(DIK_RETURN)) {
+        } else if (input->TriggerKey(DIK_RETURN) || input->TriggerButton(XINPUT_GAMEPAD_A)) {
             isSelectOrder = true;
         }
         break;

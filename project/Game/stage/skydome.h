@@ -15,6 +15,8 @@ public:
 
     void Draw();
 
+    void SetTexture(const std::string& maskTexturePath) const;
+
 private:
 private:
     Camera* camera_ = nullptr; // カメラポインタ

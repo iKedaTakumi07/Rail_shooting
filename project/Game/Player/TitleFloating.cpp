@@ -109,12 +109,12 @@ void TitleFloating::SortieUpdate(float deltaTime)
     } else {
         transform_.translate = PrePos_;
 
-        // 溜2.0f~1.0f
-        std::uniform_real_distribution<float> Posdist(-0.1f, 0.1f);
+        // 溜2.0f~1.5f
+        std::uniform_real_distribution<float> Posdist(-0.05f, 0.05f);
         transform_.translate += { Posdist(randomEngine), Posdist(randomEngine), Posdist(randomEngine) };
 
         // 回転を戻す
-        float progress = 1.0f - ((SortieTimer - 1.0f) / (kSortieTimer - 1.0f));
+        float progress = 1.0f - ((SortieTimer - 1.5f) / (kSortieTimer - 1.5f));
         progress = std::clamp(progress, 0.0f, 1.0f);
 
         float easeT = EaseOutCubic(progress);

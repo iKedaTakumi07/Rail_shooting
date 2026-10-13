@@ -48,3 +48,9 @@ void SceneTransition::Update(float deltaTime)
         PostProcess::GetInstance()->SetDissolve(false);
     }
 }
+
+void SceneTransition::SetMask(const std::string& maskTexturePath) const
+{
+    PostProcess::GetInstance()->AddMaskTexture(maskTexturePath);
+    PostProcess::GetInstance()->SetDissolveMaskTexture(maskTexturePath);
+}

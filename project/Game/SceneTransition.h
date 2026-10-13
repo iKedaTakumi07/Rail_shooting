@@ -16,6 +16,7 @@ public:
 
     bool IsFinished() const { return isFinished_; }
     State GetState() const { return currentState_; }
+    void SetMask(const std::string& maskTexturePath) const;
 
 private:
     State currentState_ = State::None;

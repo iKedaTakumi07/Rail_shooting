@@ -26,7 +26,7 @@ void stageSelectUI::Initialize()
 
     // フェード
     transition_ = std::make_unique<SceneTransition>();
-    transition_->Initialize("resources/noise3.png");
+    transition_->Initialize("resources/noise5.png");
     transition_->Start(SceneTransition::State::In, 1.0f);
 
     // 惑星の座標

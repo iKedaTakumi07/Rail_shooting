@@ -64,6 +64,10 @@ void TitleUI::Draw()
 
 void TitleUI::SpriteDraw()
 {
+    if (isLock) {
+        return;
+    }
+
     TitleScene_->Draw();
 
     titleSelect_->Draw();

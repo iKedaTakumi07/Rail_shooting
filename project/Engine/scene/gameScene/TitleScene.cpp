@@ -22,6 +22,7 @@
 
 #include "../../io/Input.h"
 
+#include "../../../Game/Particle/GalaxyParticle.h"
 #include "../../../Game/Player/TitleFloating.h"
 #include "../../../Game/SceneTransition.h"
 #include "../../../Game/UI/Title/TitleUI.h"
@@ -63,13 +64,19 @@ void TitleScene::Initialize()
     ModelManager::GetInstance()->LoadModel("human/sneakWalk.gltf");
 
     Transition_ = std::make_unique<SceneTransition>();
-    Transition_->Initialize("resources/noise2.png");
+    Transition_->Initialize("resources/noise5.png");
+
+    galaxyParticle_ = std::make_unique<GalaxyParticle>();
+    galaxyParticle_->Initialize();
+
+    particleTimer_ = 0.0f;
 
     titleUI_ = std::make_unique<TitleUI>();
     titleUI_->Initialize();
 
     skydome_ = std::make_unique<skydome>();
     skydome_->Initialize();
+    skydome_->SetTexture("resources/skydone/sky_night.png");
 
     TitleFloating_ = std::make_unique<TitleFloating>();
     TitleFloating_->Initialize();
@@ -79,7 +86,7 @@ void TitleScene::Initialize()
     meteorite_ = std::make_unique<Meteorite>();
     meteorite_->Initialize();
 
-    Transition_->Start(SceneTransition::State::In, 0.1f);
+    Transition_->Start(SceneTransition::State::In, 1.0f);
 }
 
 void TitleScene::Finalize()
@@ -90,6 +97,8 @@ void TitleScene::Update()
 {
     auto* input = Input::GetInstance();
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+    auto* camera = CameraManager::GetInstance()->GetActiveCamera();
+    CameraPos = camera->GetTranslate();
 
 #ifdef USE_IMGUI
     if (input->TriggerKey(DIK_9)) {
@@ -118,6 +127,7 @@ void TitleScene::Update()
     if (!isChange) {
         if (titleUI_->GetIsStartGame()) {
             isChange = true;
+            Transition_->SetMask("resources/noise4.png");
             Transition_->Start(SceneTransition::State::Out, SceneChangeTimer);
 
             Vector3 pos = TitleFloating_->GetPosition();
@@ -138,10 +148,21 @@ void TitleScene::Update()
 
     // x座標だけ追尾
     if (!TitleFloating_->GetIntro() && !TitleFloating_->GetSortie()) {
-        auto camera = CameraManager::GetInstance()->GetActiveCamera();
-        CameraPos = camera->GetTranslate();
+
         CameraPos.x = TitleFloating_->GetPosition().x;
         CameraManager::GetInstance()->GetActiveCamera()->SetTranslate(CameraPos);
+    }
+
+    // 星の輝きをパーティクルで再現
+    particleTimer_ += deltaTime;
+    if (particleTimer_ >= 0.5f) {
+        Vector3 TragetPosMax = { CameraPos.x + 100.0f, CameraPos.y + 100.0f, 200.0f };
+        Vector3 TragetPosMin = { CameraPos.x - 100.0f, CameraPos.y - 100.0f, 100.0f };
+        galaxyParticle_->SetMaxPos(TragetPosMax);
+        galaxyParticle_->SetMinPos(TragetPosMin);
+
+        particleTimer_ -= 0.5f;
+        galaxyParticle_->NewParticle();
     }
 }
 
