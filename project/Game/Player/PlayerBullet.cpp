@@ -64,8 +64,8 @@ void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vec
     // PointLight登録
     pointLight_.color = Vector4(0.2f, 1.0f, 0.2f, 1.0f);
     pointLight_.position = transform_.translate;
-    pointLight_.intensity = 3.0f;
-    pointLight_.radius = 6.0f;
+    pointLight_.intensity = 2.0f;
+    pointLight_.radius = 3.0f;
     pointLight_.decay = 1.0f;
     pointLight_.active = 1;
 

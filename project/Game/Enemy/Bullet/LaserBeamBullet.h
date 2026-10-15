@@ -1,6 +1,7 @@
 #pragma once
 #include "../base/baseEnemyBullet.h"
 
+#include "../../../Engine/3d/LightManager.h"
 #include "../../../Engine/3d/Model.h"
 #include "../../../Engine/3d/Object3d.h"
 #include "../../../Engine/base/Math.h"
@@ -11,6 +12,9 @@
 class Player;
 class LaserBeamBullet : public baseEnemyBullet {
 public:
+    LaserBeamBullet();
+    ~LaserBeamBullet() override; // デストラクタ宣言
+
     void Initialize(Vector3 pos, const Vector3& rotation) override;
 
     void Update(float deltaTime) override;
@@ -35,14 +39,15 @@ public:
 private:
     // 移動更新するならここに書く
 private:
-    Transform transform_;
+    Transform transform_ { };
+    PointLigth pointLight_ { }; // 敵弾固有の PointLight パラメータ
 
     // 3dモデル
     std::unique_ptr<Model> model;
     std::unique_ptr<Object3d> object3d;
 
-    Vector3 FromPos_;
-    Vector3 ToPos_;
+    Vector3 FromPos_ { };
+    Vector3 ToPos_ { };
     float laserRadius_ = 0.25f;
 
     // 当たり判定

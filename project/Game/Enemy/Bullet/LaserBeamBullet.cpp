@@ -12,6 +12,14 @@
 #include "../../Particle/LaserParticle.h"
 #include "../../Player/Player.h"
 
+LaserBeamBullet::LaserBeamBullet() = default;
+
+LaserBeamBullet::~LaserBeamBullet()
+{
+    // 弾破棄時に自動解約
+    LightManager::GetInstance()->UnregisterPointLight(&pointLight_);
+}
+
 void LaserBeamBullet::Initialize(Vector3 pos, const Vector3& rotation)
 {
     TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
@@ -39,6 +47,17 @@ void LaserBeamBullet::Initialize(Vector3 pos, const Vector3& rotation)
     enemyLaserParticle_->SetEndColor(Vector4(1.0f, 0.2f, 0.2f, 0.0f));
 
     isDead_ = false;
+
+    // 光源セット
+    pointLight_.color = Vector4(1.0f, 0.2f, 0.2f, 1.0f);
+    pointLight_.position = transform_.translate;
+    pointLight_.intensity = 2.5f;
+    pointLight_.radius = 5.0f;
+    pointLight_.decay = 1.0f;
+    pointLight_.active = 1;
+
+    // LightManager に登録
+    LightManager::GetInstance()->RegisterPointLight(&pointLight_);
 }
 
 void LaserBeamBullet::Update(float deltaTime)
@@ -73,6 +92,7 @@ void LaserBeamBullet::Update(float deltaTime)
         length * 0.5f
     };
 
+    pointLight_.position = transform_.translate;
     object3d->SetTranslate(transform_.translate);
     object3d->SetRotate(transform_.rotate);
     object3d->SetScale(transform_.scale);

@@ -4,14 +4,17 @@
 #include "../../../Engine/3d/Model.h"
 #include "../../../Engine/3d/Object3d.h"
 #include "../../../Engine/base/Math.h"
+#include "../../OnCollison/Collider.h"
 #include "../../Particle/LaserParticle.h"
 #include <memory>
-#include "../../OnCollison/Collider.h"
 
 class Player;
 
 class EnemyHomingBullet : public baseEnemyBullet {
 public:
+    EnemyHomingBullet();
+    ~EnemyHomingBullet() override;
+
     void Initialize(Vector3 pos, const Vector3& rotation) override;
 
     void Update(float deltaTime) override;
@@ -39,12 +42,13 @@ private:
     void CheckCameraCulling(); // カリング処理
 
 private:
-    Transform transform_;
+    Transform transform_ { };
+    PointLigth pointLight_ { }; // 敵弾固有の PointLight パラメータ
 
     // 当たり判定
     float size = 0.5f; // OBBに移植後は知らん。
 
-    Vector3 acceleration_; // 弾の速さ(個別で設定)
+    Vector3 acceleration_ { }; // 弾の速さ(個別で設定)
     float accelerationScalar = 0.15f; // 加速度の強さ
     Vector3 velocity_ = { 0.0f, 0.0f, 0.0f }; // 移動ベクトル
     static inline const float maxSpeed = 0.80f; // 弾の最高速度(青天井でおk)
@@ -58,7 +62,7 @@ private:
 
     int dameg_ = 2;
 
-    Vector3 targetPos_; // 追跡対象、または狙う場所
+    Vector3 targetPos_ { }; // 追跡対象、または狙う場所
 
     // 3dモデル
     std::unique_ptr<Model> model;
