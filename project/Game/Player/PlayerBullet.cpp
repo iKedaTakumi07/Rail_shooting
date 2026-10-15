@@ -13,6 +13,12 @@
 #include "../Particle/LaserParticle.h"
 #include "../Particle/chargeParticle.h"
 
+PlayerBullet::PlayerBullet() = default;
+PlayerBullet::~PlayerBullet()
+{
+    LightManager::GetInstance()->UnregisterPointLight(&pointLight_);
+}
+
 void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vector3& rotation)
 {
     TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
@@ -49,11 +55,23 @@ void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vec
     object3d->SetTranslate(transform_.translate);
     object3d->SetRotate(renderRotate);
 
+    // トレイルエフェクト
     laserParticle_ = std::make_unique<LaserParticle>();
     laserParticle_->Initialize();
     laserParticle_->SetStartColor(Vector4(0.5f, 1.0f, 0.5f, 1.0f));
     laserParticle_->SetEndColor(Vector4(0.5f, 1.0f, 0.5f, 0.0f));
 
+    // PointLight登録
+    pointLight_.color = Vector4(0.2f, 1.0f, 0.2f, 1.0f);
+    pointLight_.position = transform_.translate;
+    pointLight_.intensity = 3.0f;
+    pointLight_.radius = 6.0f;
+    pointLight_.decay = 1.0f;
+    pointLight_.active = 1;
+
+    LightManager::GetInstance()->RegisterPointLight(&pointLight_);
+
+    // チャージショット用のパーティクル
     chargeParticle_ = std::make_unique<chargeParticle>();
     chargeParticle_->Initialize();
 }
@@ -140,6 +158,8 @@ void PlayerBullet::Update(float deltaTime)
     rotate.x = atan2(-velocity_.y, hypotXZ);
     rotate.z = 0.0f;
     transform_.rotate = rotate;
+
+    pointLight_.position = transform_.translate;
 
     object3d->SetTranslate(transform_.translate);
     object3d->SetRotate(transform_.rotate);

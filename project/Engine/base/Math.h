@@ -199,6 +199,7 @@ struct PointLigth {
     float radius; // ライトの届く最大距離
     float decay; // 減衰率
     int32_t active;
+    float padding;
 };
 
 struct AccelerationField {

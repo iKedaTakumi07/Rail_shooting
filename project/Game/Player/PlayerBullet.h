@@ -1,4 +1,5 @@
 #pragma once
+#include "../../Engine/3d/LightManager.h"
 #include "../../Engine/3d/Model.h"
 #include "../../Engine/3d/Object3d.h"
 #include "../../Engine/base/Math.h"
@@ -13,6 +14,9 @@ class EnemyManager;
 
 class PlayerBullet : public Collider {
 public:
+    PlayerBullet();
+    ~PlayerBullet() override;
+
     void Initialize(Camera* camera, const Vector3& position, const Vector3& rotation);
 
     void Update(float deltaTime);
@@ -88,6 +92,8 @@ private:
     int Dameg = 2;
     int ChageDameg = 10;
     int life = 2;
+
+    PointLigth pointLight_ { };
 
     // 3dモデル
     std::unique_ptr<Model> model;

@@ -1,5 +1,7 @@
 #include "object3d.hlsli"
 
+static const uint kMaxPointLights = 64;
+
 struct Material
 {
     float32_t4 color;
@@ -24,11 +26,19 @@ struct PointLight
 {
     float32_t4 color; // 色
     float32_t3 position; // 位置
-    float intensity; // 輝度
-    float radius; // ライトの届く最大距離
-    float decay; // 減衰率
-    int32_t active;
+    float32_t intensity; // 輝度
+    float32_t radius; // ライトの届く最大距離
+    float32_t decay; // 減衰率
+    int32_t active; // 有効フラグ
+    float32_t padding; // 16バイトアライメント調整用
 };
+struct PointLightGroup
+{
+    PointLight pointLights[kMaxPointLights];
+    int32_t numPointLights;
+    float32_t3 padding; // 16バイトアライメント調整用
+};
+
 struct SpotLigth
 {
     float32_t4 color; // ライトの色
@@ -48,7 +58,7 @@ TextureCube<float32_t4> gEnvironmentTexture : register(t1);
 ConstantBuffer<Material> gMaterial : register(b0);
 ConstantBuffer<DirectionalLight> gDirectionalLight : register(b1);
 ConstantBuffer<Camera> gCamera : register(b2);
-ConstantBuffer<PointLight> gPointLight : register(b3);
+ConstantBuffer<PointLightGroup> gPointLightGroup : register(b3);
 ConstantBuffer<SpotLigth> gSpotLigth : register(b4);
 SamplerState gSampler : register(s0);
 
@@ -99,23 +109,27 @@ PixelShaderOutput main(VertexShaderOutput input)
     }
     
        /* pointLight */
-    if (gPointLight.active != 0)
+    for (int i = 0; i < gPointLightGroup.numPointLights; ++i)
     {
-        // 入射光 
-        float32_t3 pointLightDirection = normalize(gPointLight.position - input.worldPosition);
-        // ポイントライトへの距離
-        float32_t distance = length(gPointLight.position - input.worldPosition);
-        // 逆二乗則による減衰係数
-        float32_t factor = pow(saturate(-distance / gPointLight.radius + 1.0), gPointLight.decay);
-        
-        float NdotL_pt = saturate(dot(input.normal, pointLightDirection));
-        totalDiffuse += gMaterial.color.rgb * textureColor.rgb * gPointLight.color.rgb * gPointLight.intensity * factor * NdotL_pt;
+        if (gPointLightGroup.pointLights[i].active != 0)
+        {
+            // ポイントライトへの方向ベクトルと距離
+            float32_t3 pointLightDirection = normalize(gPointLightGroup.pointLights[i].position - input.worldPosition);
+            float32_t distance = length(gPointLightGroup.pointLights[i].position - input.worldPosition);
+            
+            // 距離減衰
+            float32_t factor = pow(saturate(-distance / gPointLightGroup.pointLights[i].radius + 1.0), gPointLightGroup.pointLights[i].decay);
+            
+            // 拡散反射
+            float NdotL_pt = saturate(dot(normalize(input.normal), pointLightDirection));
+            totalDiffuse += gMaterial.color.rgb * textureColor.rgb * gPointLightGroup.pointLights[i].color.rgb * gPointLightGroup.pointLights[i].intensity * factor * NdotL_pt;
 
-        // --- 鏡面反射 (Blinn-Phong) ---
-        float32_t3 halfVector_pt = normalize(pointLightDirection + toEye);
-        float NDotH_pt = saturate(dot(input.normal, halfVector_pt));
-        float specularPow_pt = pow(NDotH_pt, gMaterial.shininess);
-        totalSpecular += gPointLight.color.rgb * gPointLight.intensity * factor * specularPow_pt;
+            // 鏡面反射 (Blinn-Phong)
+            float32_t3 halfVector_pt = normalize(pointLightDirection + toEye);
+            float NDotH_pt = saturate(dot(normalize(input.normal), halfVector_pt));
+            float specularPow_pt = pow(NDotH_pt, gMaterial.shininess);
+            totalSpecular += gPointLightGroup.pointLights[i].color.rgb * gPointLightGroup.pointLights[i].intensity * factor * specularPow_pt;
+        }
     }
     
        /* spotLigth */
@@ -171,7 +185,7 @@ PixelShaderOutput main(VertexShaderOutput input)
     }
     
     bool isAnyLightActive = (gDirectionalLight.active != 0) ||
-                            (gPointLight.active != 0) ||
+                          (gPointLightGroup.numPointLights > 0) ||
                             (gSpotLigth.active != 0) ||
                             (gMaterial.enableEnvironmentMap != 0);
     
