@@ -121,6 +121,8 @@ private:
     const float kCoolTime = 0.20f;
     float coolTime = 0.0f;
     // チャージショット
+    static constexpr float kTriggerThreshold = 0.1f; // 閾値
+
     float chargeTimer_ = 0.0f; // チャージ時間
     const float kChargeTime = 1.0f; // チャージ完了までの時間
     const float kLockonAngleThreshold = 0.99f; // ロックオン範囲(円錐)<0.0fが90°,0.99fが約11°>

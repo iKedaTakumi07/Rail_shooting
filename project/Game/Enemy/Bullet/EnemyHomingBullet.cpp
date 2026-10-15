@@ -11,6 +11,13 @@
 #include "../../Particle/LaserParticle.h"
 #include "../../Player/Player.h"
 
+EnemyHomingBullet::EnemyHomingBullet() = default;
+
+EnemyHomingBullet::~EnemyHomingBullet()
+{
+    LightManager::GetInstance()->UnregisterPointLight(&pointLight_);
+}
+
 void EnemyHomingBullet::Initialize(Vector3 pos, const Vector3& rotation)
 {
     TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
@@ -35,6 +42,17 @@ void EnemyHomingBullet::Initialize(Vector3 pos, const Vector3& rotation)
     laserParticle_->Initialize();
     laserParticle_->SetStartColor(Vector4(1.0f, 0.2f, 0.2f, 1.0f));
     laserParticle_->SetEndColor(Vector4(1.0f, 0.2f, 0.2f, 0.0f));
+
+    // 光源セット
+    pointLight_.color = Vector4(1.0f, 0.2f, 0.2f, 1.0f);
+    pointLight_.position = transform_.translate;
+    pointLight_.intensity = 2.5f;
+    pointLight_.radius = 5.0f;
+    pointLight_.decay = 1.0f;
+    pointLight_.active = 1;
+
+    // LightManager に登録
+    LightManager::GetInstance()->RegisterPointLight(&pointLight_);
 }
 
 void EnemyHomingBullet::Update(float deltaTime)
@@ -47,6 +65,7 @@ void EnemyHomingBullet::Update(float deltaTime)
         isDead_ = true;
     }
 
+    pointLight_.position = transform_.translate;
     object3d->SetTranslate(transform_.translate);
     object3d->SetRotate(transform_.rotate);
     object3d->Update();

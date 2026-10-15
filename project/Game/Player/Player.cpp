@@ -246,15 +246,33 @@ void Player::MoveUpdate()
         inputDir.y -= 1.0f;
     }
 
-    // 正規化
-    float length = std::sqrt(inputDir.x * inputDir.x + inputDir.y * inputDir.y);
-    if (length > 0.0f) {
-        inputDir.x /= length;
-        inputDir.y /= length;
+    // コントローラー
+    if (Input::GetInstance()->IsControllerConnected()) {
+        Vector2 leftStick = Input::GetInstance()->GetLeftStick();
+        inputDir.x += leftStick.x;
+        inputDir.y += leftStick.y;
     }
 
-    // 高速旋回
-    bool isShift = Input::GetInstance()->PushKey(DIK_LSHIFT) || Input::GetInstance()->PushKey(DIK_RSHIFT);
+    // 正規化
+    float length = std::sqrt(inputDir.x * inputDir.x + inputDir.y * inputDir.y);
+    if (length > 1.0f) {
+        inputDir.x /= length;
+        inputDir.y /= length;
+        length = 1.0f;
+    }
+
+    // shift又はLB/RBで高速旋回
+    bool isShift = false;
+    bool isLB = false;
+    bool isRB = false;
+    if (Input::GetInstance()->PushKey(DIK_LSHIFT) || Input::GetInstance()->PushButton(XINPUT_GAMEPAD_LEFT_SHOULDER)) {
+        isShift = true;
+        isLB = true;
+    }
+    if (Input::GetInstance()->PushKey(DIK_RSHIFT) || Input::GetInstance()->PushButton(XINPUT_GAMEPAD_RIGHT_SHOULDER)) {
+        isShift = true;
+        isRB = true;
+    }
 
     float currentAccel = isShift ? kAcceleration * shiftUpSpeed : kAcceleration; // 加速度
     float currentMaxSpeed = isShift ? kCharacterSpeed * shiftUpSpeed : kCharacterSpeed; // 速度
@@ -289,21 +307,28 @@ void Player::MoveUpdate()
 
     float maxTheoreticalSpeed = currentAccel / (1.0f - kFriction);
 
+    // 機体の回転量
     float ratioX = std::clamp(velocity_.x / maxTheoreticalSpeed, -1.0f, 1.0f);
     float ratioY = std::clamp(velocity_.y / maxTheoreticalSpeed, -1.0f, 1.0f);
 
-    float targetRotateX = 0.0f; // Pitch (X軸回転)
+    float rollRatio = ratioX;
+    if (isLB && !isRB) {
+        rollRatio = -1.0f; // 左傾き
+    } else if (isRB && !isLB) {
+        rollRatio = 1.0f; // 右傾き
+    }
+
+    float targetRotateX = -ratioY * kMaxPitchAngle; // Pitch (X軸回転)
     float targetRotateY = 0.0f; // Yaw   (Y軸回転)
     float targetRotateZ = 0.0f; // Roll  (Z軸回転)
 
+    // シフトを押している場合ロールを90°傾ける
     if (isShift) {
-        targetRotateX = -ratioY * kMaxPitchAngle;
-        targetRotateY = (ratioX * kMaxYawAngle) * kShiftYawFactor;
-        targetRotateZ = -ratioX * kMaxRollShift;
+        targetRotateY = (rollRatio * kMaxYawAngle) * kShiftYawFactor;
+        targetRotateZ = -rollRatio * kMaxRollShift;
     } else {
-        targetRotateX = -ratioY * kMaxPitchAngle;
-        targetRotateY = ratioX * kMaxYawAngle;
-        targetRotateZ = -ratioX * kMaxRollNormal;
+        targetRotateY = rollRatio * kMaxYawAngle;
+        targetRotateZ = -rollRatio * kMaxRollNormal;
     }
 
     // 補間処理 (フレームレート非依存)
@@ -345,9 +370,17 @@ void Player::HoverUpdate(float length)
 void Player::ReticleUpdate()
 {
     Vector3 forwardDir;
-    forwardDir.x = -std::sin(basetransform_.rotate.z);
+    forwardDir.x = std::sin(basetransform_.rotate.y) * std::cos(basetransform_.rotate.x);
     forwardDir.y = -std::sin(basetransform_.rotate.x);
-    forwardDir.z = std::cos(basetransform_.rotate.z);
+    forwardDir.z = std::cos(basetransform_.rotate.y) * std::cos(basetransform_.rotate.x);
+
+    // ベクトルの正規化
+    float len = std::sqrt(forwardDir.x * forwardDir.x + forwardDir.y * forwardDir.y + forwardDir.z * forwardDir.z);
+    if (len > 0.0f) {
+        forwardDir.x /= len;
+        forwardDir.y /= len;
+        forwardDir.z /= len;
+    }
 
     Vector3 shortPos;
     shortPos.x = basetransform_.translate.x + (forwardDir.x * kShortDistancePlayerTo3DReticle);
@@ -372,14 +405,22 @@ void Player::BulletUpdate()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
 
-    // べく鳥
+    // バクとる
     Vector3 forwardDir;
-    forwardDir.x = -std::sin(basetransform_.rotate.z);
+    forwardDir.x = std::sin(basetransform_.rotate.y) * std::cos(basetransform_.rotate.x);
     forwardDir.y = -std::sin(basetransform_.rotate.x);
-    forwardDir.z = std::cos(basetransform_.rotate.z);
+    forwardDir.z = std::cos(basetransform_.rotate.y) * std::cos(basetransform_.rotate.x);
 
-    bool isSpacePushed = Input::GetInstance()->PushKey(DIK_SPACE);
-    if (isSpacePushed) {
+    // ベクトルの正規化
+    float len = std::sqrt(forwardDir.x * forwardDir.x + forwardDir.y * forwardDir.y + forwardDir.z * forwardDir.z);
+    if (len > 0.0f) {
+        forwardDir.x /= len;
+        forwardDir.y /= len;
+        forwardDir.z /= len;
+    }
+
+    bool isChargePushed = Input::GetInstance()->PushKey(DIK_SPACE) || (Input::GetInstance()->GetRightTrigger() > kTriggerThreshold);
+    if (isChargePushed) {
         // チャージ
         chargeTimer_ += deltaTime;
 

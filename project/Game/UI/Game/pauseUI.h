@@ -32,6 +32,8 @@ private:
     bool isResetOrder = false; // リトライするか
     bool isSelectOrder = false; // セレクトシーンに戻るか
 
+    float prevStickY_ = 0.0f;
+
     // UI(スプライト)
     std::unique_ptr<Sprite> PauseUI1;
     std::unique_ptr<Sprite> GameReturn;

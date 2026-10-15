@@ -32,6 +32,9 @@ void TitleFloating::Initialize()
 
     playerPowerUnitLaser_ = std::make_unique<PlayerPowerUnitLaser>();
     playerPowerUnitLaser_->Initialize();
+
+    sonicBoomParticle_ = std::make_unique<sonicBoomParticle>();
+    sonicBoomParticle_->Initialize();
 }
 
 void TitleFloating::Update()
@@ -98,6 +101,7 @@ void TitleFloating::SortieUpdate(float deltaTime)
 
     // 発進
     if (SortieTimer <= 1.0f) {
+        sonicBoomTimer -= deltaTime;
         PrePos_ = transform_.translate;
 
         float progress = 1.0f - (SortieTimer / (kSortieTimer / 2.0f));
@@ -106,15 +110,21 @@ void TitleFloating::SortieUpdate(float deltaTime)
         float easeT = EaseOutCubic(progress);
 
         transform_.translate = Lerp(StartPos, EndPos, easeT);
+
+        if (sonicBoomTimer <= 0.0f) {
+            sonicBoomParticle_->NewParticle(PrePos_, transform_.translate);
+            sonicBoomTimer = ksonicBoomTimer;
+        }
+
     } else {
         transform_.translate = PrePos_;
 
-        // 溜2.0f~1.0f
-        std::uniform_real_distribution<float> Posdist(-0.1f, 0.1f);
+        // 溜2.0f~1.5f
+        std::uniform_real_distribution<float> Posdist(-0.05f, 0.05f);
         transform_.translate += { Posdist(randomEngine), Posdist(randomEngine), Posdist(randomEngine) };
 
         // 回転を戻す
-        float progress = 1.0f - ((SortieTimer - 1.0f) / (kSortieTimer - 1.0f));
+        float progress = 1.0f - ((SortieTimer - 1.5f) / (kSortieTimer - 1.5f));
         progress = std::clamp(progress, 0.0f, 1.0f);
 
         float easeT = EaseOutCubic(progress);

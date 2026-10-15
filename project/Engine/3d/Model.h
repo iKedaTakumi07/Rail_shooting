@@ -21,6 +21,7 @@ public:
     const ModelData& GetModelData() const { return modelData; }
 
     // Set
+    void SetTextureFilePath(const std::string& textureFilePath) { modelData.material.textureFilePath = textureFilePath; }
     void SetEvnTexturefilePath(std::string texturefilePath) { texturefilePath_ = texturefilePath; }
     void SetMaterialDataEvnironmentCoefficient(float num) { materialData->evnironmentCoefficient = num; }
     void SetMaterialColor(Vector4 color) { materialData->color = color; }

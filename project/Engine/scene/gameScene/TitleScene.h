@@ -11,6 +11,7 @@ class LaserParticle;
 class HitParticle;
 class TitleFloating;
 class TitleUI;
+class GalaxyParticle;
 
 class Model;
 class Object3d;
@@ -42,10 +43,13 @@ private:
     bool isChange = false;
     Vector3 CameraPos = { 0.0f, 0.0f, 0.0f };
 
+    float particleTimer_ = 0.0f;
+
     // 3dモデル
     std::unique_ptr<skydome> skydome_;
     std::unique_ptr<TitleUI> titleUI_;
     std::unique_ptr<SceneTransition> Transition_;
+    std::unique_ptr<GalaxyParticle> galaxyParticle_;
     std::unique_ptr<TitleFloating> TitleFloating_;
     std::unique_ptr<Meteorite> meteorite_;
 };

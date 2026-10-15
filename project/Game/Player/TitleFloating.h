@@ -1,6 +1,7 @@
 #pragma once
 #include "../../../Engine/base/Math.h"
 #include "../Particle/PlayerPowerUnitLaser.h"
+#include "../Particle/sonicBoomParticle.h"
 #include "PlayerBullet.h"
 #include <numbers>
 
@@ -61,6 +62,8 @@ private:
     float IntroTimer = 1.0f;
     float kIntroTimer = 1.0f;
     float SortieTimer = 2.0f;
+    float sonicBoomTimer = 0.1f;
+    const float ksonicBoomTimer = 0.1f;
     float kSortieTimer = 2.0f;
     float patternInterval = 2.0f; // stat切り替え時間
     const float kpatternInterval = 2.0f;
@@ -100,4 +103,5 @@ private:
     std::unique_ptr<Model> playerModel;
     std::unique_ptr<Object3d> playerObject3d;
     std::unique_ptr<PlayerPowerUnitLaser> playerPowerUnitLaser_;
+    std::unique_ptr<sonicBoomParticle> sonicBoomParticle_;
 };

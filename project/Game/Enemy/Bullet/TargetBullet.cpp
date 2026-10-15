@@ -9,6 +9,13 @@
 
 #include "../../Particle/LaserParticle.h"
 
+TargetBullet::TargetBullet() = default;
+
+TargetBullet::~TargetBullet()
+{
+    // 弾破棄時に自動解約
+    LightManager::GetInstance()->UnregisterPointLight(&pointLight_);
+}
 void TargetBullet::Initialize(Vector3 pos, const Vector3& rotation)
 {
     TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
@@ -33,6 +40,17 @@ void TargetBullet::Initialize(Vector3 pos, const Vector3& rotation)
     laserParticle_->Initialize();
     laserParticle_->SetStartColor(Vector4(1.0f, 0.2f, 0.2f, 1.0f));
     laserParticle_->SetEndColor(Vector4(1.0f, 0.2f, 0.2f, 0.0f));
+
+    // 光源セット
+    pointLight_.color = Vector4(1.0f, 0.2f, 0.2f, 1.0f);
+    pointLight_.position = transform_.translate;
+    pointLight_.intensity = 2.5f;
+    pointLight_.radius = 5.0f;
+    pointLight_.decay = 1.0f;
+    pointLight_.active = 1;
+
+    // LightManager に登録
+    LightManager::GetInstance()->RegisterPointLight(&pointLight_);
 }
 
 void TargetBullet::Update(float deltaTime)
@@ -50,6 +68,8 @@ void TargetBullet::Update(float deltaTime)
     object3d->Update();
 
     particleTimer_ += deltaTime;
+
+    pointLight_.position = transform_.translate;
 }
 
 void TargetBullet::Draw()
@@ -80,7 +100,7 @@ AllOBB TargetBullet::GetAllOBB() const
     OBB obb;
     obb.center = transform_.translate;
 
-     Vector3 forward = velocity_;
+    Vector3 forward = velocity_;
     float sqLength = Dot(forward, forward);
 
     if (sqLength == 0.0f) {

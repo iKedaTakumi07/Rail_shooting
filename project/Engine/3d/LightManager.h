@@ -6,11 +6,22 @@
 
 class LightManager {
 public:
+    static constexpr size_t kMaxPointLights = 64;
+
+    struct PointLightGroup {
+        PointLigth pointLights[kMaxPointLights];
+        int32_t numPointLights;
+        float padding[3]; // 16バイトアライメント調整用
+    };
+
     static LightManager* GetInstance();
 
     void Initialize();
     void Update();
     void DrawImGui();
+
+    void RegisterPointLight(PointLigth* light);
+    void UnregisterPointLight(PointLigth* light);
 
     // GPUに渡す用のアドレス取得関数
     D3D12_GPU_VIRTUAL_ADDRESS GetDirectionalLightAddress() const { return directionalLightResource_->GetGPUVirtualAddress(); }
@@ -26,13 +37,6 @@ public:
     {
         if (directionalLightData_) {
             *directionalLightData_ = light;
-        }
-    }
-
-    void SetPointLight(const PointLigth& light)
-    {
-        if (pointLightData_) {
-            *pointLightData_ = light;
         }
     }
 
@@ -58,7 +62,8 @@ private:
 
     // Point Light
     Microsoft::WRL::ComPtr<ID3D12Resource> pointLightResource_;
-    PointLigth* pointLightData_ = nullptr;
+    PointLightGroup* pointLightData_ = nullptr;
+    std::vector<PointLigth*> activePointLights_;
 
     // Spot Light
     Microsoft::WRL::ComPtr<ID3D12Resource> spotLightResource_;

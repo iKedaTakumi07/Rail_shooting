@@ -1,3 +1,5 @@
+#define NOMINMAX
+
 #include "LightManager.h"
 #include "../base/Math.h"
 #include "Object3dCommon.h"
@@ -23,6 +25,18 @@ void LightManager::Update()
 {
     // 正規化など更新系はここに記述
     directionalLightData_->direction = Normalize(directionalLightData_->direction);
+
+    size_t count = std::min(activePointLights_.size(), kMaxPointLights);
+    pointLightData_->numPointLights = static_cast<int32_t>(count);
+
+    for (size_t i = 0; i < kMaxPointLights; ++i) {
+        if (i < count && activePointLights_[i] != nullptr) {
+            pointLightData_->pointLights[i] = *activePointLights_[i];
+            pointLightData_->pointLights[i].active = 1;
+        } else {
+            pointLightData_->pointLights[i].active = 0;
+        }
+    }
 }
 
 void LightManager::DrawImGui()
@@ -42,17 +56,19 @@ void LightManager::DrawImGui()
         ImGui::Unindent();
     }
 
-    // --- Point Light ---
-    if (ImGui::CollapsingHeader("Point Light")) {
+    // --- Point Light(list化中) ---
+    if (ImGui::CollapsingHeader("Point Light (Active List)")) {
         ImGui::Indent();
-        ImGui::ColorEdit4("color##Point", &(pointLightData_->color).x);
-        ImGui::DragFloat3("Position##Point", &pointLightData_->position.x, 0.01f);
-        ImGui::DragFloat("radius##Point", &pointLightData_->radius, 0.01f);
-        ImGui::DragFloat("intensity##Point", &pointLightData_->intensity, 0.01f);
-        ImGui::DragFloat("decay##Point", &pointLightData_->decay, 0.01f);
-        bool isLighting = (pointLightData_->active != 0);
-        if (ImGui::Checkbox("Lightactive##Point", &isLighting)) {
-            pointLightData_->active = isLighting ? 1 : 0;
+        ImGui::Text("Active Lights: %d / %zu", pointLightData_->numPointLights, kMaxPointLights);
+        for (int i = 0; i < pointLightData_->numPointLights; ++i) {
+            std::string label = "Light [" + std::to_string(i) + "]";
+            if (ImGui::TreeNode(label.c_str())) {
+                ImGui::ColorEdit4(("Color##Point" + std::to_string(i)).c_str(), &(pointLightData_->pointLights[i].color).x);
+                ImGui::DragFloat3(("Position##Point" + std::to_string(i)).c_str(), &pointLightData_->pointLights[i].position.x, 0.01f);
+                ImGui::DragFloat(("Intensity##Point" + std::to_string(i)).c_str(), &pointLightData_->pointLights[i].intensity, 0.01f);
+                ImGui::DragFloat(("Radius##Point" + std::to_string(i)).c_str(), &pointLightData_->pointLights[i].radius, 0.01f);
+                ImGui::TreePop();
+            }
         }
         ImGui::Unindent();
     }
@@ -78,6 +94,27 @@ void LightManager::DrawImGui()
 #endif
 }
 
+void LightManager::RegisterPointLight(PointLigth* light)
+{
+    if (!light)
+        return;
+    // 重複登録防止
+    auto it = std::find(activePointLights_.begin(), activePointLights_.end(), light);
+    if (it == activePointLights_.end()) {
+        activePointLights_.push_back(light);
+    }
+}
+
+void LightManager::UnregisterPointLight(PointLigth* light)
+{
+    if (!light)
+        return;
+    auto it = std::find(activePointLights_.begin(), activePointLights_.end(), light);
+    if (it != activePointLights_.end()) {
+        activePointLights_.erase(it);
+    }
+}
+
 void LightManager::directionalLightInitialize()
 {
     auto dxCommon = Object3dCommon::GetInstance()->GetDxCommon();
@@ -95,17 +132,13 @@ void LightManager::directionalLightInitialize()
 void LightManager::pointLightInitialize()
 {
     auto dxCommon = Object3dCommon::GetInstance()->GetDxCommon();
-    pointLightResource_ = dxCommon->CreateBufferResource(sizeof(PointLigth));
-
-    // mapして書き込み
+    pointLightResource_ = dxCommon->CreateBufferResource(sizeof(PointLightGroup));
     pointLightResource_->Map(0, nullptr, reinterpret_cast<void**>(&pointLightData_));
-    // 今回は白を書き込んでみる
-    pointLightData_->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-    pointLightData_->position = Vector3(0.0f, 2.0f, 0.0f);
-    pointLightData_->intensity = 0.0f;
-    pointLightData_->decay = 1.0f;
-    pointLightData_->radius = 0.0f;
-    pointLightData_->active = 0;
+
+    pointLightData_->numPointLights = 0;
+    for (size_t i = 0; i < kMaxPointLights; ++i) {
+        pointLightData_->pointLights[i].active = 0;
+    }
 }
 
 void LightManager::spotLightInitialize()

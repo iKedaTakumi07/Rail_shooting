@@ -13,6 +13,12 @@
 #include "../Particle/LaserParticle.h"
 #include "../Particle/chargeParticle.h"
 
+PlayerBullet::PlayerBullet() = default;
+PlayerBullet::~PlayerBullet()
+{
+    LightManager::GetInstance()->UnregisterPointLight(&pointLight_);
+}
+
 void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vector3& rotation)
 {
     TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
@@ -30,9 +36,12 @@ void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vec
     transform_.rotate = rotation;
     transform_.scale = { 1.0f, 1.0f, 1.0f };
 
-    velocity_.x = -std::sin(transform_.rotate.z) * speed_;
+    speed_ = normalSpeed_;
+    deathTimer_ = normalDeathTimer_;
+
+    velocity_.x = std::sin(transform_.rotate.y) * std::cos(transform_.rotate.x) * speed_;
     velocity_.y = -std::sin(transform_.rotate.x) * speed_;
-    velocity_.z = std::cos(transform_.rotate.z) * speed_;
+    velocity_.z = std::cos(transform_.rotate.y) * std::cos(transform_.rotate.x) * speed_;
 
     // 進行方向ベクトルからモデルの向きを計算
     transform_.rotate.y = std::atan2(velocity_.x, velocity_.z);
@@ -46,11 +55,23 @@ void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vec
     object3d->SetTranslate(transform_.translate);
     object3d->SetRotate(renderRotate);
 
+    // トレイルエフェクト
     laserParticle_ = std::make_unique<LaserParticle>();
     laserParticle_->Initialize();
     laserParticle_->SetStartColor(Vector4(0.5f, 1.0f, 0.5f, 1.0f));
     laserParticle_->SetEndColor(Vector4(0.5f, 1.0f, 0.5f, 0.0f));
 
+    // PointLight登録
+    pointLight_.color = Vector4(0.2f, 1.0f, 0.2f, 1.0f);
+    pointLight_.position = transform_.translate;
+    pointLight_.intensity = 2.0f;
+    pointLight_.radius = 3.0f;
+    pointLight_.decay = 1.0f;
+    pointLight_.active = 1;
+
+    LightManager::GetInstance()->RegisterPointLight(&pointLight_);
+
+    // チャージショット用のパーティクル
     chargeParticle_ = std::make_unique<chargeParticle>();
     chargeParticle_->Initialize();
 }
@@ -137,6 +158,8 @@ void PlayerBullet::Update(float deltaTime)
     rotate.x = atan2(-velocity_.y, hypotXZ);
     rotate.z = 0.0f;
     transform_.rotate = rotate;
+
+    pointLight_.position = transform_.translate;
 
     object3d->SetTranslate(transform_.translate);
     object3d->SetRotate(transform_.rotate);
@@ -233,4 +256,11 @@ int PlayerBullet::GetDamage() const
 
 void PlayerBullet::SpawnImpact()
 {
+}
+
+void PlayerBullet::UpdateVelocity()
+{
+    velocity_.x = std::sin(transform_.rotate.y) * std::cos(transform_.rotate.x) * speed_;
+    velocity_.y = -std::sin(transform_.rotate.x) * speed_;
+    velocity_.z = std::cos(transform_.rotate.y) * std::cos(transform_.rotate.x) * speed_;
 }

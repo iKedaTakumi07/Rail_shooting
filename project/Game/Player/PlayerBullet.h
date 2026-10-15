@@ -1,4 +1,5 @@
 #pragma once
+#include "../../Engine/3d/LightManager.h"
 #include "../../Engine/3d/Model.h"
 #include "../../Engine/3d/Object3d.h"
 #include "../../Engine/base/Math.h"
@@ -13,6 +14,9 @@ class EnemyManager;
 
 class PlayerBullet : public Collider {
 public:
+    PlayerBullet();
+    ~PlayerBullet() override;
+
     void Initialize(Camera* camera, const Vector3& position, const Vector3& rotation);
 
     void Update(float deltaTime);
@@ -41,10 +45,22 @@ public:
     void SetisChargeBullet(bool num)
     {
         isChargeBullet = num;
-        life = 5;
+        if (isChargeBullet) {
+            life = 5;
+            speed_ = chageSpeed_;
+            deathTimer_ = chageDeathTimer_;
+        } else {
+            life = 2;
+            speed_ = normalSpeed_;
+            deathTimer_ = normalDeathTimer_;
+        }
+        UpdateVelocity();
     }
 
     void SpawnImpact();
+
+private:
+    void UpdateVelocity();
 
 private:
     Transform transform_ = { 0.0f, 0.0f, 0.0f }; // 座標
@@ -54,8 +70,17 @@ private:
     float size = 0.5f; // OBBに移植後は知らん。
 
     Vector3 velocity_ = { 0.0f, 0.0f, 0.0f }; // 移動ベクトル
+
     float speed_ = 50.0f; // 弾速
     float deathTimer_ = 3.0f; // 弾の寿命（秒）
+
+    // 通常弾
+    float normalSpeed_ = 125.0f; // 弾速
+    float normalDeathTimer_ = 1.0f; // 弾の寿命（秒）
+
+    // チャージ弾
+    float chageSpeed_ = 50.0f; // 弾速
+    float chageDeathTimer_ = 3.0f; // 弾の寿命（秒）
     bool isDead_ = false;
 
     uint32_t targetId_ = 0; // 追尾する対象
@@ -66,7 +91,9 @@ private:
     bool isChargeBullet = false;
     int Dameg = 2;
     int ChageDameg = 10;
-    int life = 1;
+    int life = 2;
+
+    PointLigth pointLight_ { };
 
     // 3dモデル
     std::unique_ptr<Model> model;

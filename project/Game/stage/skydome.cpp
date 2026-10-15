@@ -22,6 +22,7 @@ void skydome::Initialize()
 
     ObjectModel = std::make_unique<Model>();
     ObjectModel->Initialize("resources/skydone", "skydome.obj"); // 指定したパターンに
+
     Object3d_->SetModel(ObjectModel.get());
 
     Object3d_->SetTranslate(transform_.translate);
@@ -41,4 +42,11 @@ void skydome::Update()
 void skydome::Draw()
 {
     Object3d_->Draw();
+}
+
+void skydome::SetTexture(const std::string& maskTexturePath) const
+{
+    TextureManager::getInstance()->LoadTexture(maskTexturePath);
+    ObjectModel->SetTextureFilePath(maskTexturePath);
+    Object3d_->SetModel(ObjectModel.get());
 }
