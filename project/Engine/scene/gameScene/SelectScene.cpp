@@ -4,6 +4,7 @@
 #include "../../../Game/Loder/stageDataLoad.h"
 #include "../../../Game/Particle/GalaxyParticle.h"
 #include "../../../Game/SceneTransition.h"
+#include "../../../Game/UI/Select/SelectUIObject.h"
 #include "../../../Game/UI/Select/stageSelectUI.h"
 #include "../../../Game/stage/skydome.h"
 #include "../../2d/SpriteCommon.h"
@@ -34,8 +35,11 @@ void SelectScene::Initialize()
 
     stageNumber = 1;
 
+    selectUIObject_ = std::make_unique<SelectUIObject>();
+    selectUIObject_->Initialize();
+
     stageSelectUI_ = std::make_unique<stageSelectUI>();
-    stageSelectUI_->Initialize();
+    stageSelectUI_->Initialize(selectUIObject_.get());
 
     skydome_ = std::make_unique<skydome>();
     skydome_->Initialize();
@@ -52,6 +56,7 @@ void SelectScene::Update()
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     auto* camera = CameraManager::GetInstance()->GetActiveCamera();
 
+    selectUIObject_->Update(deltaTime, stageSelectUI_->GetState() == stageSelectUI::State::kSortie);
     stageSelectUI_->Update(deltaTime);
     skydome_->Update();
 
@@ -82,7 +87,7 @@ void SelectScene::Draw()
     // モデルデータ
     //
     skydome_->Draw();
-    stageSelectUI_->Draw();
+    selectUIObject_->Draw();
 
     SkyBoxCommon::GetInstance()->PrepareObjectDraw();
 

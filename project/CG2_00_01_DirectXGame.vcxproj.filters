@@ -330,7 +330,7 @@
     <ClCompile Include="Game\Particle\GalaxyParticle.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Game\UI\Select\SelectObject.cpp">
+    <ClCompile Include="Game\UI\Select\SelectUIObject.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Game\Particle\sonicBoomParticle.cpp">
@@ -644,7 +644,7 @@
     <ClInclude Include="Game\Particle\GalaxyParticle.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Game\UI\Select\SelectObject.h">
+    <ClInclude Include="Game\UI\Select\SelectUIObject.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Game\Particle\sonicBoomParticle.h">

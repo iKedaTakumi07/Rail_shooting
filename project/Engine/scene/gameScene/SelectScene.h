@@ -6,6 +6,7 @@
 class SceneTransition;
 class skydome;
 class stageSelectUI;
+class SelectUIObject;
 class GalaxyParticle;
 
 class SelectScene : public BaseScene {
@@ -40,6 +41,7 @@ private:
 
     std::unique_ptr<skydome> skydome_;
     std::unique_ptr<stageSelectUI> stageSelectUI_;
+    std::unique_ptr<SelectUIObject> selectUIObject_;
     std::unique_ptr<GalaxyParticle> galaxyParticle_;
 
     bool isTitile = false; // タイトルバック
