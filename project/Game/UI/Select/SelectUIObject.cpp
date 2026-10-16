@@ -5,6 +5,20 @@
 #include "../../../Engine/base/TextureManager.h"
 #include <algorithm>
 
+SelectUIObject::SelectUIObject() = default;
+
+SelectUIObject::~SelectUIObject()
+{
+    LightManager::GetInstance()->UnregisterPointLight(&pointLight_);
+
+    DirectionalLight light;
+    light.active = 1;
+    light.color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+    light.direction = Vector3(0.0f, -1.0f, 0.0f);
+    light.intensity = 1.0f;
+    LightManager::GetInstance()->SetDirectionalLight(light);
+}
+
 void SelectUIObject::Initialize()
 {
     TextureManager::getInstance()->LoadTexture("resources/skydone/sky_sphere.png");
@@ -55,7 +69,7 @@ void SelectUIObject::Initialize()
     lampObject3d_ = std::make_unique<Object3d>();
     lampObject3d_->Initialize();
     lampObject3d_->SetModel(lampModel_.get());
-    lampObject3d_->SetTranslate(Vector3 { 0.0f, 3.5f, 4.4f });
+    lampObject3d_->SetTranslate(lanpPos_);
 
     lampCoverModel_ = std::make_unique<Model>();
     lampCoverModel_->Initialize("resources/stage", "lampCover.obj");
@@ -64,6 +78,17 @@ void SelectUIObject::Initialize()
     lampCoverObject3d_->Initialize();
     lampCoverObject3d_->SetModel(lampCoverModel_.get());
     lampCoverObject3d_->SetTranslate(Vector3 { 0.0f, 3.5f, 4.0f });
+
+    // 光源セット
+    pointLight_.color = Vector4(1.0f, 0.2f, 0.2f, 1.0f);
+    pointLight_.position = lanpPos_;
+    pointLight_.intensity = 2.5f;
+    pointLight_.radius = 5.0f;
+    pointLight_.decay = 1.0f;
+    pointLight_.active = 0;
+
+    // LightManager に登録
+    LightManager::GetInstance()->RegisterPointLight(&pointLight_);
 }
 
 void SelectUIObject::Update(float deltaTime, bool isSortie)
@@ -131,6 +156,17 @@ void SelectUIObject::MoveUpdate(float deltaTime, bool isSortie)
             isMoving_ = false;
         }
     } else if (isSortie) {
+        if (!pointLight_.active) {
+            pointLight_.active = 1;
+
+            DirectionalLight light;
+            light.active = 1;
+            light.color = Vector4(1.0f, 0.2f, 0.2f, 1.0f);
+            light.direction = Vector3(0.0f, -1.0f, 0.0f);
+            light.intensity = 1.0f;
+            LightManager::GetInstance()->SetDirectionalLight(light);
+        }
+
         moveTimer_ += deltaTime;
         float t = std::clamp(moveTimer_ / moveDuration_, 0.0f, 1.0f);
         float easedT = EaseOutCubic(t);

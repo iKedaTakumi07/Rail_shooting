@@ -49,7 +49,7 @@ void TargetBullet::Initialize(Vector3 pos, const Vector3& rotation)
     pointLight_.decay = 1.0f;
     pointLight_.active = 1;
 
-    // LightManager に登録
+    // LightManagerに登録
     LightManager::GetInstance()->RegisterPointLight(&pointLight_);
 }
 

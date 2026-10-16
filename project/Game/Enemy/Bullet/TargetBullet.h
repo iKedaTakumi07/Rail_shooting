@@ -42,7 +42,7 @@ private:
 
 private:
     Transform transform_ { };
-    PointLigth pointLight_ { }; // 敵弾固有の PointLight パラメータ
+    PointLigth pointLight_ { };
 
     // 当たり判定
     float size = 0.5f; // OBBに移植後は知らん。

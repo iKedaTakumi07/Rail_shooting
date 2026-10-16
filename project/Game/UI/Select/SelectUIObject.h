@@ -1,4 +1,5 @@
 #pragma once
+#include "../../../Engine/3d/LightManager.h"
 #include "../../../Engine/3d/Object3d.h"
 #include "../../../Engine/base/Math.h"
 #include <array>
@@ -8,6 +9,9 @@ class Model;
 
 class SelectUIObject {
 public:
+    SelectUIObject();
+    ~SelectUIObject();
+
     static constexpr int maxStage = 2;
 
     void Initialize();
@@ -41,10 +45,12 @@ private:
     std::unique_ptr<Object3d> lampCoverObject3d_;
 
     std::array<Vector3, maxStage> stagePos_;
+    PointLigth pointLight_ { }; // 固有のPointLightパラメータ
 
     Vector3 currentPlanetPos_ { 0.0f, 0.0f, 0.0f };
     Vector3 startPlanetPos_ { 0.0f, 0.0f, 0.0f };
     Vector3 targetPlanetPos_ { 0.0f, 0.0f, 0.0f };
+    Vector3 lanpPos_ = { 0.0f, 3.5f, 4.4f };
 
     bool isMoving_ = false;
     float moveTimer_ = 0.0f;

@@ -184,10 +184,7 @@ PixelShaderOutput main(VertexShaderOutput input)
         environmentColor = envSample.rgb * gMaterial.evnironmentCoefficient;
     }
     
-    bool isAnyLightActive = (gDirectionalLight.active != 0) ||
-                          (gPointLightGroup.numPointLights > 0) ||
-                            (gSpotLigth.active != 0) ||
-                            (gMaterial.enableEnvironmentMap != 0);
+    bool isAnyLightActive = (gDirectionalLight.active != 0) || (gPointLightGroup.numPointLights > 0) || (gSpotLigth.active != 0) || (gMaterial.enableEnvironmentMap != 0);
     
    // 最終カラー合成
     if (isAnyLightActive)
