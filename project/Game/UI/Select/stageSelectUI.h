@@ -22,7 +22,7 @@ public:
     void SpriteDraw();
 
     void ChangeStage(int stageIndex);
-    void StartSortie(int stageIndex, float duration);
+    void StartSortie(int stageIndex);
 
     bool IsGameChangeFinished() const { return isGameChangeFinished_; }
     bool IsTitleBackFinished() const { return isTitleBackFinished_; }
@@ -43,7 +43,7 @@ private:
     State state_ = State::kSelect;
 
     float gameChangeTimer_ = 0.0f;
-    const float kGameChangeTimer_ = 0.5f;
+    const float kGameChangeTimer_ = 1.2f;
     float titleChangeTimer_ = 1.0f;
     bool isGameChangeFinished_ = false;
     bool isTitleBackFinished_ = false;

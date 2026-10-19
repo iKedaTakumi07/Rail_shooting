@@ -21,6 +21,9 @@ enum class ParticleMeshType {
     kPlane,
     kRing,
     kCylinder,
+    kTorus,
+    kCone,
+    kHalfCone
 };
 
 struct EmitterParam {
