@@ -436,6 +436,12 @@ void CPUParticleManager::CreateParticleGroup(const std::string name, const std::
         group.mesh = std::make_unique<RingMesh>(dxCommon->GetDevice());
     } else if (meshType == ParticleMeshType::kCylinder) {
         group.mesh = std::make_unique<CylinderMesh>(dxCommon->GetDevice());
+    } else if (meshType == ParticleMeshType::kTorus) {
+        group.mesh = std::make_unique<TorusMesh>(dxCommon->GetDevice());
+    } else if (meshType == ParticleMeshType::kCone) {
+        group.mesh = std::make_unique<ConeMesh>(dxCommon->GetDevice());
+    } else if (meshType == ParticleMeshType::kHalfCone) {
+        group.mesh = std::make_unique<HalfConeMesh>(dxCommon->GetDevice());
     }
 
     // マテリアルにファイルパス設定
@@ -470,12 +476,11 @@ void CPUParticleManager::CreateParticleGroup(const std::string name, const std::
     materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     materialData->enableLighting = false;
     materialData->uvTransform = MakeIdentity4x4();
+
     // 形状タイプに応じてフラグ変更
     if (meshType == ParticleMeshType::kPlane) {
         materialData->useClampSampler = 0;
-    } else if (meshType == ParticleMeshType::kRing) {
-        materialData->useClampSampler = 1;
-    } else if (meshType == ParticleMeshType::kCylinder) {
+    } else {
         materialData->useClampSampler = 1;
     }
 

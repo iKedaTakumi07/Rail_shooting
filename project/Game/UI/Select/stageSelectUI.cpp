@@ -87,11 +87,11 @@ void stageSelectUI::ChangeStage(int stageIndex)
     uiAnimTimer_ = 0.0f;
 }
 
-void stageSelectUI::StartSortie(int stageIndex, float duration)
+void stageSelectUI::StartSortie(int stageIndex)
 {
     stageNumber_ = stageIndex;
     if (selectUIObject_) {
-        selectUIObject_->StartSortie(stageIndex, duration);
+        selectUIObject_->StartSortie(stageIndex);
     }
 }
 
@@ -128,7 +128,7 @@ void stageSelectUI::SelectUpdate(float deltaTime)
         if (input->TriggerButton(XINPUT_GAMEPAD_A)) {
             state_ = State::kSortie;
             gameChangeTimer_ = kGameChangeTimer_;
-            StartSortie(stageNumber_, gameChangeTimer_);
+            StartSortie(stageNumber_);
             stageDataLoad::GetInstance()->SetStage(stageNumber_);
             return;
         }
@@ -136,6 +136,8 @@ void stageSelectUI::SelectUpdate(float deltaTime)
         if (input->TriggerButton(XINPUT_GAMEPAD_B)) {
             state_ = State::kTitleBack;
             titleChangeTimer_ = 1.0f;
+            if (selectUIObject_)
+                selectUIObject_->StartTitleBack();
             transition_->Start(SceneTransition::State::Out, 1.0f);
             return;
         }
@@ -162,7 +164,7 @@ void stageSelectUI::SelectUpdate(float deltaTime)
     if (input->TriggerKey(DIK_SPACE) || input->TriggerKey(DIK_RETURN)) {
         state_ = State::kSortie;
         gameChangeTimer_ = kGameChangeTimer_;
-        StartSortie(stageNumber_, gameChangeTimer_);
+        StartSortie(stageNumber_);
         stageDataLoad::GetInstance()->SetStage(stageNumber_);
         return;
     }
@@ -170,6 +172,8 @@ void stageSelectUI::SelectUpdate(float deltaTime)
     if (input->TriggerKey(DIK_BACKSPACE) || input->TriggerKey(DIK_ESCAPE)) {
         state_ = State::kTitleBack;
         titleChangeTimer_ = 1.0f;
+        if (selectUIObject_)
+            selectUIObject_->StartTitleBack();
         transition_->Start(SceneTransition::State::Out, 1.0f);
         return;
     }
@@ -177,7 +181,10 @@ void stageSelectUI::SelectUpdate(float deltaTime)
 
 void stageSelectUI::SortieUpdate(float deltaTime)
 {
-    gameChangeTimer_ -= deltaTime;
+    // 4 : 出撃状態
+    if (static_cast<int>(selectUIObject_->GetSequenceState()) == 4) {
+        gameChangeTimer_ -= deltaTime;
+    }
 
     Vector2 center = { 0.5f, 0.5f };
     float blur = 1.0f - (gameChangeTimer_ / kGameChangeTimer_);

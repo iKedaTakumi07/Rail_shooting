@@ -20,7 +20,7 @@ public:
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;
-    D3D12_VERTEX_BUFFER_VIEW vertexBufferView_ {};
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView_ { };
 };
 
 // --- リング (Ring) クラス ---
@@ -32,7 +32,7 @@ public:
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;
-    D3D12_VERTEX_BUFFER_VIEW vertexBufferView_ {};
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView_ { };
     uint32_t vertexCount_ = 0;
 };
 
@@ -45,9 +45,48 @@ public:
 
 private:
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;
-    D3D12_VERTEX_BUFFER_VIEW vertexBufferView_ {};
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView_ { };
     uint32_t vertexCount_ = 0;
 
     float vTop = 1.0f;
     float vBottom = 0.0f;
+};
+
+// TorusMesh
+class TorusMesh : public IParticleMesh {
+public:
+    TorusMesh(ID3D12Device* device, uint32_t tubularDivide = 24, uint32_t radialDivide = 12, float majorRadius = 0.5f, float minorRadius = 0.2f);
+    const D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView() const override { return vertexBufferView_; }
+    uint32_t GetVertexCount() const override { return vertexCount_; }
+
+private:
+    Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView_ { };
+    uint32_t vertexCount_ = 0;
+};
+
+// ConeMesh
+class ConeMesh : public IParticleMesh {
+public:
+    ConeMesh(ID3D12Device* device, uint32_t divide = 32, float bottomRadius = 1.0f, float height = 2.0f);
+    const D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView() const override { return vertexBufferView_; }
+    uint32_t GetVertexCount() const override { return vertexCount_; }
+
+private:
+    Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView_ { };
+    uint32_t vertexCount_ = 0;
+};
+
+// HalfConeMesh
+class HalfConeMesh : public IParticleMesh {
+public:
+    HalfConeMesh(ID3D12Device* device, uint32_t divide = 32, float bottomRadius = 1.0f, float height = 2.0f);
+    const D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView() const override { return vertexBufferView_; }
+    uint32_t GetVertexCount() const override { return vertexCount_; }
+
+private:
+    Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView_ { };
+    uint32_t vertexCount_ = 0;
 };

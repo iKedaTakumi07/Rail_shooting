@@ -32,7 +32,6 @@ void LightManager::Update()
     for (size_t i = 0; i < kMaxPointLights; ++i) {
         if (i < count && activePointLights_[i] != nullptr) {
             pointLightData_->pointLights[i] = *activePointLights_[i];
-            pointLightData_->pointLights[i].active = 1;
         } else {
             pointLightData_->pointLights[i].active = 0;
         }

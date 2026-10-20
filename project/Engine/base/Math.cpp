@@ -68,6 +68,11 @@ Vector4 Lerp(const Vector4& start, const Vector4& end, float t)
     };
 }
 
+float Lerp(float start, float end, float t)
+{
+    return start + t * (end - start);
+}
+
 Vector4 Slerp(const Vector4& start, const Vector4& end, float t)
 {
     // 内積
@@ -400,4 +405,9 @@ float EaseOutCubic(float t)
 {
     float f = 1.0f - t;
     return 1.0f - (f * f * f);
+}
+
+float EaseInQuad(float t)
+{
+    return t * t;
 }
