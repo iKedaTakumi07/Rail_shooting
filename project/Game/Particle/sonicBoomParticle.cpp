@@ -5,7 +5,7 @@
 
 void sonicBoomParticle::Initialize()
 { // 事前に読み込ませるため多分?
-    CPUParticleManager::getInstance()->CreateParticleGroup("sonicBoom", "resources/sonicBoom.png", ParticleMeshType::kRing);
+    CPUParticleManager::getInstance()->CreateParticleGroup("playerSonicBoom", "resources/sonicBoom.png", ParticleMeshType::kRing);
 
     StartColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     EndColor = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
@@ -48,5 +48,5 @@ void sonicBoomParticle::NewParticle(const Vector3& emitterTransformA, const Vect
     laserfireParam.SetVelocity({ 0.0f, 0.0f, 0.0f });
     laserfireParam.SetLifeTime(0.5f);
 
-    CPUParticleManager::getInstance()->Emit("sonicBoom", TargetTransform, 1, laserfireParam);
+    CPUParticleManager::getInstance()->Emit("playerSonicBoom", TargetTransform, 1, laserfireParam);
 }

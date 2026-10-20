@@ -53,6 +53,30 @@
       "MoveDirection": { "x": 0.0, "y": 6.0, "z": 0.0},
       "UseBullet" : "TargetBullet",
       "hp": 5
+    },
+    {
+      "type": "LaserEnemy",
+      "spawn_z": 80.0,
+      "pos": { "x": 5.0, "y": 1.0, "z":160.0 },
+      "MoveDirection": { "x": 0.0, "y": 6.0, "z": 0.0},
+      "UseBullet" : "TargetBullet",
+      "hp": 5
+    },
+    {
+      "type": "LaserEnemy",
+      "spawn_z": 80.0,
+      "pos": { "x": -5.0, "y": 1.0, "z":180.0 },
+      "MoveDirection": { "x": 5.0, "y": 6.0, "z": 0.0},
+      "UseBullet" : "TargetBullet",
+      "hp": 5
+    },
+    {
+      "type": "LaserEnemy",
+      "spawn_z": 80.0,
+      "pos": { "x": -5.0, "y": 1.0, "z":200.0 },
+      "MoveDirection": { "x": -5.0, "y": -6.0, "z": 0.0},
+      "UseBullet" : "TargetBullet",
+      "hp": 5
     }
   ]
 }
