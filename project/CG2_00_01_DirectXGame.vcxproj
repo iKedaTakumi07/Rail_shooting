@@ -290,6 +290,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Game\UI\Title\TitleUI.cpp" />
     <ClCompile Include="Game\UI\Select\SelectUIObject.cpp" />
     <ClCompile Include="Game\Particle\sonicBoomParticle.cpp" />
+    <ClCompile Include="Game\Particle\SortieChargeParticle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\EmitParticle.CS.hlsl">
@@ -676,6 +677,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\UI\Title\TitleUI.h" />
     <ClInclude Include="Game\UI\Select\SelectUIObject.h" />
     <ClInclude Include="Game\Particle\sonicBoomParticle.h" />
+    <ClInclude Include="Game\Particle\SortieChargeParticle.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">

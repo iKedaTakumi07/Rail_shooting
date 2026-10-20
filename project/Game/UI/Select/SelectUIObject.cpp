@@ -100,6 +100,15 @@ void SelectUIObject::Initialize()
 
     sequenceState_ = SequenceState::kLanding;
     sequenceTimer_ = 0.0f;
+
+    sortieChargeParticle_ = std::make_unique<SortieChargeParticle>();
+    sortieChargeParticle_->Initialize();
+
+    playerPowerUnitLaser_ = std::make_unique<PlayerPowerUnitLaser>();
+    playerPowerUnitLaser_->Initialize();
+
+    sequenceState_ = SequenceState::kLanding;
+    sequenceTimer_ = 0.0f;
 }
 
 void SelectUIObject::Update(float deltaTime, int uiState)
@@ -116,20 +125,6 @@ void SelectUIObject::Update(float deltaTime, int uiState)
         object3d_[i]->Update();
     }
 }
-
-// void SelectUIObject::Update(float deltaTime, bool isSortie)
-//{
-//     MoveUpdate(deltaTime, isSortie);
-//
-//     playerObject3d_->Update();
-//     baseLabObject3d_->Update();
-//     lampObject3d_->Update();
-//     lampCoverObject3d_->Update();
-//
-//     for (int i = 0; i < maxStage; i++) {
-//         object3d_[i]->Update();
-//     }
-// }
 
 void SelectUIObject::Draw()
 {
@@ -166,17 +161,6 @@ void SelectUIObject::StartSortie(int stageIndex)
     sequenceState_ = SequenceState::kSortieRise;
     sequenceTimer_ = 0.0f;
 }
-
-// void SelectUIObject::StartSortie(int stageIndex, float duration)
-//{
-//     int idx = std::clamp(stageIndex - 1, 0, maxStage - 1);
-//     startPlanetPos_ = currentPlanetPos_;
-//     targetPlanetPos_ = Vector3(stagePos_[idx].x, stagePos_[idx].y, stagePos_[idx].z + 5.0f);
-//
-//     moveTimer_ = 0.0f;
-//     moveDuration_ = duration;
-//     isMoving_ = false;
-// }
 
 void SelectUIObject::StartTitleBack()
 {
@@ -241,17 +225,44 @@ void SelectUIObject::MoveUpdate(float deltaTime)
     }
 
     case SequenceState::kSortieCharge: {
+
+        Vector3 playerRot = playerObject3d_->GetRotate();
+        Matrix4x4 rotX = MakeRotateXMatrix(playerRot.x);
+        Matrix4x4 rotY = MakeRotateYMatrix(playerRot.y);
+        Matrix4x4 rotZ = MakeRotateZMatrix(playerRot.z);
+        Matrix4x4 rotMat = Multiply(rotX, Multiply(rotY, rotZ));
+
+        Vector3 worldOffset = {
+            kPowerUnitPos.x * rotMat.m[0][0] + kPowerUnitPos.y * rotMat.m[1][0] + kPowerUnitPos.z * rotMat.m[2][0],
+            kPowerUnitPos.x * rotMat.m[0][1] + kPowerUnitPos.y * rotMat.m[1][1] + kPowerUnitPos.z * rotMat.m[2][1],
+            kPowerUnitPos.x * rotMat.m[0][2] + kPowerUnitPos.y * rotMat.m[1][2] + kPowerUnitPos.z * rotMat.m[2][2]
+        };
+
+        Vector3 powerUnitWorldPos = playerObject3d_->GetTranslate() + worldOffset;
+
+        sortieChargeParticle_->NewParticle(powerUnitWorldPos);
+
         // 溜め時間
         if (sequenceTimer_ >= kChargeDuration) {
             sequenceState_ = SequenceState::kSortieLaunch;
             sequenceTimer_ = 0.0f;
             startPlanetPos_ = playerObject3d_->GetTranslate();
+            prePlayerPos_ = startPlanetPos_;
         }
         break;
     }
 
     case SequenceState::kSortieLaunch: {
         // 惑星に向かう
+        Transform playerTransform;
+        playerTransform.translate = playerObject3d_->GetTranslate();
+        playerTransform.rotate = playerObject3d_->GetRotate();
+        playerTransform.scale = playerObject3d_->GetScale();
+
+        playerPowerUnitLaser_->NewParticle(prePlayerPos_, playerTransform, kPowerUnitPos);
+
+        prePlayerPos_ = playerTransform.translate;
+
         float t = std::clamp(sequenceTimer_ / kLaunchDuration, 0.0f, 1.0f);
         float easedT = EaseInQuad(t);
 

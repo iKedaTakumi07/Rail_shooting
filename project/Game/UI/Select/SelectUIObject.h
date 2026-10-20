@@ -2,6 +2,8 @@
 #include "../../../Engine/3d/LightManager.h"
 #include "../../../Engine/3d/Object3d.h"
 #include "../../../Engine/base/Math.h"
+#include "../../Particle/PlayerPowerUnitLaser.h"
+#include "../../Particle/SortieChargeParticle.h"
 #include <array>
 #include <memory>
 
@@ -64,6 +66,7 @@ private:
     Vector3 targetPlanetPos_ { 0.0f, 0.0f, 0.0f };
     Vector3 lanpPos_ = { 0.0f, 4.5f, 4.4f };
     Vector3 lampCover = { 0.0f, 4.5f, 4.0f };
+    Vector3 prePlayerPos_ { 0.0f, 0.0f, 0.0f };
 
     SequenceState sequenceState_ = SequenceState::kLanding;
     float sequenceTimer_ = 0.0f;
@@ -82,4 +85,8 @@ private:
 
     static constexpr float kRotateDuration = 0.4f; // 旋回時間
     static constexpr float kMoveDuration = 0.6f; // 発進時間
+
+    std::unique_ptr<SortieChargeParticle> sortieChargeParticle_;
+    std::unique_ptr<PlayerPowerUnitLaser> playerPowerUnitLaser_;
+    static constexpr Vector3 kPowerUnitPos = { 0.0f, 0.05f, -0.75f };
 };
