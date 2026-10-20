@@ -58,8 +58,10 @@ void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vec
     // トレイルエフェクト
     laserParticle_ = std::make_unique<LaserParticle>();
     laserParticle_->Initialize();
-    laserParticle_->SetStartColor(Vector4(0.5f, 1.0f, 0.5f, 1.0f));
-    laserParticle_->SetEndColor(Vector4(0.5f, 1.0f, 0.5f, 0.0f));
+    laserParticle_->SetAuraStartColor(Vector4(0.2f, 1.0f, 0.2f, 0.35f));
+    laserParticle_->SetAuraEndColor(Vector4(0.2f, 1.0f, 0.2f, 0.0f));
+    laserParticle_->SetCoreStartColor(Vector4(0.8f, 1.0f, 0.8f, 0.9f));
+    laserParticle_->SetCoreEndColor(Vector4(0.2f, 1.0f, 0.2f, 0.0f));
 
     // PointLight登録
     pointLight_.color = Vector4(0.2f, 1.0f, 0.2f, 1.0f);

@@ -38,8 +38,10 @@ void TargetBullet::Initialize(Vector3 pos, const Vector3& rotation)
 
     laserParticle_ = std::make_unique<LaserParticle>();
     laserParticle_->Initialize();
-    laserParticle_->SetStartColor(Vector4(1.0f, 0.2f, 0.2f, 1.0f));
-    laserParticle_->SetEndColor(Vector4(1.0f, 0.2f, 0.2f, 0.0f));
+    laserParticle_->SetAuraStartColor(Vector4(1.0f, 0.2f, 0.2f, 0.5f));
+    laserParticle_->SetAuraEndColor(Vector4(1.0f, 0.2f, 0.2f, 0.0f));
+    laserParticle_->SetCoreStartColor(Vector4(1.0f, 1.0f, 1.0f, 0.9f));
+    laserParticle_->SetCoreEndColor(Vector4(1.0f, 1.0f, 1.0f, 0.0f));
 
     // 光源セット
     pointLight_.color = Vector4(1.0f, 0.2f, 0.2f, 1.0f);
