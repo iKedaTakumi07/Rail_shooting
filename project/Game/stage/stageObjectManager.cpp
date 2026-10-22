@@ -158,9 +158,9 @@ void stageObjectManager::GrauondUpdate()
 {
     Vector3 pos = player_->GetTranslate();
     if (pos.z >= grauondtransform_.translate.z + grauondSize) {
-        grauondtransform_.translate.z = grauondtransform2_.translate.z + grauondSize;
-        grauondtransform2_.translate.z = grauondtransform3_.translate.z + grauondSize;
-        grauondtransform3_.translate.z = grauondtransform3_.translate.z + grauondSize * 2;
+        grauondtransform_.translate.z = grauondtransform2_.translate.z;
+        grauondtransform2_.translate.z = grauondtransform3_.translate.z;
+        grauondtransform3_.translate.z = grauondtransform3_.translate.z + grauondSize;
     }
 
     grauond3d->SetTranslate(grauondtransform_.translate);

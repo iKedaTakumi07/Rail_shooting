@@ -1,6 +1,7 @@
 #pragma once
 #include "DirectXCommon.h"
 #include "Math.h"
+#include <algorithm>
 #include <memory>
 class Camera;
 class OffscreenSurface;
@@ -49,6 +50,18 @@ public:
         float Padding[3];
     };
 
+    struct LetterboxData {
+        float heightRate;
+        float feather;
+        float padding[2];
+    };
+
+    struct FadeData {
+        Vector4 color;
+        float factor;
+        float padding[3];
+    };
+
     enum class EffectType {
         Grayscale,
         Sepiascale,
@@ -60,6 +73,8 @@ public:
         Vignette,
         Dissolve,
         Random,
+        Letterbox,
+        Fade,
     };
 
     // コンストラクタに渡すための鍵
@@ -86,18 +101,25 @@ public:
 
     // 共通描画設定
     void DrawNormal();
-    void DrawGrayscale();
-    void DrawSepiascale();
-    void DrawVignette();
-    void DrawBoxFilterHorizontal();
-    void DrawBoxFilterVertical();
-    void DrawGaussianFilterHorizontal();
-    void DrawGaussianFilterVertical();
-    void DrawLuminanceOutLine();
-    void DrawDepthOutLine();
-    void DrawRadialBlur();
-    void DrawDissolve();
-    void DrawRandom();
+
+    // ========================
+    // 各描画
+    // ========================
+
+    void DrawGrayscale(); // グレイスケール
+    void DrawSepiascale(); // セピア調
+    void DrawVignette(); // ヴィネッティング
+    void DrawBoxFilterHorizontal(); // ボックスフィルターX
+    void DrawBoxFilterVertical(); // ボックスフィルターY
+    void DrawGaussianFilterHorizontal(); // ガウシアンフィルターx
+    void DrawGaussianFilterVertical(); // ガウシアンフィルターy
+    void DrawLuminanceOutLine(); // 輝度アウトライン
+    void DrawDepthOutLine(); // 深度アウトライン
+    void DrawRadialBlur(); // ブラー
+    void DrawDissolve(); // ディゾルブ
+    void DrawRandom(); // ランダムノイズ
+    void DrawLetterBox(); // レターボックス
+    void DrawFade(); // カラーアウト/イン
 
     // ImGuiのUIを描画する関数
     void DrawImGui();
@@ -119,6 +141,7 @@ public:
     bool IsRadialBlur() const { return enableRadialBlur_; } // ラジアルブラー
     bool IsDissolve() const { return enableDissolve_; }
     bool IsRandom() const { return enableRandom_; }
+    bool IsLetterBox() const { return enableLetterbox_; }
 
     // set
     void SetDepthSrvHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle) { this->depthSrvHandle = handle; }
@@ -205,6 +228,9 @@ public:
     void AddMaskTexture(const std::string& filePath);
 
     void SetRandom(bool enable) { enableRandom_ = enable; }
+
+    void SetEnableLetterbox(bool enable) { enableLetterbox_ = enable; }
+    void SetLetterboxHeight(float rate) { letterboxParam_.heightRate = std::clamp(rate, 0.0f, 0.5f); }
 
     void ClearAllEffects() // エフェクト全リセット
     {
@@ -322,6 +348,13 @@ private:
     Material* RandomMaterialData_ = nullptr;
     Material RandomMaterialParam_;
     std::chrono::steady_clock::time_point lastTime_; // 前フレームの時刻
+
+    /* Letterbox */
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineStateLetterbox_ = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> letterboxBuffer_ = nullptr;
+    LetterboxData* letterboxMappedData_ = nullptr;
+    LetterboxData letterboxParam_ = { 0.1f, 0.002f, { 0.0f, 0.0f } };
+    bool enableLetterbox_ = false;
 
     // 現在のモード
     bool enableGrayscale_ = false;

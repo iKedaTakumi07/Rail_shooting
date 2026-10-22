@@ -79,6 +79,9 @@ void PostProcess::Initialize(DirectXCommon* dxcommon)
     resDesc.Width = sizeof(Material);
     hr = dxCommon_->GetDevice()->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&RandomBuffer_));
 
+    resDesc.Width = sizeof(LetterboxData);
+    hr = dxCommon_->GetDevice()->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&letterboxBuffer_));
+
     // マップしてC++から書き込める状態にしておく
     GrayscaleBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&GrayscaleData_));
     SepiascaleBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&SepiascaleData_));
@@ -90,6 +93,7 @@ void PostProcess::Initialize(DirectXCommon* dxcommon)
     RadialBlurBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&RadialBlurData_));
     DissolveBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&DissolveData_));
     RandomBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&RandomMaterialData_));
+    letterboxBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&letterboxMappedData_));
 
     // 初期化がだるいっぴ。
     RandomMaterialParam_.color = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -110,6 +114,7 @@ void PostProcess::Initialize(DirectXCommon* dxcommon)
         EffectType::Vignette,
         EffectType::Dissolve,
         EffectType::Random,
+        EffectType::Letterbox,
     };
 }
 
@@ -175,6 +180,10 @@ void PostProcess::Update()
         RandomMaterialParam_.time = std::fmod(RandomMaterialParam_.time, 100.0f);
         *RandomMaterialData_ = RandomMaterialParam_;
     }
+
+    if (letterboxMappedData_) {
+        *letterboxMappedData_ = letterboxParam_;
+    }
 }
 
 void PostProcess::Execute(OffscreenSurface* surfaceA, OffscreenSurface* surfaceB)
@@ -216,6 +225,10 @@ void PostProcess::Execute(OffscreenSurface* surfaceA, OffscreenSurface* surfaceB
             break;
         case PostProcess::EffectType::Random:
             isEnabled = enableRandom_;
+            break;
+        case PostProcess::EffectType::Letterbox:
+            isEnabled = enableLetterbox_;
+            break;
         }
 
         // 実行しないものをスキップ
@@ -276,6 +289,9 @@ void PostProcess::Execute(OffscreenSurface* surfaceA, OffscreenSurface* surfaceB
             break;
         case PostProcess::EffectType::Random:
             DrawRandom();
+            break;
+        case PostProcess::EffectType::Letterbox:
+            DrawLetterBox();
             break;
         }
 
@@ -444,6 +460,22 @@ void PostProcess::DrawRandom()
     cmd->DrawInstanced(3, 1, 0, 0);
 }
 
+void PostProcess::DrawLetterBox()
+{
+    auto cmd = dxCommon_->GetCommandList();
+    cmd->SetGraphicsRootSignature(rootSignature.Get());
+    cmd->SetPipelineState(pipelineStateLetterbox_.Get());
+    cmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    cmd->SetGraphicsRootDescriptorTable(0, srvHandle);
+    cmd->SetGraphicsRootConstantBufferView(1, letterboxBuffer_->GetGPUVirtualAddress());
+    cmd->DrawInstanced(3, 1, 0, 0);
+}
+
+void PostProcess::DrawFade()
+{
+}
+
 void PostProcess::DrawImGui()
 {
 #ifdef USE_IMGUI
@@ -562,6 +594,14 @@ void PostProcess::DrawImGui()
     }
 
     ImGui::Checkbox("RandomFilter", &enableRandom_);
+
+    ImGui::Checkbox("LetterBox", &enableLetterbox_);
+    if (enableLetterbox_) {
+        ImGui::Indent();
+        ImGui::SliderFloat("feather##LetterBox", &letterboxParam_.feather, 0.0f, 1.0f, "%.2f");
+        ImGui::SliderFloat("heightRate##LetterBox", &letterboxParam_.heightRate, 0.0f, 0.5f, "%.2f");
+        ImGui::Unindent();
+    }
 
     ImGui::End();
 #endif // USE_IMGUI
@@ -730,6 +770,9 @@ void PostProcess::graphicsPipelineInitialize(DirectXCommon* dxcommon)
     Microsoft::WRL::ComPtr<IDxcBlob> pixeShaderRandom = dxcommon->CompileShader(L"resources/shaders/Random.PS.hlsl", L"ps_6_0");
     assert(pixeShaderRandom != nullptr);
 
+    Microsoft::WRL::ComPtr<IDxcBlob> pixeShaderLetterBox = dxcommon->CompileShader(L"resources/shaders/Letterbox.PS.hlsl", L"ps_6_0");
+    assert(pixeShaderLetterBox != nullptr);
+
     D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc { };
     graphicsPipelineStateDesc.pRootSignature = rootSignature.Get();
     graphicsPipelineStateDesc.InputLayout = inputLayoutDesc;
@@ -832,6 +875,11 @@ void PostProcess::graphicsPipelineInitialize(DirectXCommon* dxcommon)
     graphicsPipelineStateDesc.PS = { pixeShaderRandom->GetBufferPointer(), pixeShaderRandom->GetBufferSize() };
     pipelineStateRandom = nullptr;
     hr = dxcommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&pipelineStateRandom));
+
+    // レターボックス
+    graphicsPipelineStateDesc.PS = { pixeShaderLetterBox->GetBufferPointer(), pixeShaderLetterBox->GetBufferSize() };
+    pipelineStateLetterbox_ = nullptr;
+    hr = dxcommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&pipelineStateLetterbox_));
 
     assert(SUCCEEDED(hr));
 }

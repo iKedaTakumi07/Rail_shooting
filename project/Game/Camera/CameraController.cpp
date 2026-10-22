@@ -77,22 +77,10 @@ void CameraController::Update(const Vector3& railPos)
     camera_->Update();
 }
 
-void CameraController::UpdateIntro(const Vector3& railPos, float progress)
+void CameraController::UpdateIntro(const Vector3& railPos)
 {
     if (!camera_ || !player_)
         return;
-
-    // -20.0fまでブラーを入れる
-    if (progress <= 0.2f) {
-        Vector2 Center = { 0.5f, 0.5f }; // 中心位置
-
-        float Blur = 1.0f - (progress * 5.0f);
-
-        PostProcess::GetInstance()->SetRadialBlur(true);
-        PostProcess::GetInstance()->SetRadialBlurParam(Center, Blur);
-    } else {
-        PostProcess::GetInstance()->SetRadialBlur(false);
-    }
 
     // カメラの移動量を計算
     Vector3 targetCameraPos = defaultCameraPos_;

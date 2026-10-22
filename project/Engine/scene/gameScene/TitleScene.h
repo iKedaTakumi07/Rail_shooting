@@ -41,6 +41,8 @@ public:
 private:
     float SceneChangeTimer = 2.0f;
     bool isChange = false;
+    bool titleSceneTransition_ = false;
+    float sceneTransitionTimer_ = 1.0f;
     Vector3 CameraPos = { 0.0f, 0.0f, 0.0f };
 
     float particleTimer_ = 0.0f;

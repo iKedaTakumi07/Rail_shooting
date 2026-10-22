@@ -20,7 +20,7 @@ public:
     /// </summary>
     /// <param name="RailPos">レール位置</param>
     void Update(const Vector3& RailPos);
-    void UpdateIntro(const Vector3& railPos, float progress);
+    void UpdateIntro(const Vector3& railPos);
 
     // Set関数
     void SetDefaultPosition(const Vector3& pos) { defaultCameraPos_ = pos; }

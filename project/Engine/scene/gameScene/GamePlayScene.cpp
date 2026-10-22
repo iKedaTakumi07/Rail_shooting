@@ -25,14 +25,15 @@
 #include "../../../Game/Enemy/EnemyManager.h"
 #include "../../../Game/Enemy/base/baseEnemy.h"
 #include "../../../Game/Loder/GameScoreManager.h"
+#include "../../../Game/Loder/stageDataLoad.h"
 #include "../../../Game/OnCollison/CollisionManager.h"
 #include "../../../Game/Player/Player.h"
 #include "../../../Game/SceneTransition.h"
+#include "../../../Game/UI/Game/IntroUI.h"
 #include "../../../Game/UI/Game/pauseUI.h"
 #include "../../../Game/UI/Result/clearUI.h"
 #include "../../../Game/stage/StageManager.h"
 #include "../../../Game/stage/skydome.h"
-#include "../../../Game/Loder/stageDataLoad.h"
 #include "../../../Game/stage/stageObjectManager.h"
 
 #include "math.h"
@@ -101,6 +102,9 @@ void GamePlayScene::Initialize()
     PauseUI_ = std::make_unique<pauseUI>();
     PauseUI_->Initialize();
 
+    introUI_ = std::make_unique<IntroUI>();
+    introUI_->Initialize();
+
     sceneState_ = SceneState::kIntro;
     clearTimer_ = 0.0f;
 
@@ -154,14 +158,15 @@ void GamePlayScene::Update()
 
         // 進行速度の5秒分
         float currentZ = StageManager_->GetCurrentZ();
-        float progress = (currentZ - (-25.0f)) / 25.0f;
+        float progress = (currentZ - (-100.0f)) / 100.0f;
 
         if (progress >= 1.0f) {
             progress = 1.0f;
             sceneState_ = SceneState::kPlay;
         }
 
-        cameraController_->UpdateIntro(railPos, progress);
+        cameraController_->UpdateIntro(railPos);
+        introUI_->Update(progress);
 
         enemyManager_->Update();
         stageObject_->Update();
@@ -293,6 +298,7 @@ void GamePlayScene::Draw()
     // 2d/スプライト
     //
     SpriteCommon::GetInstance()->PrepareSpriteDraw();
+    introUI_->SpritDraw();
     player_->SpritDraw();
     enemyManager_->SpriteDraw();
     ClearUI_->SpritDraw();

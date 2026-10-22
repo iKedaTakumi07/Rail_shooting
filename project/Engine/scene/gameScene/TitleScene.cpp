@@ -123,9 +123,14 @@ void TitleScene::Update()
         return;
     }
 
+    sceneTransitionTimer_ -= deltaTime;
+    if (sceneTransitionTimer_ <= 0.0f) {
+        titleSceneTransition_ = true;
+    }
+
     // ゲームスタート処理
     if (!isChange) {
-        if (titleUI_->GetIsStartGame()) {
+        if (titleUI_->GetIsStartGame() && titleSceneTransition_) {
             isChange = true;
             Transition_->SetMask("resources/noise4.png");
             Transition_->Start(SceneTransition::State::Out, SceneChangeTimer);

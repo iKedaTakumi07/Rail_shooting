@@ -1,6 +1,9 @@
 #include "TextureManager.h"
 #include "DirectXCommon.h"
 #include "SrvManager.h"
+#include <cassert>
+#include <filesystem>
+#include <format>
 
 uint32_t TextureManager::kSRVIndexTop = 1;
 
@@ -33,10 +36,18 @@ void TextureManager::LoadTexture(const std::string& filePath)
         return;
     }
 
+    if (!std::filesystem::exists(filePath)) {
+        std::string errorMsg = std::format("[TextureManager Error] File not found: {}\n", filePath);
+        OutputDebugStringA(errorMsg.c_str());
+        assert(false && "Texture file does not exist. Check file path.");
+        return;
+    }
+
     // テクスチャファイルを読み込んでプログラムで使えるようにする
-    DirectX::ScratchImage image {};
+    DirectX::ScratchImage image { };
     std::wstring filePathW = StringUtility::ConvertString(filePath);
     HRESULT hr;
+
     if (filePathW.ends_with(L".dds")) { //.ddsで終わっていたらddsとみなす。
         hr = DirectX::LoadFromDDSFile(filePathW.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, image);
     } else {
@@ -45,12 +56,26 @@ void TextureManager::LoadTexture(const std::string& filePath)
     assert(SUCCEEDED(hr));
 
     // ミップマップの作成
-    DirectX::ScratchImage mipImages {};
-    if (DirectX::IsCompressed(image.GetMetadata().format)) { // 圧縮フォーマットかどうか
-        mipImages = std::move(image); // 圧縮フォーマットなのでmove
+    DirectX::ScratchImage mipImages { };
+    if (DirectX::IsCompressed(image.GetMetadata().format) || (image.GetMetadata().width == 1 && image.GetMetadata().height == 1)) {
+        mipImages = std::move(image);
     } else {
-        hr = DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DirectX::TEX_FILTER_SRGB, 0, mipImages);
+        hr = DirectX::GenerateMipMaps(
+            image.GetImages(),
+            image.GetImageCount(),
+            image.GetMetadata(),
+            DirectX::TEX_FILTER_SRGB,
+            0,
+            mipImages);
+
+        // ミップマップ生成が失敗した場合、または結果の解像度が 0 の場合は元画像を使用
+        if (FAILED(hr) || mipImages.GetMetadata().width == 0 || mipImages.GetMetadata().height == 0) {
+            mipImages = std::move(image);
+        }
     }
+
+    // 【事前ガード】寸法が 1 以上であることを検証
+    assert(mipImages.GetMetadata().width > 0 && mipImages.GetMetadata().height > 0 && "Texture dimensions must be at least 1x1.");
 
     // 追加したテクスチャデータの参照を取得
     TextureData& textureData = textureDatas[filePath];
