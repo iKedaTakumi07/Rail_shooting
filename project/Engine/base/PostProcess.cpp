@@ -82,6 +82,10 @@ void PostProcess::Initialize(DirectXCommon* dxcommon)
     resDesc.Width = sizeof(LetterboxData);
     hr = dxCommon_->GetDevice()->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&letterboxBuffer_));
 
+    resDesc.Width = sizeof(FadeData);
+    hr = dxCommon_->GetDevice()->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&fadeBuffer_));
+    assert(SUCCEEDED(hr));
+
     // マップしてC++から書き込める状態にしておく
     GrayscaleBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&GrayscaleData_));
     SepiascaleBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&SepiascaleData_));
@@ -94,6 +98,7 @@ void PostProcess::Initialize(DirectXCommon* dxcommon)
     DissolveBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&DissolveData_));
     RandomBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&RandomMaterialData_));
     letterboxBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&letterboxMappedData_));
+    fadeBuffer_->Map(0, nullptr, reinterpret_cast<void**>(&fadeMappedData_));
 
     // 初期化がだるいっぴ。
     RandomMaterialParam_.color = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -115,6 +120,7 @@ void PostProcess::Initialize(DirectXCommon* dxcommon)
         EffectType::Dissolve,
         EffectType::Random,
         EffectType::Letterbox,
+        EffectType::Fade,
     };
 }
 
@@ -184,6 +190,10 @@ void PostProcess::Update()
     if (letterboxMappedData_) {
         *letterboxMappedData_ = letterboxParam_;
     }
+
+    if (fadeMappedData_) {
+        *fadeMappedData_ = fadeParam_;
+    }
 }
 
 void PostProcess::Execute(OffscreenSurface* surfaceA, OffscreenSurface* surfaceB)
@@ -228,6 +238,9 @@ void PostProcess::Execute(OffscreenSurface* surfaceA, OffscreenSurface* surfaceB
             break;
         case PostProcess::EffectType::Letterbox:
             isEnabled = enableLetterbox_;
+            break;
+        case PostProcess::EffectType::Fade:
+            isEnabled = enableFade_;
             break;
         }
 
@@ -292,6 +305,9 @@ void PostProcess::Execute(OffscreenSurface* surfaceA, OffscreenSurface* surfaceB
             break;
         case PostProcess::EffectType::Letterbox:
             DrawLetterBox();
+            break;
+        case PostProcess::EffectType::Fade:
+            DrawFade();
             break;
         }
 
@@ -474,6 +490,14 @@ void PostProcess::DrawLetterBox()
 
 void PostProcess::DrawFade()
 {
+    auto cmd = dxCommon_->GetCommandList();
+    cmd->SetGraphicsRootSignature(rootSignature.Get());
+    cmd->SetPipelineState(pipelineStateFade_.Get());
+    cmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    cmd->SetGraphicsRootDescriptorTable(0, srvHandle);
+    cmd->SetGraphicsRootConstantBufferView(1, fadeBuffer_->GetGPUVirtualAddress());
+    cmd->DrawInstanced(3, 1, 0, 0);
 }
 
 void PostProcess::DrawImGui()
@@ -603,6 +627,21 @@ void PostProcess::DrawImGui()
         ImGui::Unindent();
     }
 
+    ImGui::Checkbox("Fade (Black/White)", &enableFade_);
+    if (enableFade_) {
+        ImGui::Indent();
+        ImGui::ColorEdit4("Fade Color", &fadeParam_.color.x);
+        ImGui::SliderFloat("Factor", &fadeParam_.factor, 0.0f, 1.0f, "%.2f");
+
+        if (ImGui::Button("Set Blackout")) {
+            SetBlackout(1.0f);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Set Whiteout")) {
+            SetWhiteout(1.0f);
+        }
+        ImGui::Unindent();
+    }
     ImGui::End();
 #endif // USE_IMGUI
 }
@@ -773,6 +812,9 @@ void PostProcess::graphicsPipelineInitialize(DirectXCommon* dxcommon)
     Microsoft::WRL::ComPtr<IDxcBlob> pixeShaderLetterBox = dxcommon->CompileShader(L"resources/shaders/Letterbox.PS.hlsl", L"ps_6_0");
     assert(pixeShaderLetterBox != nullptr);
 
+    Microsoft::WRL::ComPtr<IDxcBlob> pixeShaderFade = dxcommon->CompileShader(L"resources/shaders/Fade.PS.hlsl", L"ps_6_0");
+    assert(pixeShaderFade != nullptr);
+
     D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc { };
     graphicsPipelineStateDesc.pRootSignature = rootSignature.Get();
     graphicsPipelineStateDesc.InputLayout = inputLayoutDesc;
@@ -865,21 +907,29 @@ void PostProcess::graphicsPipelineInitialize(DirectXCommon* dxcommon)
     graphicsPipelineStateDesc.PS = { pixeShaderRadialBlur->GetBufferPointer(), pixeShaderRadialBlur->GetBufferSize() };
     pipelineStateRadialBlur = nullptr;
     hr = dxcommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&pipelineStateRadialBlur));
+    assert(SUCCEEDED(hr));
 
     // でぃそるぶ
     graphicsPipelineStateDesc.PS = { pixeShaderDissolve->GetBufferPointer(), pixeShaderDissolve->GetBufferSize() };
     pipelineStateDissolve = nullptr;
     hr = dxcommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&pipelineStateDissolve));
+    assert(SUCCEEDED(hr));
 
     // ランダム(ノイズ)
     graphicsPipelineStateDesc.PS = { pixeShaderRandom->GetBufferPointer(), pixeShaderRandom->GetBufferSize() };
     pipelineStateRandom = nullptr;
     hr = dxcommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&pipelineStateRandom));
+    assert(SUCCEEDED(hr));
 
     // レターボックス
     graphicsPipelineStateDesc.PS = { pixeShaderLetterBox->GetBufferPointer(), pixeShaderLetterBox->GetBufferSize() };
     pipelineStateLetterbox_ = nullptr;
     hr = dxcommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&pipelineStateLetterbox_));
+    assert(SUCCEEDED(hr));
 
+    // カラーアウト
+    graphicsPipelineStateDesc.PS = { pixeShaderFade->GetBufferPointer(), pixeShaderFade->GetBufferSize() };
+    pipelineStateFade_ = nullptr;
+    hr = dxcommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&pipelineStateFade_));
     assert(SUCCEEDED(hr));
 }
