@@ -37,6 +37,7 @@ void Player::Initialize()
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
 
     isClear = false;
+    isIntro = true;
 
     playerObject3d = std::make_unique<Object3d>();
     playerObject3d->Initialize();
@@ -112,8 +113,12 @@ void Player::Update()
     UIUpdate();
 }
 
-void Player::UpdateIntro()
+void Player::UpdateIntro(float progress)
 {
+    if (progress >= 1.0f) {
+        isIntro = false;
+    }
+
     PrePos_ = basetransform_.translate;
 
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
@@ -121,6 +126,30 @@ void Player::UpdateIntro()
 
     // 入力を無視し、レール座標にそのまま追従
     basetransform_.translate = railBasePos_;
+
+    constexpr float kIntroStartProgress = 0.2f;
+    constexpr float kIntroEndProgress = 0.4f;
+    constexpr float kCameraBehindOffsetZ = -30.0f;
+
+    float zOffset = 0.0f;
+
+    if (progress < kIntroStartProgress) {
+
+        zOffset = kCameraBehindOffsetZ;
+    } else if (progress < kIntroEndProgress) {
+
+        float subProgress = (progress - kIntroStartProgress) / (kIntroEndProgress - kIntroStartProgress);
+        subProgress = std::clamp(subProgress, 0.0f, 1.0f);
+
+        float easeT = 1.0f - std::pow(1.0f - subProgress, 3.0f);
+
+        zOffset = kCameraBehindOffsetZ * (1.0f - easeT);
+    } else {
+
+        zOffset = 0.0f;
+    }
+
+    basetransform_.translate.z += zOffset;
 
     float length = 0.0f; // 横上下移動しないので0.0f固定
 
@@ -165,7 +194,7 @@ void Player::Draw()
 
     playerObject3d->Draw();
 
-    if (!isClear) {
+    if (!isClear && !isIntro) {
         ShortReticleObject3d->Draw();
         LongReticleObject3d->Draw();
     }
@@ -173,7 +202,7 @@ void Player::Draw()
 
 void Player::SpritDraw()
 {
-    if (isClear) {
+    if (isClear || isIntro) {
         return;
     }
 
@@ -404,6 +433,14 @@ void Player::ReticleUpdate()
 void Player::BulletUpdate()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+    
+    // クリア状態奈なら射撃不可
+    if (isClear) {
+        for (auto& bullet_ : playerBullets_) {
+            bullet_->Update(deltaTime);
+        };
+        return;
+    }
 
     // バクとる
     Vector3 forwardDir;

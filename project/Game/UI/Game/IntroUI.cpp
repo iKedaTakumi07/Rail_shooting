@@ -43,8 +43,38 @@ void IntroUI::Update(float progress)
 
         PostProcess::GetInstance()->SetRadialBlur(true);
         PostProcess::GetInstance()->SetRadialBlurParam(Center, Blur);
+        PostProcess::GetInstance()->SetBlackout(true);
+        PostProcess::GetInstance()->SetBlackout(Blur);
+
     } else {
         PostProcess::GetInstance()->SetRadialBlur(false);
+        PostProcess::GetInstance()->SetBlackout(false);
+    }
+
+    if (progress <= 0.4f) {
+        float t = progress - 0.2f;
+        t = std::clamp(t, 0.0f, 0.1f);
+        float Height = 0.1f - t;
+
+        PostProcess::GetInstance()->SetLetterbox(true);
+        PostProcess::GetInstance()->SetLetterboxHeight(Height);
+    } else {
+        isSprite = true;
+        PostProcess::GetInstance()->SetLetterbox(false);
+    }
+
+    if (progress <= 0.5f) {
+        float t = (progress - 0.4f) * 10.0f;
+
+        IntroStage->SetColor(Vector4(1.0f, 1.0f, 1.0f, t));
+        IntroMission->SetColor(Vector4(1.0f, 1.0f, 1.0f, t));
+    }
+
+    if (progress >= 0.95f) {
+        float t = (1.0f - progress) * 20.0f;
+
+        IntroStage->SetColor(Vector4(1.0f, 1.0f, 1.0f, t));
+        IntroMission->SetColor(Vector4(1.0f, 1.0f, 1.0f, t));
     }
 
     IntroStage->Update();
@@ -57,7 +87,7 @@ void IntroUI::Draw()
 
 void IntroUI::SpritDraw()
 {
-    if (!isIntroEnd) {
+    if (!isIntroEnd && isSprite && !iskPause) {
         IntroStage->Draw();
         IntroMission->Draw();
     }

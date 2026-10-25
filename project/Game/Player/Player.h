@@ -21,7 +21,7 @@ public:
 
     void Update();
 
-    void UpdateIntro();
+    void UpdateIntro(float progress);
     void UpdateClear();
 
     void Draw();
@@ -80,6 +80,7 @@ private:
 
     // クリアフラグ(無敵当)
     bool isClear = false;
+    bool isIntro = false;
 
     // 体力
     int hp_ = 100; // 現体力

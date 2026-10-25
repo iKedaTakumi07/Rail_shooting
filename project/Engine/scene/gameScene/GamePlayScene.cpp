@@ -149,12 +149,12 @@ void GamePlayScene::Update()
 
         PauseUI_->Update();
         if (PauseUI_->GetPause()) {
+            introUI_->SetiskPause(true);
             PreState_ = sceneState_;
             sceneState_ = SceneState::kPause;
         }
 
         player_->SetBasePosition(railPos);
-        player_->UpdateIntro(); // 操作不能
 
         // 進行速度の5秒分
         float currentZ = StageManager_->GetCurrentZ();
@@ -163,8 +163,10 @@ void GamePlayScene::Update()
         if (progress >= 1.0f) {
             progress = 1.0f;
             sceneState_ = SceneState::kPlay;
+            introUI_->SetIntroEnd(true);
         }
 
+        player_->UpdateIntro(progress); // 操作不能
         cameraController_->UpdateIntro(railPos);
         introUI_->Update(progress);
 
@@ -269,6 +271,7 @@ void GamePlayScene::Update()
 
         if (!PauseUI_->GetPause() && !isChange && !isReset) {
             sceneState_ = PreState_;
+            introUI_->SetiskPause(false);
             PreState_ = SceneState::knull;
         }
         break;

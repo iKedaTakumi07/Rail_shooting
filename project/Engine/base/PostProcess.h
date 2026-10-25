@@ -230,10 +230,10 @@ public:
 
     void SetRandom(bool enable) { enableRandom_ = enable; }
 
-    void SetEnableLetterbox(bool enable) { enableLetterbox_ = enable; }
+    void SetLetterbox(bool enable) { enableLetterbox_ = enable; }
     void SetLetterboxHeight(float rate) { letterboxParam_.heightRate = std::clamp(rate, 0.0f, 0.5f); }
 
-    void SetEnableFade(bool enable) { enableFade_ = enable; }
+    void SetFade(bool enable) { enableFade_ = enable; }
     void SetFadeParam(const Vector4& color, float factor)
     {
         fadeParam_.color = color;

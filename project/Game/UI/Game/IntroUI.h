@@ -16,6 +16,7 @@ public:
 
 public:
     void SetIntroEnd(bool num) { isIntroEnd = num; };
+    void SetiskPause(bool num) { iskPause = num; }
 
 private:
     void IntroUpdate();
@@ -32,6 +33,8 @@ private:
     Vector2 returnSelectBaseSize_ { 1.0f, 1.0f };
 
     bool isIntroEnd = false;
+    bool isSprite = false;
+    bool iskPause = false;
 
     float Size = 1.0f; // 可変式スケール倍率
     float MaxSize = 1.2f;
