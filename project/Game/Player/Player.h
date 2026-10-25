@@ -40,6 +40,9 @@ public:
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kPlayer; }
     int GetDamage() const override { return damage_; }
 
+    bool IsDead() const { return isDead_; }
+    bool IsExplosion() const { return isExplosion; }
+
     // set
     void SetBasePosition(const Vector3& pos) { railBasePos_ = pos; }
     void SetEnemyManager(EnemyManager* enemyManager) { enemyManager_ = enemyManager; }
@@ -65,6 +68,11 @@ private:
     // 押し出し処理
     void ColliderUpdate(Collider* other);
 
+    // 死亡演出
+    void DeadInitialize();
+    void UpdateDead();
+    void UpdateExplosion();
+
 private:
     // 座標
     Transform transform_ = { { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } }; // モデル座標
@@ -81,6 +89,14 @@ private:
     // クリアフラグ(無敵当)
     bool isClear = false;
     bool isIntro = false;
+    bool isDead_ = false; // 死んでいるか
+    bool isExplosion = false; // 機体が爆破下か(ゲームオーバ表示UIお忘れなく)
+
+    float ExplosionTimer = 2.0f;
+    const float kExplosionTimer = 2.0f;
+    Vector3 lastDir { 0.0f, 0.0f };
+    Vector3 deadAngularVelocity_ { 0.0f, 0.0f, 0.0f };
+    float fallingSpeed = 2.0f;
 
     // 体力
     int hp_ = 100; // 現体力

@@ -81,26 +81,36 @@ void Player::Update()
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
 
-    // 無敵時間の処理
-    if (isinvincible) {
-        invincibleTime -= deltaTime;
-        const float kBlinkInterval = 0.1f; // 点滅周期
-
-        if (std::fmod(invincibleTime, kBlinkInterval * 2.0f) > kBlinkInterval) {
-            playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 0.5f));
-        } else {
-            playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-        }
-
-        if (invincibleTime <= 0.0f) {
-            isinvincible = false;
-            playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-        }
+    // 爆発したのなら煙エフェクトのみ
+    if (isExplosion) {
+        UpdateExplosion();
+        return;
     }
 
-    MoveUpdate();
-    BulletUpdate();
-    ReticleUpdate();
+    if (!isDead_) {
+        // 無敵時間の処理
+        if (isinvincible) {
+            invincibleTime -= deltaTime;
+            const float kBlinkInterval = 0.1f; // 点滅周期
+
+            if (std::fmod(invincibleTime, kBlinkInterval * 2.0f) > kBlinkInterval) {
+                playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 0.5f));
+            } else {
+                playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            }
+
+            if (invincibleTime <= 0.0f) {
+                isinvincible = false;
+                playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            }
+        }
+
+        MoveUpdate();
+        BulletUpdate();
+        ReticleUpdate();
+    } else {
+        UpdateDead();
+    }
 
     playerPowerUnitLaser_->NewParticle(PrePos_, transform_, kPowerUnitPos);
 
@@ -192,7 +202,9 @@ void Player::Draw()
         bullet_->Draw();
     }
 
-    playerObject3d->Draw();
+    if (!isExplosion) {
+        playerObject3d->Draw();
+    }
 
     if (!isClear && !isIntro) {
         ShortReticleObject3d->Draw();
@@ -232,10 +244,25 @@ void Player::OnCollision(Collider* other)
     if (isinvincible || isClear)
         return;
 
+    // 死亡中は即爆状態
+    if (isDead_) {
+        if (other->GetCollisionGroup() == CollisionGroup::kStageObject) {
+            isExplosion = true;
+        }
+        return;
+    }
+
     // 当たったもの次第で分岐
     if (other->GetCollisionGroup() == CollisionGroup::kEnemyBullet || other->GetCollisionGroup() == CollisionGroup::kEnemy) {
         int damege = other->GetDamage();
         hp_ -= damege;
+
+        // 死んだら墜落状態
+        if (hp_ <= 0) {
+            isDead_ = true;
+            DeadInitialize();
+            return;
+        }
 
         // 無敵時間のフラグ実行
         isinvincible = true;
@@ -247,6 +274,13 @@ void Player::OnCollision(Collider* other)
         // 無敵時間のフラグ実行
         isinvincible = true;
         invincibleTime = kInvincibleTime;
+
+        if (hp_ <= 0) {
+            // 即爆発
+            isExplosion = true;
+            isDead_ = true;
+            return;
+        }
 
         // 押し出し処理
         ColliderUpdate(other);
@@ -274,6 +308,12 @@ void Player::MoveUpdate()
     if (Input::GetInstance()->PushKey(DIK_S)) {
         inputDir.y -= 1.0f;
     }
+#ifdef USE_IMGUI
+    // チートコード(一発即発状態にする)
+    if (Input::GetInstance()->PushKey(DIK_X)) {
+        hp_ = 1;
+    }
+#endif // DEBUG
 
     // コントローラー
     if (Input::GetInstance()->IsControllerConnected()) {
@@ -289,6 +329,8 @@ void Player::MoveUpdate()
         inputDir.y /= length;
         length = 1.0f;
     }
+
+    lastDir = inputDir;
 
     // shift又はLB/RBで高速旋回
     bool isShift = false;
@@ -433,7 +475,7 @@ void Player::ReticleUpdate()
 void Player::BulletUpdate()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    
+
     // クリア状態奈なら射撃不可
     if (isClear) {
         for (auto& bullet_ : playerBullets_) {
@@ -732,4 +774,57 @@ void Player::ColliderUpdate(Collider* other)
             basetransform_.translate.y = railBasePos_.y + localPos_.y;
         }
     }
+}
+
+void Player::DeadInitialize()
+{
+    // 念のための初期か
+    ExplosionTimer = kExplosionTimer;
+
+    deadAngularVelocity_.x = 3.0f; // Pitch回転
+    deadAngularVelocity_.y = 2.0f; // Yaw回転
+    deadAngularVelocity_.z = 5.0f; // Roll回転
+
+    velocity_.z = kCharacterSpeed * 0.8f;
+    velocity_.y = 0.0f;
+}
+
+void Player::UpdateDead()
+{
+    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+
+    // 2秒以上落下する場合は途中で爆発
+    ExplosionTimer -= deltaTime;
+    if (ExplosionTimer <= 0.0f) {
+        isExplosion = true;
+    }
+
+    // 最後の入力方向に墜落
+    constexpr float kGravity = 15.0f;
+    velocity_.y -= kGravity * deltaTime;
+
+    // 指定方向に加速
+    localPos_.x += (lastDir.x * kAcceleration + velocity_.x) * 0.5f;
+    localPos_.y += velocity_.y * deltaTime;
+
+    // クランプ制限を撤廃して上限なしで進む
+    basetransform_.translate.x = railBasePos_.x + localPos_.x;
+    basetransform_.translate.y = railBasePos_.y + localPos_.y;
+    basetransform_.translate.z = railBasePos_.z + localPos_.z;
+
+    // レール座標を加算
+    basetransform_.rotate.x += deadAngularVelocity_.x * deltaTime;
+    basetransform_.rotate.y += deadAngularVelocity_.y * deltaTime;
+    basetransform_.rotate.z += deadAngularVelocity_.z * deltaTime;
+
+    float maxTheoreticalSpeed = kAcceleration / (1.0f - kFriction);
+
+    // 機体の回転量
+    // 最後の入力方向に回転し続ける
+    transform_.translate = basetransform_.translate;
+    transform_.rotate = basetransform_.rotate;
+}
+
+void Player::UpdateExplosion()
+{
 }

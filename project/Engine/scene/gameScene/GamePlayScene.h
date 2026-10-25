@@ -43,6 +43,8 @@ private:
         knull = -1,
         kIntro,
         kPlay,
+        kDead,
+        kGameOver,
         kPause,
         kClear
     };

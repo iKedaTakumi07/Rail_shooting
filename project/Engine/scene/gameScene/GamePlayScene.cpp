@@ -189,6 +189,14 @@ void GamePlayScene::Update()
         player_->SetBasePosition(railPos);
         player_->Update();
 
+        if (player_->IsExplosion()) {
+            sceneState_ = SceneState::kGameOver;
+            break;
+        } else if (player_->IsDead()) {
+            sceneState_ = SceneState::kDead;
+            break;
+        }
+
         cameraController_->Update(railPos);
 
         enemyManager_->Update();
@@ -209,6 +217,7 @@ void GamePlayScene::Update()
         for (auto& stageObj : stageObject_->GetstageObjects()) {
             collisionManager_->AddCollider(stageObj.get());
         }
+        collisionManager_->AddCollider(stageObject_.get());
 
         collisionManager_->CheckAllCollisions();
 
@@ -218,6 +227,52 @@ void GamePlayScene::Update()
             player_->SetisClear(true);
             clearTimer_ = 0.0f;
         }
+
+        break;
+    }
+    case GamePlayScene::SceneState::kDead: {
+        StageManager_->Update();
+        Vector3 railPos = StageManager_->CalcRailPosition();
+
+        player_->SetBasePosition(railPos);
+        player_->Update();
+        if (player_->IsExplosion()) {
+            sceneState_ = SceneState::kGameOver;
+            break;
+        }
+
+        cameraController_->Update(railPos);
+
+        enemyManager_->Update();
+        stageObject_->Update();
+
+        // 当たり判定(敵の攻撃では爆発しない予定)
+        collisionManager_->Clear();
+
+        for (auto& bullet : player_->GetBullets()) {
+            collisionManager_->AddCollider(bullet.get());
+        }
+        for (auto& enemy : enemyManager_->GetEnemyes()) {
+            collisionManager_->AddCollider(enemy.get());
+            for (auto& enemyBullet : enemy->GetBullets()) {
+                collisionManager_->AddCollider(enemyBullet.get());
+            }
+        }
+        for (auto& stageObj : stageObject_->GetstageObjects()) {
+            collisionManager_->AddCollider(stageObj.get());
+        }
+        collisionManager_->AddCollider(stageObject_.get());
+
+        collisionManager_->CheckAllCollisions();
+        break;
+    }
+    case GamePlayScene::SceneState::kGameOver: {
+
+        player_->Update();
+        enemyManager_->Update();
+        stageObject_->Update();
+
+        // UI更新
 
         break;
     }
