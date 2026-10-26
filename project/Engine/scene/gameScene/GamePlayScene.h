@@ -18,6 +18,7 @@ class StageManager;
 class SceneTransition;
 class pauseUI;
 class skydome;
+class IntroUI;
 
 class GamePlayScene : public BaseScene {
 public:
@@ -42,6 +43,8 @@ private:
         knull = -1,
         kIntro,
         kPlay,
+        kDead,
+        kGameOver,
         kPause,
         kClear
     };
@@ -62,6 +65,7 @@ private:
     std::unique_ptr<Camera> BossCamera_; // ボス演出用
 
     std::unique_ptr<skydome> skydome_;
+    std::unique_ptr<IntroUI> introUI_;
 
     // ステージ置物
     std::unique_ptr<stageObjectManager> stageObject_;

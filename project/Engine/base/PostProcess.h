@@ -1,6 +1,7 @@
 #pragma once
 #include "DirectXCommon.h"
 #include "Math.h"
+#include <algorithm>
 #include <memory>
 class Camera;
 class OffscreenSurface;
@@ -49,6 +50,18 @@ public:
         float Padding[3];
     };
 
+    struct LetterboxData {
+        float heightRate;
+        float feather;
+        float padding[2];
+    };
+
+    struct FadeData {
+        Vector4 color;
+        float factor;
+        float padding[3];
+    };
+
     enum class EffectType {
         Grayscale,
         Sepiascale,
@@ -60,6 +73,8 @@ public:
         Vignette,
         Dissolve,
         Random,
+        Letterbox,
+        Fade,
     };
 
     // コンストラクタに渡すための鍵
@@ -86,18 +101,25 @@ public:
 
     // 共通描画設定
     void DrawNormal();
-    void DrawGrayscale();
-    void DrawSepiascale();
-    void DrawVignette();
-    void DrawBoxFilterHorizontal();
-    void DrawBoxFilterVertical();
-    void DrawGaussianFilterHorizontal();
-    void DrawGaussianFilterVertical();
-    void DrawLuminanceOutLine();
-    void DrawDepthOutLine();
-    void DrawRadialBlur();
-    void DrawDissolve();
-    void DrawRandom();
+
+    // ========================
+    // 各描画
+    // ========================
+
+    void DrawGrayscale(); // グレイスケール
+    void DrawSepiascale(); // セピア調
+    void DrawVignette(); // ヴィネッティング
+    void DrawBoxFilterHorizontal(); // ボックスフィルターX
+    void DrawBoxFilterVertical(); // ボックスフィルターY
+    void DrawGaussianFilterHorizontal(); // ガウシアンフィルターx
+    void DrawGaussianFilterVertical(); // ガウシアンフィルターy
+    void DrawLuminanceOutLine(); // 輝度アウトライン
+    void DrawDepthOutLine(); // 深度アウトライン
+    void DrawRadialBlur(); // ブラー
+    void DrawDissolve(); // ディゾルブ
+    void DrawRandom(); // ランダムノイズ
+    void DrawLetterBox(); // レターボックス
+    void DrawFade(); // カラーアウト/イン
 
     // ImGuiのUIを描画する関数
     void DrawImGui();
@@ -119,6 +141,8 @@ public:
     bool IsRadialBlur() const { return enableRadialBlur_; } // ラジアルブラー
     bool IsDissolve() const { return enableDissolve_; }
     bool IsRandom() const { return enableRandom_; }
+    bool IsLetterBox() const { return enableLetterbox_; }
+    bool IsFade() const { return enableFade_; }
 
     // set
     void SetDepthSrvHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle) { this->depthSrvHandle = handle; }
@@ -206,6 +230,18 @@ public:
 
     void SetRandom(bool enable) { enableRandom_ = enable; }
 
+    void SetLetterbox(bool enable) { enableLetterbox_ = enable; }
+    void SetLetterboxHeight(float rate) { letterboxParam_.heightRate = std::clamp(rate, 0.0f, 0.5f); }
+
+    void SetFade(bool enable) { enableFade_ = enable; }
+    void SetFadeParam(const Vector4& color, float factor)
+    {
+        fadeParam_.color = color;
+        fadeParam_.factor = std::clamp(factor, 0.0f, 1.0f);
+    }
+    void SetBlackout(float factor) { SetFadeParam({ 0.0f, 0.0f, 0.0f, 1.0f }, factor); } // ブラックアウト固定
+    void SetWhiteout(float factor) { SetFadeParam({ 1.0f, 1.0f, 1.0f, 1.0f }, factor); } // ホワイトアウト固定
+
     void ClearAllEffects() // エフェクト全リセット
     {
         enableGrayscale_ = false;
@@ -218,6 +254,8 @@ public:
         enableRadialBlur_ = false;
         enableDissolve_ = false;
         enableRandom_ = false;
+        enableLetterbox_ = false;
+        enableFade_ = false;
     }
 
 public:
@@ -251,7 +289,7 @@ private:
     gIntensity* GrayscaleData_ = nullptr;
     gIntensity GrayScaleParam_ = { 1.0f, { 0.0f, 0.0f, 0.0f } };
 
-    /* Sepiascale */
+    /* SepiaScale */
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineStateSepiascale_ = nullptr;
     Microsoft::WRL::ComPtr<ID3D12Resource> SepiascaleBuffer_ = nullptr;
     gIntensity* SepiascaleData_ = nullptr;
@@ -263,7 +301,7 @@ private:
     VignetteData* vignetteMappedData_ = nullptr;
     VignetteData vignetteParam_ = { 16.0f, 0.8f, { 0.0f, 0.0f } }; // 初期値
 
-    /* BoxFillter */
+    /* BoxFilter */
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineStateBoxFilterX = nullptr;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineStateBoxFilterY = nullptr;
     Microsoft::WRL::ComPtr<ID3D12Resource> boxFilterBuffer_ = nullptr;
@@ -323,6 +361,18 @@ private:
     Material RandomMaterialParam_;
     std::chrono::steady_clock::time_point lastTime_; // 前フレームの時刻
 
+    /* Letterbox */
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineStateLetterbox_ = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> letterboxBuffer_ = nullptr;
+    LetterboxData* letterboxMappedData_ = nullptr;
+    LetterboxData letterboxParam_ = { 0.1f, 0.002f, { 0.0f, 0.0f } };
+
+    /* Fade */
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineStateFade_ = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> fadeBuffer_ = nullptr;
+    FadeData* fadeMappedData_ = nullptr;
+    FadeData fadeParam_ = { { 0.0f, 0.0f, 0.0f, 1.0f }, 0.0f, { 0.0f, 0.0f, 0.0f } };
+
     // 現在のモード
     bool enableGrayscale_ = false;
     bool enableSepiascale_ = false;
@@ -334,6 +384,8 @@ private:
     bool enableRadialBlur_ = false;
     bool enableDissolve_ = false;
     bool enableRandom_ = false;
+    bool enableLetterbox_ = false;
+    bool enableFade_ = false;
 
     // エフェクトの描画順を管理するためのリスト
     std::vector<EffectType> effectOrder_;

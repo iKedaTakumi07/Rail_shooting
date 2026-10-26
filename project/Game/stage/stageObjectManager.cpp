@@ -123,6 +123,39 @@ void stageObjectManager::LoadJsonPopData(const std::string& filePath)
     });
 }
 
+AllAABB stageObjectManager::GetAllAABB() const
+{
+    {
+        AllAABB compound;
+        AABB box;
+        float playerZ = player_ ? player_->GetTranslate().z : 0.0f;
+
+        box.min = { center_.x - size_.x, center_.y - size_.y, playerZ - 100.0f };
+        box.max = { center_.x + size_.x, center_.y + size_.y, playerZ + 300.0f };
+
+        compound.wholeBox = box;
+        compound.dividBoxes.push_back(box);
+        return compound;
+    }
+}
+
+AllOBB stageObjectManager::GetAllOBB() const
+{
+    AllOBB compound;
+    OBB box;
+    float playerZ = player_ ? player_->GetTranslate().z : 0.0f;
+
+    box.center = { center_.x, center_.y, playerZ + 100.0f };
+    box.orientations[0] = { 1.0f, 0.0f, 0.0f };
+    box.orientations[1] = { 0.0f, 1.0f, 0.0f };
+    box.orientations[2] = { 0.0f, 0.0f, 1.0f };
+    box.size = { size_.x, 2.0f, 400.0f };
+
+    compound.wholeBox = box;
+    compound.dividBoxes.push_back(box);
+    return compound;
+}
+
 void stageObjectManager::PopEnemyCheck(const stageObjectPopData& data)
 {
     auto newObj = std::make_unique<stageObject>();
@@ -152,15 +185,19 @@ void stageObjectManager::GrauondInitialize()
     grauondtransform_.translate.z = 0.0f;
     grauondtransform2_.translate.z = grauondSize;
     grauondtransform3_.translate.z = grauondSize * 2;
+
+    grauondtransform_.translate.y = center_.y;
+    grauondtransform2_.translate.y = center_.y;
+    grauondtransform3_.translate.y = center_.y;
 }
 
 void stageObjectManager::GrauondUpdate()
 {
     Vector3 pos = player_->GetTranslate();
     if (pos.z >= grauondtransform_.translate.z + grauondSize) {
-        grauondtransform_.translate.z = grauondtransform2_.translate.z + grauondSize;
-        grauondtransform2_.translate.z = grauondtransform3_.translate.z + grauondSize;
-        grauondtransform3_.translate.z = grauondtransform3_.translate.z + grauondSize * 2;
+        grauondtransform_.translate.z = grauondtransform2_.translate.z;
+        grauondtransform2_.translate.z = grauondtransform3_.translate.z;
+        grauondtransform3_.translate.z = grauondtransform3_.translate.z + grauondSize;
     }
 
     grauond3d->SetTranslate(grauondtransform_.translate);

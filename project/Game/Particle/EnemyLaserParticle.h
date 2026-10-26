@@ -22,7 +22,6 @@ public:
     void SetEndColor(Vector4 color) { EndColor = color; }
 
 private:
-    // ステータス設定。
-    Vector4 StartColor;
-    Vector4 EndColor;
+    Vector4 StartColor = { 1.0f, 0.2f, 0.2f, 0.35f };
+    Vector4 EndColor = { 1.0f, 0.2f, 0.2f, 0.0f };
 };

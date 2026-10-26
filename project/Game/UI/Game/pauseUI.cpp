@@ -55,6 +55,8 @@ void pauseUI::Update()
     if (isPause) {
         // ブラーを強制解除
         PostProcess::GetInstance()->SetRadialBlur(false);
+        PostProcess::GetInstance()->SetBlackout(false);
+        PostProcess::GetInstance()->SetLetterbox(false);
 
         PauseUpdate();
     }

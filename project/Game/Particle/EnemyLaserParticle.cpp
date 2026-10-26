@@ -7,7 +7,7 @@
 void EnemyLaserParticle::Initialize()
 {
     // 事前に読み込ませるため多分?
-    CPUParticleManager::getInstance()->CreateParticleGroup("laser", "resources/playerLaser.png", ParticleMeshType::kPlane);
+    CPUParticleManager::getInstance()->CreateParticleGroup("enemyLaser", "resources/playerLaser.png", ParticleMeshType::kPlane);
 
     StartColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     EndColor = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
@@ -84,7 +84,7 @@ void EnemyLaserParticle::NewParticle(const Vector3& emitterTransformA, const Vec
         laserfireParam.SetLifeTime(0.1f);
 
         // えせトレイル
-        CPUParticleManager::getInstance()->Emit("laser", TagetTransfrom, 1, laserfireParam);
+        CPUParticleManager::getInstance()->Emit("enemyLaser", TagetTransfrom, 1, laserfireParam);
     }
 }
 

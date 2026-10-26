@@ -5,8 +5,8 @@
 void PlayerPowerUnitLaser::Initialize()
 {
     // 事前に読み込ませるため多分?
-    CPUParticleManager::getInstance()->CreateParticleGroup("laser", "resources/powerUnitLaser.png", ParticleMeshType::kHalfCone);
-    CPUParticleManager::getInstance()->CreateParticleGroup("lasercircle", "resources/circle2.png", ParticleMeshType::kPlane);
+    CPUParticleManager::getInstance()->CreateParticleGroup("PowerUintLaser", "resources/powerUnitLaser.png", ParticleMeshType::kHalfCone);
+    CPUParticleManager::getInstance()->CreateParticleGroup("PowerUintLasercircle", "resources/circle2.png", ParticleMeshType::kPlane);
 
     // ランダムエンジン初期化
     std::random_device seedGenerator;
@@ -86,7 +86,7 @@ void PlayerPowerUnitLaser::NewParticle(const Vector3& prePos, const Transform& e
     laserfireParam.SetVelocity({ 0.0f, 0.0f, 0.0f });
     laserfireParam.SetLifeTime(0.08f);
 
-    CPUParticleManager::getInstance()->Emit("laser", targetTransform, 1, laserfireParam);
+    CPUParticleManager::getInstance()->Emit("PowerUintLaser", targetTransform, 1, laserfireParam);
 
     float innerRadius = 0.12f;
     targetTransform.scale = { innerRadius, innerRadius, length * 0.45f };
@@ -99,7 +99,7 @@ void PlayerPowerUnitLaser::NewParticle(const Vector3& prePos, const Transform& e
     laserfireParam.SetVelocity({ 0.0f, 0.0f, 0.0f });
     laserfireParam.SetLifeTime(0.08f);
 
-    CPUParticleManager::getInstance()->Emit("laser", targetTransform, 1, laserfireParam);
+    CPUParticleManager::getInstance()->Emit("PowerUintLaser", targetTransform, 1, laserfireParam);
 
     laserfireParam.SetRotate(emitterTransform.rotate);
     laserfireParam.SetScale({ 0.03f, 0.03f, 0.03f });
@@ -115,5 +115,5 @@ void PlayerPowerUnitLaser::NewParticle(const Vector3& prePos, const Transform& e
     Transform circleTransform = emitterTransform;
     circleTransform.translate = circleEmitPos;
 
-    CPUParticleManager::getInstance()->Emit("lasercircle", circleTransform, 5, laserfireParam);
+    CPUParticleManager::getInstance()->Emit("PowerUintLasercircle", circleTransform, 5, laserfireParam);
 }

@@ -18,6 +18,8 @@ public:
     std::string GetStageObjectData() const { return loadStageObjectData; };
     std::string GetStageData() const { return loadStageData; };
     std::string GetEnemyPopData() const { return loadEnemyPopDat; };
+    int GetloadNumber() const { return loadNumber; };
+    int GetMaxStage() const { return maxStage; }
 
 private:
     stageDataLoad() = default;
@@ -26,6 +28,7 @@ private:
 private:
     static std::unique_ptr<stageDataLoad> instance_;
 
+    static constexpr int maxStage = 2;
     int loadNumber = 1;
     std::string loadStageObjectData;
     std::string loadStageData;

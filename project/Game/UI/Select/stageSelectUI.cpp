@@ -188,14 +188,19 @@ void stageSelectUI::SortieUpdate(float deltaTime)
 
     Vector2 center = { 0.5f, 0.5f };
     float blur = 1.0f - (gameChangeTimer_ / kGameChangeTimer_);
+    if (gameChangeTimer_ <= 0.0f) {
+        gameChangeTimer_ = 0.0f;
+        blur = 1.0f;
+
+        if (transition_->IsFinished()) {
+            isGameChangeFinished_ = true;
+        }
+    }
 
     PostProcess::GetInstance()->SetRadialBlur(true);
     PostProcess::GetInstance()->SetRadialBlurParam(center, blur);
-
-    if (gameChangeTimer_ <= 0.0f && transition_->IsFinished()) {
-        gameChangeTimer_ = 0.0f;
-        isGameChangeFinished_ = true;
-    }
+    PostProcess::GetInstance()->SetFade(true);
+    PostProcess::GetInstance()->SetBlackout(blur);
 }
 
 void stageSelectUI::TitleBackUpdate(float deltaTime)

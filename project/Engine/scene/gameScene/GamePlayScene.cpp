@@ -25,14 +25,15 @@
 #include "../../../Game/Enemy/EnemyManager.h"
 #include "../../../Game/Enemy/base/baseEnemy.h"
 #include "../../../Game/Loder/GameScoreManager.h"
+#include "../../../Game/Loder/stageDataLoad.h"
 #include "../../../Game/OnCollison/CollisionManager.h"
 #include "../../../Game/Player/Player.h"
 #include "../../../Game/SceneTransition.h"
+#include "../../../Game/UI/Game/IntroUI.h"
 #include "../../../Game/UI/Game/pauseUI.h"
 #include "../../../Game/UI/Result/clearUI.h"
 #include "../../../Game/stage/StageManager.h"
 #include "../../../Game/stage/skydome.h"
-#include "../../../Game/Loder/stageDataLoad.h"
 #include "../../../Game/stage/stageObjectManager.h"
 
 #include "math.h"
@@ -101,6 +102,9 @@ void GamePlayScene::Initialize()
     PauseUI_ = std::make_unique<pauseUI>();
     PauseUI_->Initialize();
 
+    introUI_ = std::make_unique<IntroUI>();
+    introUI_->Initialize();
+
     sceneState_ = SceneState::kIntro;
     clearTimer_ = 0.0f;
 
@@ -145,23 +149,26 @@ void GamePlayScene::Update()
 
         PauseUI_->Update();
         if (PauseUI_->GetPause()) {
+            introUI_->SetiskPause(true);
             PreState_ = sceneState_;
             sceneState_ = SceneState::kPause;
         }
 
         player_->SetBasePosition(railPos);
-        player_->UpdateIntro(); // 操作不能
 
         // 進行速度の5秒分
         float currentZ = StageManager_->GetCurrentZ();
-        float progress = (currentZ - (-25.0f)) / 25.0f;
+        float progress = (currentZ - (-100.0f)) / 100.0f;
 
         if (progress >= 1.0f) {
             progress = 1.0f;
             sceneState_ = SceneState::kPlay;
+            introUI_->SetIntroEnd(true);
         }
 
-        cameraController_->UpdateIntro(railPos, progress);
+        player_->UpdateIntro(progress); // 操作不能
+        cameraController_->UpdateIntro(railPos);
+        introUI_->Update(progress);
 
         enemyManager_->Update();
         stageObject_->Update();
@@ -181,6 +188,14 @@ void GamePlayScene::Update()
 
         player_->SetBasePosition(railPos);
         player_->Update();
+
+        if (player_->IsExplosion()) {
+            sceneState_ = SceneState::kGameOver;
+            break;
+        } else if (player_->IsDead()) {
+            sceneState_ = SceneState::kDead;
+            break;
+        }
 
         cameraController_->Update(railPos);
 
@@ -202,6 +217,7 @@ void GamePlayScene::Update()
         for (auto& stageObj : stageObject_->GetstageObjects()) {
             collisionManager_->AddCollider(stageObj.get());
         }
+        collisionManager_->AddCollider(stageObject_.get());
 
         collisionManager_->CheckAllCollisions();
 
@@ -211,6 +227,52 @@ void GamePlayScene::Update()
             player_->SetisClear(true);
             clearTimer_ = 0.0f;
         }
+
+        break;
+    }
+    case GamePlayScene::SceneState::kDead: {
+        StageManager_->Update();
+        Vector3 railPos = StageManager_->CalcRailPosition();
+
+        player_->SetBasePosition(railPos);
+        player_->Update();
+        if (player_->IsExplosion()) {
+            sceneState_ = SceneState::kGameOver;
+            break;
+        }
+
+        cameraController_->Update(railPos);
+
+        enemyManager_->Update();
+        stageObject_->Update();
+
+        // 当たり判定(敵の攻撃では爆発しない予定)
+        collisionManager_->Clear();
+
+        for (auto& bullet : player_->GetBullets()) {
+            collisionManager_->AddCollider(bullet.get());
+        }
+        for (auto& enemy : enemyManager_->GetEnemyes()) {
+            collisionManager_->AddCollider(enemy.get());
+            for (auto& enemyBullet : enemy->GetBullets()) {
+                collisionManager_->AddCollider(enemyBullet.get());
+            }
+        }
+        for (auto& stageObj : stageObject_->GetstageObjects()) {
+            collisionManager_->AddCollider(stageObj.get());
+        }
+        collisionManager_->AddCollider(stageObject_.get());
+
+        collisionManager_->CheckAllCollisions();
+        break;
+    }
+    case GamePlayScene::SceneState::kGameOver: {
+
+        player_->Update();
+        enemyManager_->Update();
+        stageObject_->Update();
+
+        // UI更新
 
         break;
     }
@@ -264,6 +326,7 @@ void GamePlayScene::Update()
 
         if (!PauseUI_->GetPause() && !isChange && !isReset) {
             sceneState_ = PreState_;
+            introUI_->SetiskPause(false);
             PreState_ = SceneState::knull;
         }
         break;
@@ -293,6 +356,7 @@ void GamePlayScene::Draw()
     // 2d/スプライト
     //
     SpriteCommon::GetInstance()->PrepareSpriteDraw();
+    introUI_->SpritDraw();
     player_->SpritDraw();
     enemyManager_->SpriteDraw();
     ClearUI_->SpritDraw();
