@@ -5,9 +5,9 @@
 void LaserParticle::Initialize()
 {
     // 事前に読み込ませるため多分?
-    CPUParticleManager::getInstance()->CreateParticleGroup("multiLaser", "resources/playerLaser.png", ParticleMeshType::kPlane);
-    CPUParticleManager::getInstance()->CreateParticleGroup("laser_halfcone", "resources/powerUnitLaser.png", ParticleMeshType::kHalfCone);
-    CPUParticleManager::getInstance()->CreateParticleGroup("laser_cone", "resources/powerUnitLaser.png", ParticleMeshType::kCone);
+    CPUParticleManager::getInstance()->CreateParticleGroup("multiLaser", "resources/playerLaser.png", ParticleMeshType::kPlane, BlendMode::kBlendModeAdd);
+    CPUParticleManager::getInstance()->CreateParticleGroup("laser_halfcone", "resources/powerUnitLaser.png", ParticleMeshType::kHalfCone, BlendMode::kBlendModeAdd);
+    CPUParticleManager::getInstance()->CreateParticleGroup("laser_cone", "resources/powerUnitLaser.png", ParticleMeshType::kCone, BlendMode::kBlendModeAdd);
 }
 
 void LaserParticle::NewParticle(const Transform& emitterTransform) const

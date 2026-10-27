@@ -99,3 +99,31 @@ void CameraController::UpdateIntro(const Vector3& railPos)
     camera_->SetTranslate(newPos);
     camera_->Update();
 }
+
+void CameraController::UpdateDead(const Vector3& railPos)
+{
+    float deltaTime_ = SceneManager::GetInstance()->GetDeltaTime();
+
+    if (!camera_ || !player_) {
+        return;
+    }
+
+    Vector3 playerPos = player_->GetTranslate();
+
+    Vector3 targetCameraPos;
+    targetCameraPos.x = playerPos.x + defaultCameraPos_.x;
+    targetCameraPos.y = playerPos.y + defaultCameraPos_.y;
+    targetCameraPos.z = playerPos.z + defaultOffsetZ_;
+
+    Vector3 currentPos = camera_->GetTranslate();
+
+    float t = 1.0f - std::exp(-followSpeed_ * deltaTime_);
+
+    Vector3 newPos;
+    newPos.x = currentPos.x + (targetCameraPos.x - currentPos.x) * t;
+    newPos.y = currentPos.y + (targetCameraPos.y - currentPos.y) * t;
+    newPos.z = currentPos.z + (targetCameraPos.z - currentPos.z) * t;
+
+    camera_->SetTranslate(newPos);
+    camera_->Update();
+}

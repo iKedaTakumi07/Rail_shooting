@@ -5,8 +5,8 @@
 void PlayerPowerUnitLaser::Initialize()
 {
     // 事前に読み込ませるため多分?
-    CPUParticleManager::getInstance()->CreateParticleGroup("PowerUintLaser", "resources/powerUnitLaser.png", ParticleMeshType::kHalfCone);
-    CPUParticleManager::getInstance()->CreateParticleGroup("PowerUintLasercircle", "resources/circle2.png", ParticleMeshType::kPlane);
+    CPUParticleManager::getInstance()->CreateParticleGroup("PowerUintLaser", "resources/powerUnitLaser.png", ParticleMeshType::kHalfCone, BlendMode::kBlendModeAdd);
+    CPUParticleManager::getInstance()->CreateParticleGroup("PowerUintLasercircle", "resources/circle2.png", ParticleMeshType::kPlane, BlendMode::kBlendModeAdd);
 
     // ランダムエンジン初期化
     std::random_device seedGenerator;

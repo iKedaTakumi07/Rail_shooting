@@ -7,7 +7,7 @@
 void EnemyLaserParticle::Initialize()
 {
     // 事前に読み込ませるため多分?
-    CPUParticleManager::getInstance()->CreateParticleGroup("enemyLaser", "resources/playerLaser.png", ParticleMeshType::kPlane);
+    CPUParticleManager::getInstance()->CreateParticleGroup("enemyLaser", "resources/playerLaser.png", ParticleMeshType::kPlane, BlendMode::kBlendModeAdd);
 
     StartColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     EndColor = Vector4(1.0f, 1.0f, 1.0f, 0.0f);

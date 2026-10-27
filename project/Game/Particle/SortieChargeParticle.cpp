@@ -7,7 +7,7 @@
 void SortieChargeParticle::Initialize()
 {
     // 事前に読み込ませるため多分?
-    CPUParticleManager::getInstance()->CreateParticleGroup("circle2", "resources/circle2.png", ParticleMeshType::kPlane);
+    CPUParticleManager::getInstance()->CreateParticleGroup("circle2", "resources/circle2.png", ParticleMeshType::kPlane, BlendMode::kBlendModeAdd);
 
     std::random_device seedGenerator;
     randomEngine_ = std::mt19937(seedGenerator());

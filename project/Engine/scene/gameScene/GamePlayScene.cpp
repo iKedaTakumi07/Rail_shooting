@@ -217,7 +217,7 @@ void GamePlayScene::Update()
         for (auto& stageObj : stageObject_->GetstageObjects()) {
             collisionManager_->AddCollider(stageObj.get());
         }
-        collisionManager_->AddCollider(stageObject_.get());
+       
 
         collisionManager_->CheckAllCollisions();
 
@@ -241,14 +241,14 @@ void GamePlayScene::Update()
             break;
         }
 
-        cameraController_->Update(railPos);
+        cameraController_->UpdateDead(railPos);
 
         enemyManager_->Update();
         stageObject_->Update();
 
         // 当たり判定(敵の攻撃では爆発しない予定)
         collisionManager_->Clear();
-
+        collisionManager_->AddCollider(player_.get());
         for (auto& bullet : player_->GetBullets()) {
             collisionManager_->AddCollider(bullet.get());
         }

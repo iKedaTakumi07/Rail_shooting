@@ -10,6 +10,7 @@
 #include "../OnCollison/Collider.h"
 
 #include "../Particle/PlayerPowerUnitLaser.h"
+#include "../Particle/blackSmokeParticle.h"
 #include "PlayerBullet.h"
 #include <numbers>
 class EnemyManager;
@@ -71,6 +72,8 @@ private:
     // 死亡演出
     void DeadInitialize();
     void UpdateDead();
+
+    void explosionInitialize();
     void UpdateExplosion();
 
 private:
@@ -175,4 +178,5 @@ private:
     // 弾
     std::list<std::unique_ptr<PlayerBullet>> playerBullets_;
     std::unique_ptr<PlayerPowerUnitLaser> playerPowerUnitLaser_;
+    std::unique_ptr<blackSmokeParticle> blackSmokeParticle_;
 };

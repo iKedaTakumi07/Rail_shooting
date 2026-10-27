@@ -74,6 +74,9 @@ void Player::Initialize()
 
     playerPowerUnitLaser_ = std::make_unique<PlayerPowerUnitLaser>();
     playerPowerUnitLaser_->Initialize();
+
+    blackSmokeParticle_ = std::make_unique<blackSmokeParticle>();
+    blackSmokeParticle_->Initialize();
 }
 
 void Player::Update()
@@ -823,8 +826,11 @@ void Player::UpdateDead()
     // 最後の入力方向に回転し続ける
     transform_.translate = basetransform_.translate;
     transform_.rotate = basetransform_.rotate;
+
+    blackSmokeParticle_->NewParticle(basetransform_);
 }
 
 void Player::UpdateExplosion()
 {
+    blackSmokeParticle_->NewParticle(basetransform_);
 }

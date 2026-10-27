@@ -5,7 +5,7 @@
 void chargeParticle::Initialize()
 {
     // 事前に読み込ませるため多分?
-    CPUParticleManager::getInstance()->CreateParticleGroup("gradationLine", "resources/gradationLine.png", ParticleMeshType::kRing);
+    CPUParticleManager::getInstance()->CreateParticleGroup("gradationLine", "resources/gradationLine.png", ParticleMeshType::kRing, BlendMode::kBlendModeAdd);
 
     // ランダムエンジン初期化
     std::random_device seedGenerator;

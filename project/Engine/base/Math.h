@@ -237,6 +237,8 @@ enum BlendMode {
     kBlendModeSubtract, // 減算
     kBlendModeMultily, // 乗算
     kBlendModeScreen, // スクリーン
+   
+    kCount,
 };
 struct Emitter {
     Transform transform;

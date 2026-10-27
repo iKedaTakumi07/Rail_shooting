@@ -5,7 +5,7 @@
 
 void sonicBoomParticle::Initialize()
 { // 事前に読み込ませるため多分?
-    CPUParticleManager::getInstance()->CreateParticleGroup("playerSonicBoom", "resources/sonicBoom.png", ParticleMeshType::kRing);
+    CPUParticleManager::getInstance()->CreateParticleGroup("playerSonicBoom", "resources/sonicBoom.png", ParticleMeshType::kRing, BlendMode::kBlendModeAdd);
 
     StartColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     EndColor = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
