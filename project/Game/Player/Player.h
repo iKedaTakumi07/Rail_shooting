@@ -11,6 +11,7 @@
 
 #include "../Particle/PlayerPowerUnitLaser.h"
 #include "../Particle/blackSmokeParticle.h"
+#include "../Particle/ExplosionParticle.h"
 #include "PlayerBullet.h"
 #include <numbers>
 class EnemyManager;
@@ -179,4 +180,5 @@ private:
     std::list<std::unique_ptr<PlayerBullet>> playerBullets_;
     std::unique_ptr<PlayerPowerUnitLaser> playerPowerUnitLaser_;
     std::unique_ptr<blackSmokeParticle> blackSmokeParticle_;
+    std::unique_ptr<ExplosionParticle> explosionParticle_;
 };

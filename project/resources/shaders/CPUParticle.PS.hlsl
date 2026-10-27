@@ -33,6 +33,8 @@ PixelShaderOutput main(VertexShaderOutput input)
 {
     PixelShaderOutput output;
     float32_t4 transformedUV = mul(float32_t4(input.texcoord, 0.0f, 1.0f), gMaterial.uvTransform);
+    
+    // サンプリング設定の分岐
     float32_t4 textureColor;
     if (gMaterial.useClampSampler != 0)
     {
@@ -45,11 +47,17 @@ PixelShaderOutput main(VertexShaderOutput input)
         textureColor = gTexture.Sample(gSamplerWrap, transformedUV.xy);
     }
     
+    // 【修正1】マテリアルカラー、テクスチャカラー、頂点カラーの正確な乗算
     output.color = gMaterial.color * textureColor * input.color;
-    if (output.color.a == 0.0)
+    
+    // 【修正2】微小な透過漏れを防止するため、微小値以下は discard
+    if (output.color.a <= 0.001f)
     {
         discard;
     }
+    
+    // 【修正3】加算合成時のアルファ漏れを抑制するためのRGBプレマルチプライ処理
+    output.color.rgb *= output.color.a;
     
     return output;
 }

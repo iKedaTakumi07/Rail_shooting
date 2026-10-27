@@ -77,6 +77,9 @@ void Player::Initialize()
 
     blackSmokeParticle_ = std::make_unique<blackSmokeParticle>();
     blackSmokeParticle_->Initialize();
+
+    explosionParticle_ = std::make_unique<ExplosionParticle>();
+    explosionParticle_->Initialize();
 }
 
 void Player::Update()
@@ -251,6 +254,7 @@ void Player::OnCollision(Collider* other)
     if (isDead_) {
         if (other->GetCollisionGroup() == CollisionGroup::kStageObject) {
             isExplosion = true;
+            explosionInitialize();
         }
         return;
     }
@@ -282,6 +286,8 @@ void Player::OnCollision(Collider* other)
             // 即爆発
             isExplosion = true;
             isDead_ = true;
+            explosionInitialize();
+
             return;
         }
 
@@ -828,6 +834,11 @@ void Player::UpdateDead()
     transform_.rotate = basetransform_.rotate;
 
     blackSmokeParticle_->NewParticle(basetransform_);
+}
+
+void Player::explosionInitialize()
+{
+    explosionParticle_->NewParticle(basetransform_);
 }
 
 void Player::UpdateExplosion()
