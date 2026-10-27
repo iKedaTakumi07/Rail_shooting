@@ -673,7 +673,7 @@
     <ClInclude Include="Game\Particle\blackSmokeParticle.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="GameOverUI.h">
+    <ClInclude Include="Game\UI\Game\GameOverUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

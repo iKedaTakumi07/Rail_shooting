@@ -105,6 +105,9 @@ void GamePlayScene::Initialize()
     introUI_ = std::make_unique<IntroUI>();
     introUI_->Initialize();
 
+    gameOverUI_ = std::make_unique<GameOverUI>();
+    gameOverUI_->Initialize();
+
     sceneState_ = SceneState::kIntro;
     clearTimer_ = 0.0f;
 
@@ -119,6 +122,7 @@ void GamePlayScene::Initialize()
 void GamePlayScene::Update()
 {
     auto* input = Input::GetInstance();
+    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
 
     if (isSceneFinished_) {
         return;
@@ -191,9 +195,11 @@ void GamePlayScene::Update()
 
         if (player_->IsExplosion()) {
             sceneState_ = SceneState::kGameOver;
+            gameOverUI_->Start(true);
             break;
         } else if (player_->IsDead()) {
             sceneState_ = SceneState::kDead;
+            gameOverUI_->Start(false);
             break;
         }
 
@@ -217,7 +223,6 @@ void GamePlayScene::Update()
         for (auto& stageObj : stageObject_->GetstageObjects()) {
             collisionManager_->AddCollider(stageObj.get());
         }
-       
 
         collisionManager_->CheckAllCollisions();
 
@@ -236,7 +241,11 @@ void GamePlayScene::Update()
 
         player_->SetBasePosition(railPos);
         player_->Update();
+
+        gameOverUI_->Update(deltaTime);
+
         if (player_->IsExplosion()) {
+            gameOverUI_->ClearExplosionTrigger();
             sceneState_ = SceneState::kGameOver;
             break;
         }
@@ -272,12 +281,25 @@ void GamePlayScene::Update()
         enemyManager_->Update();
         stageObject_->Update();
 
+        gameOverUI_->Update(deltaTime);
+
         // UI更新
+        if (gameOverUI_->IsInteractive() && gameOverUI_->IsSelected()) {
+            if (gameOverUI_->GetSelectedOption() == GameOverUI::SelectOption::kRetry) {
+                // リトライ：ゲームプレイ再読み込み
+                isSceneFinished_ = true;
+                SceneManager::GetInstance()->ChangeScene("GAMEPLAY");
+            } else {
+                // 諦める：ステージ選択へ遷移
+                isSceneFinished_ = true;
+                SceneManager::GetInstance()->ChangeScene("SELECT");
+            }
+        }
 
         break;
     }
     case GamePlayScene::SceneState::kClear: {
-        float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+
         clearTimer_ += deltaTime;
 
         player_->UpdateClear();
@@ -361,4 +383,8 @@ void GamePlayScene::Draw()
     enemyManager_->SpriteDraw();
     ClearUI_->SpritDraw();
     PauseUI_->SpritDraw();
+
+    if (sceneState_ == SceneState::kGameOver) {
+        gameOverUI_->SpritDraw();
+    }
 }

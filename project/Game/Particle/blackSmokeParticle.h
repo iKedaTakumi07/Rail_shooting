@@ -19,5 +19,9 @@ private:
     // ステータス設定。
     Vector4 StartColor;
     Vector4 EndColor;
-    Vector3 Velocity = { 0.0f,3.0f,0.0f};
+    Vector4 fireColor;
+
+    Vector3 Velocity = { 0.0f, 1.0f, 0.0f };
+
+    std::mt19937 randomEngine;
 };

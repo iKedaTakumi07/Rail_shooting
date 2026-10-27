@@ -560,7 +560,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GameOverUI.h" />
+    <ClInclude Include="Game\UI\Game\GameOverUI.h" />
     <ClInclude Include="Game\Particle\blackSmokeParticle.h" />
     <ClInclude Include="Game\Particle\GalaxyParticle.h" />
     <ClInclude Include="Game\Particle\EnemyLaserParticle.h" />
