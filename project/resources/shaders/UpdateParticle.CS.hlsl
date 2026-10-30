@@ -7,6 +7,8 @@ struct Particle
     float32_t currentTime;
     float32_t4 color;
     uint32_t textureIndex;
+    float32_t3 acceleration;
+    float airResistance;
 };
 struct PerFrame
 {
@@ -35,9 +37,15 @@ void main(uint3 DTid : SV_DispatchThreadID)
         // alphaが0のparticleは死んでいるとみなして更新しない
         if (gParticles[particleIndex].color.a > 0.0f)
         {
-            // スケールに0を入れておいてvertexshader出力で忘却されるようにする
-            gParticles[particleIndex].translate += gParticles[particleIndex].velocity * gPerFrame.deltaTime;
-            gParticles[particleIndex].currentTime += gPerFrame.deltaTime;
+            float deltaTime = gPerFrame.deltaTime;
+            
+            gParticles[particleIndex].velocity += gParticles[particleIndex].acceleration * deltaTime;
+            
+            float dragFactor = saturate(1.0f - gParticles[particleIndex].airResistance * deltaTime);
+            gParticles[particleIndex].velocity *= dragFactor;
+            
+            gParticles[particleIndex].translate += gParticles[particleIndex].velocity * deltaTime;
+            gParticles[particleIndex].currentTime += deltaTime;
 
             float32_t alpha = 1.0f - (gParticles[particleIndex].currentTime / gParticles[particleIndex].lifeTime);
             gParticles[particleIndex].color.a = saturate(alpha);

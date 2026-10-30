@@ -4,9 +4,14 @@ struct EmitterSphere
     float radius; // 射出半径
     uint32_t count; // 数
     float frequency; // 射出時間
-    float frequemcyTime; // 射出間隔調整用時間
+    float frequencyTime; // 射出間隔調整用時間
     uint32_t emit; // 射出許可
+    float32_t3 gravity; // 重力
+    float airResistance; // 空気抵抗
+    float32_t3 acceleration; // 加速度
+    float particleLifeTime; //描画時間
     uint32_t textureIndex; // Textureのインデックス番号
+    float32_t3 padding; // 12B
 };
 struct Particle
 {
@@ -17,6 +22,9 @@ struct Particle
     float32_t currentTime;
     float32_t4 color;
     uint32_t textureIndex;
+    float32_t3 acceleration;
+    float airResistance;
+   
 };
 struct PerFrame
 {
@@ -102,8 +110,10 @@ void main(uint32_t3 DTid : SV_DispatchThreadID)
             gParticles[particleIndex].color = float4(generator.Generate3d(), 1.0f);
             gParticles[particleIndex].currentTime = 0.0f;
             gParticles[particleIndex].velocity = normalize(velDir) * 1.5f;
-            gParticles[particleIndex].lifeTime = 2.0f;
+            gParticles[particleIndex].lifeTime = gEmitter.particleLifeTime;
             gParticles[particleIndex].textureIndex = gEmitter.textureIndex;
+            gParticles[particleIndex].acceleration = gEmitter.acceleration + gEmitter.gravity;
+            gParticles[particleIndex].airResistance = gEmitter.airResistance;
         }
         else
         {

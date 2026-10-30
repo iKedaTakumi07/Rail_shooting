@@ -55,12 +55,46 @@ void GPUParticleManager::Update()
         if (!emitter.active || !emitter.mappedData)
             continue;
 
-        emitter.mappedData->frequencyTime += deltaTime;
-        if (emitter.mappedData->frequency <= emitter.mappedData->frequencyTime) {
-            emitter.mappedData->frequencyTime -= emitter.mappedData->frequency;
-            emitter.mappedData->emit = 1; // 射出許可
-        } else {
-            emitter.mappedData->emit = 0; // 射出非許可
+        // 1. 任意時限射出 (TriggerEmitForDuration)
+        if (emitter.emitDurationTimer > 0.0f) {
+            emitter.emitDurationTimer -= deltaTime;
+
+            emitter.mappedData->frequencyTime += deltaTime;
+            if (emitter.mappedData->frequency <= emitter.mappedData->frequencyTime) {
+                emitter.mappedData->frequencyTime -= emitter.mappedData->frequency;
+                emitter.mappedData->emit = 1; // 射出許可
+            } else {
+                emitter.mappedData->emit = 0;
+            }
+
+            // 指定時間が経過した瞬間
+            if (emitter.emitDurationTimer <= 0.0f) {
+                // 次フレームで安全にフラグを消去するため -1.0f に移行させる
+                emitter.emitDurationTimer = -1.0f;
+            }
+        }
+        // 2. 常時自動射出 (autoEmit)
+        else if (emitter.autoEmit) {
+            emitter.mappedData->frequencyTime += deltaTime;
+            if (emitter.mappedData->frequency <= emitter.mappedData->frequencyTime) {
+                emitter.mappedData->frequencyTime -= emitter.mappedData->frequency;
+                emitter.mappedData->emit = 1;
+            } else {
+                emitter.mappedData->emit = 0;
+            }
+        }
+        // 3. 単発射出 (TriggerOneShot) と消去の遅延処理
+        else {
+            // 外部から emit = 1, timer = 0 に設定された「トリガー直後」のフレーム
+            if (emitter.emitDurationTimer == 0.0f && emitter.mappedData->emit == 1) {
+                // 今フレームは emit = 1 を維持してCSEmitへ渡し、次フレームで消去させる状態へ移行
+                emitter.emitDurationTimer = -1.0f;
+            }
+            // 射出コマンド発行から1フレーム経過した状態 (GPU側での前フレーム処理が開始/完了している見込み)
+            else if (emitter.emitDurationTimer < 0.0f) {
+                emitter.mappedData->emit = 0; // ここで初めて安全にリセット
+                emitter.emitDurationTimer = 0.0f; // 待機状態に戻す
+            }
         }
     }
 
@@ -69,11 +103,11 @@ void GPUParticleManager::Update()
     // ビルボード行列の計算
     Matrix4x4 backToFrontMatrix = MakeRotateYMatrix(std::numbers::pi_v<float>);
     Matrix4x4 billboardMatrix = Multiply(backToFrontMatrix, Camera_->GetWorldMatrix());
-    // 平行移動成分をリセット
     billboardMatrix.m[3][0] = 0.0f;
     billboardMatrix.m[3][1] = 0.0f;
     billboardMatrix.m[3][2] = 0.0f;
 
+    // 構文エラー修正: PerView* へのポインタ宣言
     PerView* perViewData = nullptr;
     perViewResource->Map(0, nullptr, reinterpret_cast<void**>(&perViewData));
     perViewData->viewProjection = viewProjection;
@@ -92,12 +126,14 @@ void GPUParticleManager::Update()
 void GPUParticleManager::Draw()
 {
     auto* commandList = dxCommon->GetCommandList();
-    commandList->SetGraphicsRootSignature(rootSignature.Get());
 
+    commandList->SetGraphicsRootSignature(rootSignature.Get());
     commandList->SetGraphicsRootConstantBufferView(1, perViewResource->GetGPUVirtualAddress());
     srvManager->SetGraphicsRootDescriptorTable(3, 0);
 
     for (const auto& [groupName, group] : groups_) {
+        assert(group.textureIndex != 0 && "GPUParticleGroup textureIndex is 0! Texture loading failed or points to OffscreenSurface.");
+
         // 各グループのブレンドモードに応じた PSO を適用
         size_t blendIdx = static_cast<size_t>(group.blendMode);
         commandList->SetPipelineState(graphicsPipelineStates_[blendIdx].Get());
@@ -128,6 +164,7 @@ void GPUParticleManager::CreateParticleGroup(const std::string& name, const std:
 
     TextureManager::getInstance()->LoadTexture(textureFilePath);
     uint32_t texIndex = TextureManager::getInstance()->GetSrvIndex(textureFilePath);
+    assert(texIndex != 0 && "Texture SrvIndex returned 0. Ensure the file path is correct and loaded.");
 
     GPUParticleGroup group;
     group.name = name;
@@ -181,13 +218,22 @@ void GPUParticleManager::CreateParticleGroup(const std::string& name, const std:
     groups_[name] = std::move(group);
 }
 
-size_t GPUParticleManager::AddEmitter(const std::string& groupName, const Vector3& position, float radius, uint32_t count, float frequency)
+size_t GPUParticleManager::AddEmitter(const std::string& groupName,
+    const Vector3& position,
+    float radius,
+    uint32_t count,
+    float frequency,
+    float particleLifeTime,
+    const Vector3& gravity,
+    const Vector3& acceleration,
+    float airResistance)
 {
     auto it = groups_.find(groupName);
     assert(it != groups_.end() && "Particle group not found!");
 
     GPUEmitterInstance newEmitter;
     newEmitter.groupName = groupName;
+    newEmitter.autoEmit = true;
     newEmitter.bufferResource = dxCommon->CreateBufferResource(sizeof(EmitterSphereData));
     newEmitter.bufferResource->Map(0, nullptr, reinterpret_cast<void**>(&newEmitter.mappedData));
 
@@ -198,9 +244,74 @@ size_t GPUParticleManager::AddEmitter(const std::string& groupName, const Vector
     newEmitter.mappedData->frequencyTime = 0.0f;
     newEmitter.mappedData->emit = 0;
     newEmitter.mappedData->textureIndex = it->second.textureIndex;
+    newEmitter.mappedData->gravity = gravity;
+    newEmitter.mappedData->acceleration = acceleration;
+    newEmitter.mappedData->airResistance = airResistance;
+    newEmitter.mappedData->particleLifeTime = particleLifeTime;
 
     emitters_.push_back(std::move(newEmitter));
     return emitters_.size() - 1;
+}
+
+void GPUParticleManager::SetEmitterAutoEmit(size_t emitterIndex, bool autoEmit)
+{
+    if (emitterIndex < emitters_.size()) {
+        emitters_[emitterIndex].autoEmit = autoEmit;
+    }
+}
+
+void GPUParticleManager::TriggerOneShot(size_t emitterIndex, uint32_t count)
+{
+    // duration = 0.0f を指定して 1 フレーム限定即時射出を実行
+    TriggerEmitForDuration(emitterIndex, 0.0f, count);
+}
+
+void GPUParticleManager::TriggerEmitForDuration(size_t emitterIndex, float duration, uint32_t count)
+{
+    if (emitterIndex < emitters_.size() && emitters_[emitterIndex].mappedData) {
+        auto& emitter = emitters_[emitterIndex];
+        emitter.emitDurationTimer = duration;
+
+        // 呼び出したそのフレームで即時1回目の発射が行われるようインターバルタイマーを満了状態に初期化
+        emitter.mappedData->frequencyTime = emitter.mappedData->frequency;
+
+        if (count > 0) {
+            emitter.mappedData->count = count;
+        }
+
+        if (duration > 0.0f) {
+            // 指定時間継続して射出するケース
+            emitter.emitDurationTimer = duration;
+            emitter.mappedData->frequencyTime = emitter.mappedData->frequency; // 即時1回目を許可
+        } else {
+            // duration = 0.0f の場合：呼び出したこのフレーム限定で即時 1 回射出
+            emitter.emitDurationTimer = 0.0f;
+            emitter.mappedData->emit = 1; // 1フレーム限定で直接射出許可を出す
+        }
+    }
+}
+
+void GPUParticleManager::SetEmitterPosition(size_t emitterIndex, const Vector3& position)
+{
+    if (emitterIndex < emitters_.size() && emitters_[emitterIndex].mappedData) {
+        emitters_[emitterIndex].mappedData->translate = position;
+    }
+}
+
+void GPUParticleManager::SetEmitterPhysics(size_t emitterIndex, const Vector3& gravity, const Vector3& accel, float drag)
+{
+    if (emitterIndex < emitters_.size() && emitters_[emitterIndex].mappedData) {
+        emitters_[emitterIndex].mappedData->gravity = gravity;
+        emitters_[emitterIndex].mappedData->acceleration = accel;
+        emitters_[emitterIndex].mappedData->airResistance = drag;
+    }
+}
+
+void GPUParticleManager::SetEmitterParticleLifeTime(size_t emitterIndex, float lifeTime)
+{
+    if (emitterIndex < emitters_.size() && emitters_[emitterIndex].mappedData) {
+        emitters_[emitterIndex].mappedData->particleLifeTime = lifeTime;
+    }
 }
 
 void GPUParticleManager::PrepareCSInitialize()

@@ -66,7 +66,37 @@ public:
         const Vector4& color = { 1.0f, 1.0f, 1.0f, 1.0f });
 
     // 指定したグループからエミッターを追加。
-    size_t AddEmitter(const std::string& groupName, const Vector3& position, float radius, uint32_t count, float frequency);
+    size_t AddEmitter(
+        const std::string& groupName,
+        const Vector3& position,
+        float radius,
+        uint32_t count,
+        float frequency,
+        float particleLifeTime = 2.0f,
+        const Vector3& gravity = { 0.0f, -9.8f, 0.0f },
+        const Vector3& acceleration = { 0.0f, 0.0f, 0.0f },
+        float airResistance = 0.1f);
+
+    void SetEmitterAutoEmit(size_t emitterIndex, bool autoEmit); // autoにするかどうか
+
+    /// <summary>
+    /// 1回限りの即時単発射出 (duration = 0.0f のショートカット)
+    /// </summary>
+    /// <param name="emitterIndex">エミッターのインデックス</param>
+    /// <param name="count">射出個数 (0の場合は既存設定値を維持)</param>
+    void TriggerOneShot(size_t emitterIndex, uint32_t count = 0);
+
+    /// <summary>
+    /// 1回限りの即時射出
+    /// </summary>
+    /// <param name="emitterIndex">Textureの番号</param>
+    /// <param name="duration">持続時間</param>
+    /// <param name="count">個数</param>
+    void TriggerEmitForDuration(size_t emitterIndex, float duration, uint32_t count = 0);
+
+    void SetEmitterPosition(size_t emitterIndex, const Vector3& position);
+    void SetEmitterPhysics(size_t emitterIndex, const Vector3& gravity, const Vector3& accel, float drag);
+    void SetEmitterParticleLifeTime(size_t emitterIndex, float lifeTime);
 
     // CSInitialize
     void PrepareCSInitialize();

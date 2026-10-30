@@ -226,6 +226,8 @@ struct Particle {
     float currentTime;
     Vector4 color;
     uint32_t textureIndex;
+    Vector3 acceleration;
+    float airResistance;
 };
 
 enum class ParticleMeshType {
@@ -244,13 +246,20 @@ struct EmitterSphereData {
     float frequency;
     float frequencyTime;
     uint32_t emit;
+    Vector3 gravity;
+    float airResistance;
+    Vector3 acceleration;
+    float particleLifeTime;
     uint32_t textureIndex;
+    Vector3 padding;
 };
 struct GPUEmitterInstance {
     std::string groupName;
     Microsoft::WRL::ComPtr<ID3D12Resource> bufferResource;
     EmitterSphereData* mappedData = nullptr;
     bool active = true;
+    bool autoEmit = true;
+    float emitDurationTimer = 0.0f;
 };
 
 struct PerView {
