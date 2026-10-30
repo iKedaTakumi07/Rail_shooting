@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <wrl.h>
 
-#include "IParticleMesh.h"
+#include "../IParticleMesh.h"
 #include <numbers>
 
 class DirectXCommon;
@@ -17,14 +17,6 @@ class Camera;
 class WinApp;
 
 // パーティクルのタイプ
-enum class ParticleMeshType {
-    kPlane,
-    kRing,
-    kCylinder,
-    kTorus,
-    kCone,
-    kHalfCone
-};
 
 struct EmitterParam {
     // スケールの最小・最大

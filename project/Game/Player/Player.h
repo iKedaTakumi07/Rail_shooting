@@ -94,7 +94,7 @@ private:
     bool isClear = false;
     bool isIntro = false;
     bool isDead_ = false; // 死んでいるか
-    bool isExplosion = false; // 機体が爆破下か(ゲームオーバ表示UIお忘れなく)
+    bool isExplosion = false; // 機体が爆破下か
 
     float ExplosionTimer = 2.0f;
     const float kExplosionTimer = 2.0f;

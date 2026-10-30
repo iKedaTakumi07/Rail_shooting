@@ -6,6 +6,7 @@ struct Particle
     float32_t3 velocity;
     float32_t currentTime;
     float32_t4 color;
+    uint32_t textureIndex;
 };
 
 static const uint32_t kMaxParticles = 1024;
@@ -25,6 +26,7 @@ void main(uint32_t3 DTid : SV_DispatchThreadID)
         gParticles[particleIndex].color = float32_t4(1.0f, 1.0f, 1.0f, 0.0f);
         gParticles[particleIndex].currentTime = 0.01f;
         gParticles[particleIndex].lifeTime = 2.0f;
+        gFreeList[particleIndex] = particleIndex;
         if (particleIndex < kMaxParticles)
         {
             gParticles[particleIndex] = (Particle) 0;

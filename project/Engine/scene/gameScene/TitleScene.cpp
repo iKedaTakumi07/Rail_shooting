@@ -29,7 +29,7 @@
 #include "../../../Game/stage//object/Meteorite.h"
 #include "../../../Game/stage/skydome.h"
 #include "../../3d/CameraManager.h"
-#include "math.h"
+#include "../../base/Math.h"
 
 TitleScene::TitleScene()
 {
@@ -87,6 +87,20 @@ void TitleScene::Initialize()
     meteorite_->Initialize();
 
     Transition_->Start(SceneTransition::State::In, 1.0f);
+
+    auto* gpuParticleMgr = GPUParticleManager::getInstance();
+    gpuParticleMgr->CreateParticleGroup("RedPlaneAdd", "resources/uvChecker.png", ParticleMeshType::kPlane, kBlendModeAdd, Vector4(1.0f, 0.2f, 0.2f, 1.0f));
+
+    // グループ2: リングメッシュ / 通常αブレンド / 青色
+    gpuParticleMgr->CreateParticleGroup("BlueRingNormal", "resources/uvChecker.png", ParticleMeshType::kRing, kBlendModeAdd, Vector4(0.2f, 0.5f, 1.0f, 0.8f));
+
+    // グループ3: シリンダーメッシュ / 減算合成 / 緑色
+    gpuParticleMgr->CreateParticleGroup("GreenCylinderSub", "resources/uvChecker.png", ParticleMeshType::kCylinder, kBlendModeSubtract, Vector4(0.2f, 1.0f, 0.3f, 1.0f));
+
+    // それぞれのグループに対してエミッターを追加
+    gpuParticleMgr->AddEmitter("RedPlaneAdd", Vector3(-4.0f, 0.0f, 0.0f), 1.0f, 32, 0.1f);
+    gpuParticleMgr->AddEmitter("BlueRingNormal", Vector3(0.0f, 0.0f, 0.0f), 1.5f, 16, 0.15f);
+    gpuParticleMgr->AddEmitter("GreenCylinderSub", Vector3(4.0f, 0.0f, 0.0f), 0.8f, 24, 0.08f);
 }
 
 void TitleScene::Finalize()

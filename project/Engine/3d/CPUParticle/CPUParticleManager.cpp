@@ -7,7 +7,7 @@
 #include "../Camera.h"
 #include "../CameraManager.h"
 
-#include "IParticleMesh.h"
+#include "../IParticleMesh.h"
 #include <cassert>
 #include <numbers>
 

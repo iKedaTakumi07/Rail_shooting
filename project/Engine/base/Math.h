@@ -225,7 +225,34 @@ struct Particle {
     Vector3 velocity;
     float currentTime;
     Vector4 color;
+    uint32_t textureIndex;
 };
+
+enum class ParticleMeshType {
+    kPlane,
+    kRing,
+    kCylinder,
+    kTorus,
+    kCone,
+    kHalfCone
+};
+
+struct EmitterSphereData {
+    Vector3 translate;
+    float radius;
+    uint32_t count;
+    float frequency;
+    float frequencyTime;
+    uint32_t emit;
+    uint32_t textureIndex;
+};
+struct GPUEmitterInstance {
+    std::string groupName;
+    Microsoft::WRL::ComPtr<ID3D12Resource> bufferResource;
+    EmitterSphereData* mappedData = nullptr;
+    bool active = true;
+};
+
 struct PerView {
     Matrix4x4 viewProjection;
     Matrix4x4 billboardMatrix;
@@ -237,7 +264,7 @@ enum BlendMode {
     kBlendModeSubtract, // 減算
     kBlendModeMultily, // 乗算
     kBlendModeScreen, // スクリーン
-   
+
     kCount,
 };
 struct Emitter {
