@@ -10,6 +10,8 @@
 #include "../OnCollison/Collider.h"
 
 #include "../Particle/PlayerPowerUnitLaser.h"
+#include "../Particle/blackSmokeParticle.h"
+#include "../Particle/ExplosionParticle.h"
 #include "PlayerBullet.h"
 #include <numbers>
 class EnemyManager;
@@ -71,6 +73,8 @@ private:
     // 死亡演出
     void DeadInitialize();
     void UpdateDead();
+
+    void explosionInitialize();
     void UpdateExplosion();
 
 private:
@@ -90,7 +94,7 @@ private:
     bool isClear = false;
     bool isIntro = false;
     bool isDead_ = false; // 死んでいるか
-    bool isExplosion = false; // 機体が爆破下か(ゲームオーバ表示UIお忘れなく)
+    bool isExplosion = false; // 機体が爆破下か
 
     float ExplosionTimer = 2.0f;
     const float kExplosionTimer = 2.0f;
@@ -175,4 +179,6 @@ private:
     // 弾
     std::list<std::unique_ptr<PlayerBullet>> playerBullets_;
     std::unique_ptr<PlayerPowerUnitLaser> playerPowerUnitLaser_;
+    std::unique_ptr<blackSmokeParticle> blackSmokeParticle_;
+    std::unique_ptr<ExplosionParticle> explosionParticle_;
 };

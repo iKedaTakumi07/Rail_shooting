@@ -1,5 +1,5 @@
 #pragma once
-#include "../../base/Math.h" // Vector2, Vector3, Vector4 などの定義を想定
+#include "../base/Math.h" // Vector2, Vector3, Vector4 などの定義を想定
 #include <d3d12.h>
 #include <wrl.h>
 

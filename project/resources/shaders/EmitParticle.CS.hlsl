@@ -4,8 +4,14 @@ struct EmitterSphere
     float radius; // 射出半径
     uint32_t count; // 数
     float frequency; // 射出時間
-    float frequemcyTime; // 射出間隔調整用時間
+    float frequencyTime; // 射出間隔調整用時間
     uint32_t emit; // 射出許可
+    float32_t3 gravity; // 重力
+    float airResistance; // 空気抵抗
+    float32_t3 acceleration; // 加速度
+    float particleLifeTime; //描画時間
+    uint32_t textureIndex; // Textureのインデックス番号
+    float32_t3 padding; // 12B
 };
 struct Particle
 {
@@ -15,6 +21,10 @@ struct Particle
     float32_t3 velocity;
     float32_t currentTime;
     float32_t4 color;
+    uint32_t textureIndex;
+    float32_t3 acceleration;
+    float airResistance;
+   
 };
 struct PerFrame
 {
@@ -59,44 +69,57 @@ class RandomGenerator
 };
 
 static const uint32_t kMaxParticles = 1024;
-ConstantBuffer<EmitterSphere> gEimtter : register(b0);
+static const uint32_t kParticlesPerThread = 4;
+ConstantBuffer<EmitterSphere> gEmitter : register(b0);
 ConstantBuffer<PerFrame> gPerFrame : register(b1);
 RWStructuredBuffer<Particle> gParticles : register(u0);
 RWStructuredBuffer<int32_t> gFreeListIndex : register(u1);
 RWStructuredBuffer<int32_t> gFreeList : register(u2);
 
-[numthreads(1, 1, 1)]
+[numthreads(64, 1, 1)]
 void main(uint32_t3 DTid : SV_DispatchThreadID)
 {
-    RandomGenerator generator;
-    generator.seed = (DTid + gPerFrame.time) * gPerFrame.time;
-    if (gEimtter.emit != 0)
+    if (gEmitter.emit == 0)
     {
-        for (uint32_t countIndex = 0; countIndex < gEimtter.count; ++countIndex)
+        return;
+    }
+
+    RandomGenerator generator;
+    generator.seed = (float3(DTid) + gPerFrame.time) * (gPerFrame.time + 0.1f);
+
+    for (uint32_t i = 0; i < kParticlesPerThread; ++i)
+    {
+        uint32_t emitIdx = DTid.x * kParticlesPerThread + i;
+        if (emitIdx >= gEmitter.count)
         {
-            int freeListIndex;
-            // FreeListのindexを1っ前に設定し、現在のindexを取得する
-            InterlockedAdd(gFreeListIndex[0], -1, freeListIndex);
-            if (0 <= freeListIndex && freeListIndex < kMaxParticles)
-            {
-                uint32_t particleIndex = gFreeList[freeListIndex];
-                
-                float3 velDir = generator.Generate3d() * 2.0f - 1.0f;
-                
-                gParticles[particleIndex].scale = generator.Generate3d();
-                gParticles[particleIndex].translate = generator.Generate3d();
-                gParticles[particleIndex].color.rgb = generator.Generate3d();
-                gParticles[particleIndex].color.a = 1.0f;
-                gParticles[particleIndex].currentTime = 0.01f;
-                gParticles[particleIndex].velocity = normalize(velDir) * 0.05f;
-                gParticles[particleIndex].lifeTime = 2.0f;
-            }
-            else
-            {
-                // 発生させられなかったので減らしてしまった分もとに戻す。
-                InterlockedAdd(gFreeListIndex[0], 1);
-                break;
-            }
+            break;
+        }
+
+        int freeListIndex;
+        InterlockedAdd(gFreeListIndex[0], -1, freeListIndex);
+
+        if (freeListIndex >= 0 && freeListIndex < (int32_t) kMaxParticles)
+        {
+            uint32_t particleIndex = gFreeList[freeListIndex];
+
+            float3 velDir = generator.Generate3d() * 2.0f - 1.0f;
+            float3 offset = generator.Generate3d() * 2.0f - 1.0f;
+
+            gParticles[particleIndex].scale = float3(0.3f, 0.3f, 0.3f);
+            gParticles[particleIndex].translate = gEmitter.translate + normalize(offset) * gEmitter.radius * generator.Generate3d().x;
+            gParticles[particleIndex].color = float4(generator.Generate3d(), 1.0f);
+            gParticles[particleIndex].currentTime = 0.0f;
+            gParticles[particleIndex].velocity = normalize(velDir) * 1.5f;
+            gParticles[particleIndex].lifeTime = gEmitter.particleLifeTime;
+            gParticles[particleIndex].textureIndex = gEmitter.textureIndex;
+            gParticles[particleIndex].acceleration = gEmitter.acceleration + gEmitter.gravity;
+            gParticles[particleIndex].airResistance = gEmitter.airResistance;
+        }
+        else
+        {
+            InterlockedAdd(gFreeListIndex[0], 1);
+            break;
         }
     }
+    
 }

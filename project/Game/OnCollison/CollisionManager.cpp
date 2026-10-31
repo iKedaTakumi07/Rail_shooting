@@ -29,6 +29,10 @@ void CollisionManager::CheckAllCollisions()
                 continue;
             if (colA->GetCollisionGroup() == CollisionGroup::kPlayerBullet && colB->GetCollisionGroup() == CollisionGroup::kPlayer)
                 continue;
+            if (colA->GetCollisionGroup() == CollisionGroup::kEnemy && colB->GetCollisionGroup() == CollisionGroup::kEnemyBullet)
+                continue;
+            if (colA->GetCollisionGroup() == CollisionGroup::kEnemyBullet && colB->GetCollisionGroup() == CollisionGroup::kEnemy)
+                continue;
 
             // 交差していれば、お互いのオーバーライドされたOnCollisionを呼び出す
             if (CheckAllOBBCollision(colA->GetAllOBB(), colB->GetAllOBB())) {

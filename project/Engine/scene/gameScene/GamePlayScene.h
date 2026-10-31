@@ -5,6 +5,7 @@
 #include "../../3d/Camera.h"
 #include "../../audio/Sound.h"
 
+#include "../../../Game/UI/Game/GameOverUI.h"
 class Model;
 class Object3d;
 class Skybox;
@@ -66,6 +67,7 @@ private:
 
     std::unique_ptr<skydome> skydome_;
     std::unique_ptr<IntroUI> introUI_;
+    std::unique_ptr<GameOverUI> gameOverUI_;
 
     // ステージ置物
     std::unique_ptr<stageObjectManager> stageObject_;

@@ -5,7 +5,7 @@
 void GalaxyParticle::Initialize()
 {
     // 事前に読み込ませるため多分?
-    CPUParticleManager::getInstance()->CreateParticleGroup("firstClassStar", "resources/firstClassStar.png", ParticleMeshType::kPlane);
+    CPUParticleManager::getInstance()->CreateParticleGroup("firstClassStar", "resources/firstClassStar.png", ParticleMeshType::kPlane, BlendMode::kBlendModeAdd);
 
     // ランダムエンジン初期化
     std::random_device seedGenerator;

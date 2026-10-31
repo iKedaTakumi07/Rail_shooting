@@ -29,7 +29,7 @@
 #include "../../../Game/stage//object/Meteorite.h"
 #include "../../../Game/stage/skydome.h"
 #include "../../3d/CameraManager.h"
-#include "math.h"
+#include "../../base/Math.h"
 
 TitleScene::TitleScene()
 {
@@ -110,6 +110,7 @@ void TitleScene::Update()
     if (input->TriggerKey(DIK_1)) {
         SceneManager::GetInstance()->ChangeScene("TEST");
     }
+
 #endif // USE_IMGUI
 
     titleUI_->Update();
@@ -187,11 +188,10 @@ void TitleScene::Draw()
 #endif // USE_IMGUI
 
     CPUParticleManager::getInstance()->Draw();
+    GPUParticleManager::getInstance()->Draw();
 
     SkyBoxCommon::GetInstance()->PrepareObjectDraw();
 
     SpriteCommon::GetInstance()->PrepareSpriteDraw();
     titleUI_->SpriteDraw();
-
-    // GPUParticleManager::getInstance()->Draw();
 }

@@ -183,7 +183,7 @@
     <ClCompile Include="Engine\base\PostProcess.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\3d\CPUParticle\IParticleMesh.cpp">
+    <ClCompile Include="Engine\3d\IParticleMesh.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Engine\scene\base\AbstractSceneFactory.cpp">
@@ -342,6 +342,15 @@
     <ClCompile Include="Game\UI\Game\IntroUI.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Particle\blackSmokeParticle.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\UI\Game\GameOverUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Particle\ExplosionParticle.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\Object3d.PS.hlsl">
@@ -380,6 +389,7 @@
     <FxCompile Include="resources\shaders\UpdateParticle.CS.hlsl" />
     <FxCompile Include="resources\shaders\Letterbox.PS.hlsl" />
     <FxCompile Include="resources\shaders\Fade.PS.hlsl" />
+    <FxCompile Include="resources\shaders\Particle.PS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\io\Input.h">
@@ -502,7 +512,7 @@
     <ClInclude Include="Engine\base\PostProcess.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\3d\CPUParticle\IParticleMesh.h">
+    <ClInclude Include="Engine\3d\IParticleMesh.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Engine\scene\base\AbstractSceneFactory.h">
@@ -664,15 +674,25 @@
     <ClInclude Include="Game\UI\Game\IntroUI.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Particle\blackSmokeParticle.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\UI\Game\GameOverUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Particle\ExplosionParticle.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d.hlsli">
       <Filter>シェーダー ファイル</Filter>
     </None>
-    <None Include="resources\shaders\Particle.hlsli" />
+    <None Include="resources\shaders\CPUParticle.hlsli" />
     <None Include="resources\shaders\Skybox.hlsli" />
     <None Include="resources\shaders\Fullscreen.hlsli" />
     <None Include="resources\shaders\Sprite.hlsli" />
+    <None Include="resources\shaders\Particle.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />

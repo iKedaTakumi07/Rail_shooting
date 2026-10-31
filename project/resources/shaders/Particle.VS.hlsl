@@ -13,6 +13,9 @@ struct Particle
     float32_t3 velocity;
     float32_t currentTime;
     float32_t4 color;
+    uint32_t textureIndex;
+    float32_t3 acceleration;
+    float airResistance;
 };
 struct VertexShaderInput
 {
@@ -36,6 +39,7 @@ VertexShaderOutput main(VertexShaderInput input, uint32_t instanceId : SV_Instan
     output.position = mul(input.position, mul(worldMatrix, gPerView.viewProjection));
     output.texcoord = input.texcoord;
     output.color = particle.color;
+    output.textureIndex = particle.textureIndex;
     
     return output;
 }

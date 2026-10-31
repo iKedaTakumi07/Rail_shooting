@@ -7,7 +7,7 @@
 #include "../Camera.h"
 #include "../CameraManager.h"
 
-#include "IParticleMesh.h"
+#include "../IParticleMesh.h"
 #include <cassert>
 #include <numbers>
 
@@ -219,7 +219,7 @@ void CPUParticleManager::Draw()
     commandList->SetGraphicsRootSignature(rootSignature.Get());
 
     // PSO設定
-    commandList->SetPipelineState(graphicsPipelineState.Get());
+    BlendMode currentBoundBlendMode = static_cast<BlendMode>(-1);
 
     // プリミティブトポロジー
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -232,6 +232,12 @@ void CPUParticleManager::Draw()
         // 生存パーティクルがなければ描画しない
         if (group.instanceCount == 0) {
             continue;
+        }
+
+        if (group.blendMode != currentBoundBlendMode) {
+            size_t modeIndex = static_cast<size_t>(group.blendMode);
+            commandList->SetPipelineState(graphicsPipelineStates_[modeIndex].Get());
+            currentBoundBlendMode = group.blendMode;
         }
 
         commandList->IASetVertexBuffers(0, 1, &group.mesh->GetVertexBufferView());
@@ -332,7 +338,6 @@ void CPUParticleManager::RootSignatureInitialize(DirectXCommon* dxcommon)
 
 void CPUParticleManager::graphicsPipelineInitialize(DirectXCommon* dxcommon)
 {
-    // ルートシグネチャ作成
     RootSignatureInitialize(dxcommon);
 
     // InputLayout
@@ -356,68 +361,96 @@ void CPUParticleManager::graphicsPipelineInitialize(DirectXCommon* dxcommon)
     inputLayoutDesc.pInputElementDescs = inputElementDescs;
     inputLayoutDesc.NumElements = _countof(inputElementDescs);
 
-    // BlendStateの設定
-    D3D12_BLEND_DESC blendDesc { };
-    // 全ての色要素を書き込む
-    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-    blendDesc.RenderTarget[0].BlendEnable = true;
-    blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
-    blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-    blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
-    blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-    blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-    blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-
     // RasterizerStateの設定
     D3D12_RASTERIZER_DESC rasterizerDesc { };
-    // 裏面(時計回り)を表示しない
     rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
-    // 三角形の中を塗りつぶす
     rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 
-    // Shaderをコンパイルする
+    // Shaderのコンパイル
     Microsoft::WRL::ComPtr<IDxcBlob> vertexShaderBlob = dxcommon->CompileShader(L"resources/shaders/CPUParticle.VS.hlsl", L"vs_6_0");
     assert(vertexShaderBlob != nullptr);
 
     Microsoft::WRL::ComPtr<IDxcBlob> pixeShaderBlob = dxcommon->CompileShader(L"resources/shaders/CPUParticle.PS.hlsl", L"ps_6_0");
     assert(pixeShaderBlob != nullptr);
 
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc { };
-    graphicsPipelineStateDesc.pRootSignature = rootSignature.Get();
-    graphicsPipelineStateDesc.InputLayout = inputLayoutDesc;
-    graphicsPipelineStateDesc.VS = { vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize() };
-    graphicsPipelineStateDesc.PS = { pixeShaderBlob->GetBufferPointer(), pixeShaderBlob->GetBufferSize() };
-    graphicsPipelineStateDesc.BlendState = blendDesc;
-    graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;
-    // 書き込むRTVの情報
-    graphicsPipelineStateDesc.NumRenderTargets = 1;
-    graphicsPipelineStateDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-    // 利用するとぽろじのタイプ
-    graphicsPipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    // どのように画面に色を打ち込むかの設定
-    graphicsPipelineStateDesc.SampleDesc.Count = 1;
-    graphicsPipelineStateDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
-
-    // depthStencilStateの設定
+    // DepthStencil設定
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc { };
-    // depthを有効化
     depthStencilDesc.DepthEnable = true;
-    // 書き込み
-    depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-    // 比較関数はLessEqual
+    depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO; // パーティクル描画のため深度書き込みはオフ
     depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
-    // DepthStencilの設定
-    graphicsPipelineStateDesc.DepthStencilState = depthStencilDesc;
-    graphicsPipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    // 実際に生成
-    HRESULT hr;
-    graphicsPipelineState = nullptr;
-    hr = dxcommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&graphicsPipelineState));
-    assert(SUCCEEDED(hr));
+    // 共通のベース PSO 記述子を作成
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC basePsoDesc { };
+    basePsoDesc.pRootSignature = rootSignature.Get();
+    basePsoDesc.InputLayout = inputLayoutDesc;
+    basePsoDesc.VS = { vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize() };
+    basePsoDesc.PS = { pixeShaderBlob->GetBufferPointer(), pixeShaderBlob->GetBufferSize() };
+    basePsoDesc.RasterizerState = rasterizerDesc;
+    basePsoDesc.NumRenderTargets = 1;
+    basePsoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    basePsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    basePsoDesc.SampleDesc.Count = 1;
+    basePsoDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
+    basePsoDesc.DepthStencilState = depthStencilDesc;
+    basePsoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+    // 各ブレンドモード設定の生成ループ
+    for (size_t i = 0; i < static_cast<size_t>(BlendMode::kCount); ++i) {
+        BlendMode mode = static_cast<BlendMode>(i);
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = basePsoDesc;
+
+        D3D12_RENDER_TARGET_BLEND_DESC& renderTarget = psoDesc.BlendState.RenderTarget[0];
+        renderTarget.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+        renderTarget.BlendEnable = true;
+        renderTarget.SrcBlendAlpha = D3D12_BLEND_ONE;
+        renderTarget.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+        renderTarget.DestBlendAlpha = D3D12_BLEND_ZERO;
+
+        switch (mode) {
+        case BlendMode::kBlendModeNone:
+            renderTarget.BlendEnable = false;
+            break;
+        case BlendMode::kBlendModeNormal: // 透過合成
+            renderTarget.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            renderTarget.BlendOp = D3D12_BLEND_OP_ADD;
+            renderTarget.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+            break;
+
+        case BlendMode::kBlendModeAdd: // 加算合成
+            renderTarget.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            renderTarget.BlendOp = D3D12_BLEND_OP_ADD;
+            renderTarget.DestBlend = D3D12_BLEND_ONE;
+            break;
+
+        case BlendMode::kBlendModeSubtract: // 減算合成
+            renderTarget.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            renderTarget.BlendOp = D3D12_BLEND_OP_REV_SUBTRACT;
+            renderTarget.DestBlend = D3D12_BLEND_ONE;
+            break;
+
+        case BlendMode::kBlendModeMultily: // 乗算合成
+            renderTarget.SrcBlend = D3D12_BLEND_ZERO;
+            renderTarget.BlendOp = D3D12_BLEND_OP_ADD;
+            renderTarget.DestBlend = D3D12_BLEND_SRC_COLOR;
+            break;
+
+        case BlendMode::kBlendModeScreen: // スクリーン合成
+            renderTarget.SrcBlend = D3D12_BLEND_INV_DEST_COLOR;
+            renderTarget.BlendOp = D3D12_BLEND_OP_ADD;
+            renderTarget.DestBlend = D3D12_BLEND_ONE;
+            break;
+
+        default:
+            assert(false);
+            break;
+        }
+
+        HRESULT hr = dxcommon->GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&graphicsPipelineStates_[i]));
+        assert(SUCCEEDED(hr));
+    }
 }
 
-void CPUParticleManager::CreateParticleGroup(const std::string name, const std::string textureFilePath, ParticleMeshType meshType)
+void CPUParticleManager::CreateParticleGroup(const std::string name, const std::string textureFilePath, ParticleMeshType meshType, BlendMode blendMode)
 {
     // 登録済みチェック
     auto it = particleGroups.find(name);
@@ -429,6 +462,8 @@ void CPUParticleManager::CreateParticleGroup(const std::string name, const std::
     ParticleGroup group { };
 
     group.meshType = meshType;
+    group.blendMode = blendMode;
+
     // 形状タイプに応じて個別クラスを生成
     if (meshType == ParticleMeshType::kPlane) {
         group.mesh = std::make_unique<PlaneMesh>(dxCommon->GetDevice());

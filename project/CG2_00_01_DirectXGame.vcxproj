@@ -160,6 +160,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Game\Particle\ExplosionParticle.cpp" />
+    <ClCompile Include="Game\UI\Game\GameOverUI.cpp" />
+    <ClCompile Include="Game\Particle\blackSmokeParticle.cpp" />
     <ClCompile Include="Game\Particle\GalaxyParticle.cpp" />
     <ClCompile Include="Game\Particle\EnemyLaserParticle.cpp" />
     <ClCompile Include="Game\Loder\GameScoreManager.cpp" />
@@ -224,7 +227,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\base\ImGuiManager.cpp" />
     <ClCompile Include="Engine\io\Input.cpp" />
     <ClCompile Include="Engine\base\Logger.cpp" />
-    <ClCompile Include="Engine\3d\CPUParticle\IParticleMesh.cpp" />
+    <ClCompile Include="Engine\3d\IParticleMesh.cpp" />
     <ClCompile Include="Game\Particle\LaserParticle.cpp" />
     <ClCompile Include="Engine\3d\LightManager.cpp" />
     <ClCompile Include="Game\Particle\HitParticle.cpp" />
@@ -294,6 +297,14 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Game\Particle\SortieChargeParticle.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="resources\shaders\Particle.PS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Development|x64'">Pixel</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="resources\shaders\Fade.PS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
@@ -558,6 +569,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game\Particle\ExplosionParticle.h" />
+    <ClInclude Include="Game\UI\Game\GameOverUI.h" />
+    <ClInclude Include="Game\Particle\blackSmokeParticle.h" />
     <ClInclude Include="Game\Particle\GalaxyParticle.h" />
     <ClInclude Include="Game\Particle\EnemyLaserParticle.h" />
     <ClInclude Include="Game\Loder\GameScoreManager.h" />
@@ -655,7 +669,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Engine\base\OffscreenSurface.h" />
-    <ClInclude Include="Engine\3d\CPUParticle\IParticleMesh.h" />
+    <ClInclude Include="Engine\3d\IParticleMesh.h" />
     <ClInclude Include="Engine\scene\base\SceneFactory.h" />
     <ClInclude Include="Game\Particle\LaserParticle.h" />
     <ClInclude Include="Engine\3d\LightManager.h" />
@@ -703,12 +717,17 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="resources\shaders\Particle.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
     <None Include="resources\shaders\Fullscreen.hlsli" />
     <None Include="resources\shaders\Object3d.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="resources\shaders\Particle.hlsli" />
+    <None Include="resources\shaders\CPUParticle.hlsli" />
     <None Include="resources\shaders\Skybox.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>

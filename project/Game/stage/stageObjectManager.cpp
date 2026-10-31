@@ -149,7 +149,7 @@ AllOBB stageObjectManager::GetAllOBB() const
     box.orientations[0] = { 1.0f, 0.0f, 0.0f };
     box.orientations[1] = { 0.0f, 1.0f, 0.0f };
     box.orientations[2] = { 0.0f, 0.0f, 1.0f };
-    box.size = { size_.x, 2.0f, 400.0f };
+    box.size = { size_.x, 0.5f, 400.0f };
 
     compound.wholeBox = box;
     compound.dividBoxes.push_back(box);

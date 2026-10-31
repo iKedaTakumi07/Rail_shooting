@@ -5,8 +5,8 @@
 void HitParticle::Initialize()
 {
     // 事前に読み込ませるため多分?
-    CPUParticleManager::getInstance()->CreateParticleGroup("circle2", "resources/circle2.png", ParticleMeshType::kPlane);
-    CPUParticleManager::getInstance()->CreateParticleGroup("circle3", "resources/circle3.png", ParticleMeshType::kPlane);
+    CPUParticleManager::getInstance()->CreateParticleGroup("circle2", "resources/circle2.png", ParticleMeshType::kPlane, BlendMode::kBlendModeAdd);
+    CPUParticleManager::getInstance()->CreateParticleGroup("circle3", "resources/circle3.png", ParticleMeshType::kPlane, BlendMode::kBlendModeAdd);
 }
 
 void HitParticle::NewTransform()

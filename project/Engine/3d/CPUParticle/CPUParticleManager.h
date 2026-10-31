@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <wrl.h>
 
-#include "IParticleMesh.h"
+#include "../IParticleMesh.h"
 #include <numbers>
 
 class DirectXCommon;
@@ -17,14 +17,6 @@ class Camera;
 class WinApp;
 
 // パーティクルのタイプ
-enum class ParticleMeshType {
-    kPlane,
-    kRing,
-    kCylinder,
-    kTorus,
-    kCone,
-    kHalfCone
-};
 
 struct EmitterParam {
     // スケールの最小・最大
@@ -96,6 +88,7 @@ public:
         Vector2 uvScrollSpeed = { 0.0f, 0.0f }; // 1秒間にどれだけ進むか (xが横方向)
         Vector2 uvOffset = { 0.0f, 0.0f }; // 現在の累積スクロール量
         ParticleMeshType meshType; // 判別用に保存しておくと便利
+        BlendMode blendMode = BlendMode::kBlendModeNormal; // 通常
     };
 
     static CPUParticleManager* getInstance();
@@ -109,7 +102,7 @@ public:
 
     void Draw();
 
-    void CreateParticleGroup(const std::string name, const std::string textureFilePath, ParticleMeshType meshType);
+    void CreateParticleGroup(const std::string name, const std::string textureFilePath, ParticleMeshType meshType, BlendMode blendMode = BlendMode::kBlendModeNormal);
 
     void Emit(const std::string name, const Transform& transform, uint32_t count, const EmitterParam& param);
 
@@ -148,9 +141,8 @@ private:
     VertexData* vertexData = nullptr;
 
     std::unordered_map<std::string, ParticleGroup> particleGroups;
-
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
-    Microsoft::WRL::ComPtr<ID3D12PipelineState> graphicsPipelineState;
+    std::array<Microsoft::WRL::ComPtr<ID3D12PipelineState>, static_cast<size_t>(BlendMode::kCount)> graphicsPipelineStates_;
 
     std::mt19937 randomEngine;
 };

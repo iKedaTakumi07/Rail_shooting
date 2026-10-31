@@ -74,6 +74,12 @@ void Player::Initialize()
 
     playerPowerUnitLaser_ = std::make_unique<PlayerPowerUnitLaser>();
     playerPowerUnitLaser_->Initialize();
+
+    blackSmokeParticle_ = std::make_unique<blackSmokeParticle>();
+    blackSmokeParticle_->Initialize();
+
+    explosionParticle_ = std::make_unique<ExplosionParticle>();
+    explosionParticle_->Initialize();
 }
 
 void Player::Update()
@@ -248,6 +254,7 @@ void Player::OnCollision(Collider* other)
     if (isDead_) {
         if (other->GetCollisionGroup() == CollisionGroup::kStageObject) {
             isExplosion = true;
+            explosionInitialize();
         }
         return;
     }
@@ -279,6 +286,8 @@ void Player::OnCollision(Collider* other)
             // 即爆発
             isExplosion = true;
             isDead_ = true;
+            explosionInitialize();
+
             return;
         }
 
@@ -823,8 +832,16 @@ void Player::UpdateDead()
     // 最後の入力方向に回転し続ける
     transform_.translate = basetransform_.translate;
     transform_.rotate = basetransform_.rotate;
+
+    blackSmokeParticle_->NewParticle(basetransform_);
+}
+
+void Player::explosionInitialize()
+{
+    explosionParticle_->NewParticle(basetransform_);
 }
 
 void Player::UpdateExplosion()
 {
+    blackSmokeParticle_->NewParticle(basetransform_);
 }

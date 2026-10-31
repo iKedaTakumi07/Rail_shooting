@@ -15,7 +15,6 @@ std::unique_ptr<GPUParticleManager> GPUParticleManager::instance = nullptr;
 
 GPUParticleManager* GPUParticleManager::getInstance()
 {
-
     if (instance == nullptr) {
         instance = std::make_unique<GPUParticleManager>(ConstructorKey());
     }
@@ -38,48 +37,81 @@ void GPUParticleManager::Initialize(DirectXCommon* DirectXCollision, SrvManager*
 
     // リソース類初期化
     ResourceInitialize();
-
-    // CSInit実行
-    PrepareCSInitialize();
-    CSInitialize();
 }
 
 void GPUParticleManager::Update()
 {
+    Camera_ = CameraManager::GetInstance()->GetActiveCamera();
     if (!Camera_) {
         return;
     }
 
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    eitterSphere->frequencyTime += deltaTime;
 
     PreFrameData_->deltaTime = deltaTime;
     PreFrameData_->time += deltaTime;
 
-    if (eitterSphere->frequency <= eitterSphere->frequencyTime) {
-        eitterSphere->frequencyTime -= eitterSphere->frequency;
-        eitterSphere->emit = 1;
-    } else {
-        eitterSphere->emit = 0;
+    for (auto& emitter : emitters_) {
+        if (!emitter.active || !emitter.mappedData)
+            continue;
+
+        // 1. 任意時限射出 (TriggerEmitForDuration)
+        if (emitter.emitDurationTimer > 0.0f) {
+            emitter.emitDurationTimer -= deltaTime;
+
+            emitter.mappedData->frequencyTime += deltaTime;
+            if (emitter.mappedData->frequency <= emitter.mappedData->frequencyTime) {
+                emitter.mappedData->frequencyTime -= emitter.mappedData->frequency;
+                emitter.mappedData->emit = 1; // 射出許可
+            } else {
+                emitter.mappedData->emit = 0;
+            }
+
+            // 指定時間が経過した瞬間
+            if (emitter.emitDurationTimer <= 0.0f) {
+                // 次フレームで安全にフラグを消去するため -1.0f に移行させる
+                emitter.emitDurationTimer = -1.0f;
+            }
+        }
+        // 2. 常時自動射出 (autoEmit)
+        else if (emitter.autoEmit) {
+            emitter.mappedData->frequencyTime += deltaTime;
+            if (emitter.mappedData->frequency <= emitter.mappedData->frequencyTime) {
+                emitter.mappedData->frequencyTime -= emitter.mappedData->frequency;
+                emitter.mappedData->emit = 1;
+            } else {
+                emitter.mappedData->emit = 0;
+            }
+        }
+        // 3. 単発射出 (TriggerOneShot) と消去の遅延処理
+        else {
+            // 外部から emit = 1, timer = 0 に設定された「トリガー直後」のフレーム
+            if (emitter.emitDurationTimer == 0.0f && emitter.mappedData->emit == 1) {
+                // 今フレームは emit = 1 を維持してCSEmitへ渡し、次フレームで消去させる状態へ移行
+                emitter.emitDurationTimer = -1.0f;
+            }
+            // 射出コマンド発行から1フレーム経過した状態 (GPU側での前フレーム処理が開始/完了している見込み)
+            else if (emitter.emitDurationTimer < 0.0f) {
+                emitter.mappedData->emit = 0; // ここで初めて安全にリセット
+                emitter.emitDurationTimer = 0.0f; // 待機状態に戻す
+            }
+        }
     }
 
-    Camera_ = CameraManager::GetInstance()->GetActiveCamera();
     const Matrix4x4& viewProjection = Camera_->GetViewProjectionMatrix();
 
     // ビルボード行列の計算
     Matrix4x4 backToFrontMatrix = MakeRotateYMatrix(std::numbers::pi_v<float>);
     Matrix4x4 billboardMatrix = Multiply(backToFrontMatrix, Camera_->GetWorldMatrix());
-    // 平行移動成分をリセット
     billboardMatrix.m[3][0] = 0.0f;
     billboardMatrix.m[3][1] = 0.0f;
     billboardMatrix.m[3][2] = 0.0f;
 
+    // 構文エラー修正: PerView* へのポインタ宣言
     PerView* perViewData = nullptr;
     perViewResource->Map(0, nullptr, reinterpret_cast<void**>(&perViewData));
-
     perViewData->viewProjection = viewProjection;
     perViewData->billboardMatrix = billboardMatrix;
-
     perViewResource->Unmap(0, nullptr);
 
     // 射出CS
@@ -95,29 +127,191 @@ void GPUParticleManager::Draw()
 {
     auto* commandList = dxCommon->GetCommandList();
 
-    // ルートシグネチャ設定
     commandList->SetGraphicsRootSignature(rootSignature.Get());
-
-    // PSO設定
-    commandList->SetPipelineState(graphicsPipelineState.Get());
-
-    // プリミティブトポロジー
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-
-    commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
-
     commandList->SetGraphicsRootConstantBufferView(1, perViewResource->GetGPUVirtualAddress());
+    srvManager->SetGraphicsRootDescriptorTable(3, 0);
 
-    // テクスチャSRV
-    srvManager->SetGraphicsRootDescriptorTable(2, instancingSrvIndex);
+    for (const auto& [groupName, group] : groups_) {
+        assert(group.textureIndex != 0 && "GPUParticleGroup textureIndex is 0! Texture loading failed or points to OffscreenSurface.");
 
-    // インスタンシングSRV
-    srvManager->SetGraphicsRootDescriptorTable(3, textureSrvIndex);
+        // 各グループのブレンドモードに応じた PSO を適用
+        size_t blendIdx = static_cast<size_t>(group.blendMode);
+        commandList->SetPipelineState(graphicsPipelineStates_[blendIdx].Get());
 
-    // お試し1024
-    commandList->DrawInstanced(6, kMaxParticles, 0, 0);
+        // 各グループのマテリアル CBV を適用（b0）
+        commandList->SetGraphicsRootConstantBufferView(0, group.materialResource->GetGPUVirtualAddress());
+
+        // 各グループ専用の Particle StructuredBuffer SRV を適用（t0）
+        srvManager->SetGraphicsRootDescriptorTable(2, group.instancingSrvIndex);
+
+        // 各グループのメッシュ VBV をバインドして描画呼び出し
+        auto meshIt = meshes_.find(group.meshType);
+        if (meshIt != meshes_.end()) {
+            const auto& mesh = meshIt->second;
+            commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            commandList->IASetVertexBuffers(0, 1, &mesh->GetVertexBufferView());
+
+            commandList->DrawInstanced(mesh->GetVertexCount(), group.maxParticles, 0, 0);
+        }
+    }
+}
+
+void GPUParticleManager::CreateParticleGroup(const std::string& name, const std::string& textureFilePath, ParticleMeshType meshType, BlendMode blendMode, const Vector4& color)
+{
+    if (groups_.find(name) != groups_.end()) {
+        return; // 登録済み
+    }
+
+    TextureManager::getInstance()->LoadTexture(textureFilePath);
+    uint32_t texIndex = TextureManager::getInstance()->GetSrvIndex(textureFilePath);
+    assert(texIndex != 0 && "Texture SrvIndex returned 0. Ensure the file path is correct and loaded.");
+
+    GPUParticleGroup group;
+    group.name = name;
+    group.textureFilePath = textureFilePath;
+    group.textureIndex = texIndex;
+    group.blendMode = blendMode;
+    group.meshType = meshType;
+    group.color = color;
+    group.useClampSampler = (meshType == ParticleMeshType::kRing) ? 1 : 0;
+    group.maxParticles = 1024;
+
+    // グループごとのマテリアル定数バッファ生成
+    group.materialResource = dxCommon->CreateBufferResource(sizeof(ParticleMaterial));
+    group.materialResource->Map(0, nullptr, reinterpret_cast<void**>(&group.mappedMaterialData));
+    group.mappedMaterialData->color = color;
+    group.mappedMaterialData->enableLighting = false;
+    group.mappedMaterialData->uvTransform = MakeIdentity4x4();
+    group.mappedMaterialData->useClampSampler = group.useClampSampler;
+
+    auto* device = dxCommon->GetDevice();
+
+    size_t particleBufferSize = sizeof(Particle) * group.maxParticles;
+    D3D12_HEAP_PROPERTIES heapProps { D3D12_HEAP_TYPE_DEFAULT };
+    D3D12_RESOURCE_DESC resDesc { };
+    resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    resDesc.Width = particleBufferSize;
+    resDesc.Height = 1;
+    resDesc.DepthOrArraySize = 1;
+    resDesc.MipLevels = 1;
+    resDesc.Format = DXGI_FORMAT_UNKNOWN;
+    resDesc.SampleDesc.Count = 1;
+    resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+    device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&group.particleResource));
+
+    group.instancingSrvIndex = srvManager->Allocate();
+    srvManager->CreateSRVforStructuredBuffer(group.instancingSrvIndex, group.particleResource.Get(), group.maxParticles, sizeof(Particle));
+
+    D3D12_RESOURCE_DESC counterResDesc = resDesc;
+    counterResDesc.Width = sizeof(int32_t);
+    device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &counterResDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&group.freeCounterResource));
+
+    D3D12_RESOURCE_DESC listResDesc = resDesc;
+    listResDesc.Width = sizeof(int32_t) * group.maxParticles;
+    device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &listResDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&group.freeListResource));
+
+    PrepareCSInitialize();
+    CSInitialize(group);
+
+    groups_[name] = std::move(group);
+}
+
+size_t GPUParticleManager::AddEmitter(const std::string& groupName,
+    const Vector3& position,
+    float radius,
+    uint32_t count,
+    float frequency,
+    float particleLifeTime,
+    const Vector3& gravity,
+    const Vector3& acceleration,
+    float airResistance)
+{
+    auto it = groups_.find(groupName);
+    assert(it != groups_.end() && "Particle group not found!");
+
+    GPUEmitterInstance newEmitter;
+    newEmitter.groupName = groupName;
+    newEmitter.autoEmit = true;
+    newEmitter.bufferResource = dxCommon->CreateBufferResource(sizeof(EmitterSphereData));
+    newEmitter.bufferResource->Map(0, nullptr, reinterpret_cast<void**>(&newEmitter.mappedData));
+
+    newEmitter.mappedData->translate = position;
+    newEmitter.mappedData->radius = radius;
+    newEmitter.mappedData->count = count;
+    newEmitter.mappedData->frequency = frequency;
+    newEmitter.mappedData->frequencyTime = 0.0f;
+    newEmitter.mappedData->emit = 0;
+    newEmitter.mappedData->textureIndex = it->second.textureIndex;
+    newEmitter.mappedData->gravity = gravity;
+    newEmitter.mappedData->acceleration = acceleration;
+    newEmitter.mappedData->airResistance = airResistance;
+    newEmitter.mappedData->particleLifeTime = particleLifeTime;
+
+    emitters_.push_back(std::move(newEmitter));
+    return emitters_.size() - 1;
+}
+
+void GPUParticleManager::SetEmitterAutoEmit(size_t emitterIndex, bool autoEmit)
+{
+    if (emitterIndex < emitters_.size()) {
+        emitters_[emitterIndex].autoEmit = autoEmit;
+    }
+}
+
+void GPUParticleManager::TriggerOneShot(size_t emitterIndex, uint32_t count)
+{
+    // duration = 0.0f を指定して 1 フレーム限定即時射出を実行
+    TriggerEmitForDuration(emitterIndex, 0.0f, count);
+}
+
+void GPUParticleManager::TriggerEmitForDuration(size_t emitterIndex, float duration, uint32_t count)
+{
+    if (emitterIndex < emitters_.size() && emitters_[emitterIndex].mappedData) {
+        auto& emitter = emitters_[emitterIndex];
+        emitter.emitDurationTimer = duration;
+
+        // 呼び出したそのフレームで即時1回目の発射が行われるようインターバルタイマーを満了状態に初期化
+        emitter.mappedData->frequencyTime = emitter.mappedData->frequency;
+
+        if (count > 0) {
+            emitter.mappedData->count = count;
+        }
+
+        if (duration > 0.0f) {
+            // 指定時間継続して射出するケース
+            emitter.emitDurationTimer = duration;
+            emitter.mappedData->frequencyTime = emitter.mappedData->frequency; // 即時1回目を許可
+        } else {
+            // duration = 0.0f の場合：呼び出したこのフレーム限定で即時 1 回射出
+            emitter.emitDurationTimer = 0.0f;
+            emitter.mappedData->emit = 1; // 1フレーム限定で直接射出許可を出す
+        }
+    }
+}
+
+void GPUParticleManager::SetEmitterPosition(size_t emitterIndex, const Vector3& position)
+{
+    if (emitterIndex < emitters_.size() && emitters_[emitterIndex].mappedData) {
+        emitters_[emitterIndex].mappedData->translate = position;
+    }
+}
+
+void GPUParticleManager::SetEmitterPhysics(size_t emitterIndex, const Vector3& gravity, const Vector3& accel, float drag)
+{
+    if (emitterIndex < emitters_.size() && emitters_[emitterIndex].mappedData) {
+        emitters_[emitterIndex].mappedData->gravity = gravity;
+        emitters_[emitterIndex].mappedData->acceleration = accel;
+        emitters_[emitterIndex].mappedData->airResistance = drag;
+    }
+}
+
+void GPUParticleManager::SetEmitterParticleLifeTime(size_t emitterIndex, float lifeTime)
+{
+    if (emitterIndex < emitters_.size() && emitters_[emitterIndex].mappedData) {
+        emitters_[emitterIndex].mappedData->particleLifeTime = lifeTime;
+    }
 }
 
 void GPUParticleManager::PrepareCSInitialize()
@@ -126,28 +320,23 @@ void GPUParticleManager::PrepareCSInitialize()
     dxCommon->GetCommandList()->SetPipelineState(csInitPipelineState.Get());
 }
 
-void GPUParticleManager::CSInitialize()
+void GPUParticleManager::CSInitialize(GPUParticleGroup& group)
 {
     auto* cmdList = dxCommon->GetCommandList();
 
     // u0
-    cmdList->SetComputeRootUnorderedAccessView(0, particleResource_->GetGPUVirtualAddress());
-
+    cmdList->SetComputeRootUnorderedAccessView(0, group.particleResource->GetGPUVirtualAddress());
     // u1
-    cmdList->SetComputeRootUnorderedAccessView(1, freeCounterResource->GetGPUVirtualAddress());
-
+    cmdList->SetComputeRootUnorderedAccessView(1, group.freeCounterResource->GetGPUVirtualAddress());
     // u2
-    cmdList->SetComputeRootUnorderedAccessView(2, freeListResource->GetGPUVirtualAddress());
+    cmdList->SetComputeRootUnorderedAccessView(2, group.freeListResource->GetGPUVirtualAddress());
 
-    // とりあえずお試し1024
     cmdList->Dispatch(1, 1, 1);
 
-    // バリア張る
     D3D12_RESOURCE_BARRIER barrier = { };
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
     barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    // UAVとして書き込んだリソースを指定
-    barrier.UAV.pResource = particleResource_.Get();
+    barrier.UAV.pResource = group.particleResource.Get();
     cmdList->ResourceBarrier(1, &barrier);
 }
 
@@ -161,37 +350,41 @@ void GPUParticleManager::CSEmit()
 {
     auto* cmdList = dxCommon->GetCommandList();
 
-    D3D12_RESOURCE_BARRIER barrier = { };
-    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Transition.pResource = particleResource_.Get();
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    cmdList->ResourceBarrier(1, &barrier);
+    for (const auto& emitter : emitters_) {
+        if (!emitter.active || emitter.mappedData->emit == 0)
+            continue;
 
-    // u0
-    cmdList->SetComputeRootUnorderedAccessView(0, particleResource_->GetGPUVirtualAddress());
+        auto groupIt = groups_.find(emitter.groupName);
+        if (groupIt == groups_.end())
+            continue;
 
-    // u1
-    cmdList->SetComputeRootUnorderedAccessView(1, freeCounterResource->GetGPUVirtualAddress());
+        auto& group = groupIt->second;
 
-    // u2
-    cmdList->SetComputeRootUnorderedAccessView(2, freeListResource->GetGPUVirtualAddress());
+        D3D12_RESOURCE_BARRIER barrier = { };
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Transition.pResource = group.particleResource.Get();
+        barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+        barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        cmdList->ResourceBarrier(1, &barrier);
 
-    // b0
-    cmdList->SetComputeRootConstantBufferView(3, SphereResource->GetGPUVirtualAddress());
+        cmdList->SetComputeRootUnorderedAccessView(0, group.particleResource->GetGPUVirtualAddress());
+        cmdList->SetComputeRootUnorderedAccessView(1, group.freeCounterResource->GetGPUVirtualAddress());
+        cmdList->SetComputeRootUnorderedAccessView(2, group.freeListResource->GetGPUVirtualAddress());
 
-    // b1
-    cmdList->SetComputeRootConstantBufferView(4, randomResource->GetGPUVirtualAddress());
+        cmdList->SetComputeRootConstantBufferView(3, emitter.bufferResource->GetGPUVirtualAddress());
+        cmdList->SetComputeRootConstantBufferView(4, randomResource->GetGPUVirtualAddress());
 
-    // とりあえずお試し1024
-    cmdList->Dispatch(1, 1, 1);
+        UINT totalThreadsNeeded = (emitter.mappedData->count + 3) / 4;
+        UINT threadGroupCountX = (totalThreadsNeeded + 63) / 64;
+        cmdList->Dispatch(threadGroupCountX, 1, 1);
 
-    D3D12_RESOURCE_BARRIER uavBarrier = { };
-    uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-    uavBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    uavBarrier.UAV.pResource = particleResource_.Get();
-    cmdList->ResourceBarrier(1, &uavBarrier);
+        D3D12_RESOURCE_BARRIER uavBarrier = { };
+        uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        uavBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        uavBarrier.UAV.pResource = group.particleResource.Get();
+        cmdList->ResourceBarrier(1, &uavBarrier);
+    }
 }
 
 void GPUParticleManager::PrepareCSUpdate()
@@ -204,28 +397,29 @@ void GPUParticleManager::CSUpdate()
 {
     auto* cmdList = dxCommon->GetCommandList();
 
-    // u0
-    cmdList->SetComputeRootUnorderedAccessView(0, particleResource_->GetGPUVirtualAddress());
+    for (auto& [groupName, group] : groups_) {
+        // u0
+        cmdList->SetComputeRootUnorderedAccessView(0, group.particleResource->GetGPUVirtualAddress());
+        // u1
+        cmdList->SetComputeRootUnorderedAccessView(1, group.freeCounterResource->GetGPUVirtualAddress());
+        // u2
+        cmdList->SetComputeRootUnorderedAccessView(2, group.freeListResource->GetGPUVirtualAddress());
 
-    // u1
-    cmdList->SetComputeRootUnorderedAccessView(1, freeCounterResource->GetGPUVirtualAddress());
+        // b0
+        cmdList->SetComputeRootConstantBufferView(3, randomResource->GetGPUVirtualAddress());
 
-    // u2
-    cmdList->SetComputeRootUnorderedAccessView(2, freeListResource->GetGPUVirtualAddress());
+        UINT totalThreadsNeeded = (group.maxParticles + 3) / 4;
+        UINT threadGroupCountX = (totalThreadsNeeded + 63) / 64;
+        cmdList->Dispatch(threadGroupCountX, 1, 1);
 
-    // b0
-    cmdList->SetComputeRootConstantBufferView(3, randomResource->GetGPUVirtualAddress());
-
-    // とりあえずお試し1024
-    cmdList->Dispatch(1, 1, 1);
-
-    D3D12_RESOURCE_BARRIER transitionToSRV = { };
-    transitionToSRV.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    transitionToSRV.Transition.pResource = particleResource_.Get();
-    transitionToSRV.Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-    transitionToSRV.Transition.StateAfter = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-    transitionToSRV.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    cmdList->ResourceBarrier(1, &transitionToSRV);
+        D3D12_RESOURCE_BARRIER transitionToSRV = { };
+        transitionToSRV.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        transitionToSRV.Transition.pResource = group.particleResource.Get();
+        transitionToSRV.Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+        transitionToSRV.Transition.StateAfter = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+        transitionToSRV.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        cmdList->ResourceBarrier(1, &transitionToSRV);
+    }
 }
 
 void GPUParticleManager::RootSignatureInitialize(DirectXCommon* dxcommon)
@@ -242,7 +436,7 @@ void GPUParticleManager::RootSignatureInitialize(DirectXCommon* dxcommon)
 
     D3D12_DESCRIPTOR_RANGE descriptorRange[1] = { };
     descriptorRange[0].BaseShaderRegister = 0;
-    descriptorRange[0].NumDescriptors = 1;
+    descriptorRange[0].NumDescriptors = 256;
     descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
@@ -273,7 +467,7 @@ void GPUParticleManager::RootSignatureInitialize(DirectXCommon* dxcommon)
     staticSamplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
     staticSamplers[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
     staticSamplers[0].MaxLOD = D3D12_FLOAT32_MAX;
-    staticSamplers[0].ShaderRegister = 0; // ⭐️ s0
+    staticSamplers[0].ShaderRegister = 0;
     staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
     // [1] CLAMP用 (主にRing用) -> register(s1)
@@ -283,7 +477,7 @@ void GPUParticleManager::RootSignatureInitialize(DirectXCommon* dxcommon)
     staticSamplers[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
     staticSamplers[1].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
     staticSamplers[1].MaxLOD = D3D12_FLOAT32_MAX;
-    staticSamplers[1].ShaderRegister = 1; // ⭐️ s1
+    staticSamplers[1].ShaderRegister = 1;
     staticSamplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
     descriptionRootSignature.pStaticSamplers = staticSamplers;
@@ -335,18 +529,6 @@ void GPUParticleManager::graphicsPipelineInitialize(DirectXCommon* dxcommon)
     inputLayoutDesc.pInputElementDescs = inputElementDescs;
     inputLayoutDesc.NumElements = _countof(inputElementDescs);
 
-    // BlendStateの設定
-    D3D12_BLEND_DESC blendDesc { };
-    // 全ての色要素を書き込む
-    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-    blendDesc.RenderTarget[0].BlendEnable = true;
-    blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
-    blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-    blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
-    blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-    blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-    blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-
     // RasterizerStateの設定
     D3D12_RASTERIZER_DESC rasterizerDesc { };
     // 裏面(時計回り)を表示しない
@@ -358,7 +540,7 @@ void GPUParticleManager::graphicsPipelineInitialize(DirectXCommon* dxcommon)
     Microsoft::WRL::ComPtr<IDxcBlob> vertexShaderBlob = dxcommon->CompileShader(L"resources/shaders/Particle.VS.hlsl", L"vs_6_0");
     assert(vertexShaderBlob != nullptr);
 
-    Microsoft::WRL::ComPtr<IDxcBlob> pixeShaderBlob = dxcommon->CompileShader(L"resources/shaders/CPUParticle.PS.hlsl", L"ps_6_0");
+    Microsoft::WRL::ComPtr<IDxcBlob> pixeShaderBlob = dxcommon->CompileShader(L"resources/shaders/Particle.PS.hlsl", L"ps_6_0");
     assert(pixeShaderBlob != nullptr);
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc { };
@@ -366,7 +548,7 @@ void GPUParticleManager::graphicsPipelineInitialize(DirectXCommon* dxcommon)
     graphicsPipelineStateDesc.InputLayout = inputLayoutDesc;
     graphicsPipelineStateDesc.VS = { vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize() };
     graphicsPipelineStateDesc.PS = { pixeShaderBlob->GetBufferPointer(), pixeShaderBlob->GetBufferSize() };
-    graphicsPipelineStateDesc.BlendState = blendDesc;
+
     graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;
     // 書き込むRTVの情報
     graphicsPipelineStateDesc.NumRenderTargets = 1;
@@ -389,11 +571,65 @@ void GPUParticleManager::graphicsPipelineInitialize(DirectXCommon* dxcommon)
     // DepthStencilの設定
     graphicsPipelineStateDesc.DepthStencilState = depthStencilDesc;
     graphicsPipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    // 実際に生成
-    HRESULT hr;
-    graphicsPipelineState = nullptr;
-    hr = dxcommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&graphicsPipelineState));
-    assert(SUCCEEDED(hr));
+
+    for (uint32_t i = 0; i < static_cast<uint32_t>(BlendMode::kCount); ++i) {
+        D3D12_BLEND_DESC blendDesc { };
+        blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+        blendDesc.RenderTarget[0].BlendEnable = true;
+
+        switch (static_cast<BlendMode>(i)) {
+        case kBlendModeNone:
+            blendDesc.RenderTarget[0].BlendEnable = false;
+            break;
+        case kBlendModeNormal: // 通常αブレンド
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+            break;
+        case kBlendModeAdd: // 加算合成
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+            break;
+        case kBlendModeSubtract: // 減算合成
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_REV_SUBTRACT;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+            break;
+        case kBlendModeMultily: // 乗算合成
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_ZERO;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_SRC_COLOR;
+            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_DEST_ALPHA;
+            blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+            break;
+        case kBlendModeScreen: // スクリーン合成
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_INV_DEST_COLOR;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+            break;
+        default:
+            break;
+        }
+
+        // 実際に生成
+        graphicsPipelineStateDesc.BlendState = blendDesc;
+        HRESULT hr = dxcommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&graphicsPipelineStates_[i]));
+        assert(SUCCEEDED(hr));
+    }
 }
 
 void GPUParticleManager::CSRootSignatureInitialize(DirectXCommon* dxcommon)
@@ -592,121 +828,19 @@ void GPUParticleManager::ResourceInitialize()
 {
     auto* device = dxCommon->GetDevice();
 
-    // テクスチャ
-    TextureManager::getInstance()->LoadTexture("resources/circle2.png");
-    uint32_t textureIndex = TextureManager::getInstance()->GetSrvIndex("resources/circle2.png");
-
-    textureSrvIndex = textureIndex;
-
-    // 頂点バッフア
-    vertexResource = dxCommon->CreateBufferResource(sizeof(VertexData) * 6);
-    vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
-    vertexBufferView.SizeInBytes = static_cast<UINT>(sizeof(VertexData) * 6);
-    vertexBufferView.StrideInBytes = sizeof(VertexData);
-
-    VertexData* mappedVertexData = nullptr;
-    vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&mappedVertexData));
-
-    // 板ポリ
-    mappedVertexData[0] = { { 1.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } };
-    mappedVertexData[1] = { { -1.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } };
-    mappedVertexData[2] = { { 1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f } };
-    mappedVertexData[3] = { { 1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f } };
-    mappedVertexData[4] = { { -1.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } };
-    mappedVertexData[5] = { { -1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f } };
-    vertexResource->Unmap(0, nullptr);
-
-    // エミッタデータ
-    SphereResource = dxCommon->CreateBufferResource(sizeof(EmitterSphere));
-    SphereResource->Map(0, nullptr, reinterpret_cast<void**>(&eitterSphere));
-    eitterSphere->count = 10;
-    eitterSphere->frequency = 0.5f;
-    eitterSphere->frequencyTime = 0.0f;
-    eitterSphere->translate = Vector3(0.0f, 0.0f, 0.0f);
-    eitterSphere->radius = 1.0f;
-    eitterSphere->emit = 0;
-
-    // マテリある
-    materialResource = dxCommon->CreateBufferResource(sizeof(ParticleMaterial));
-    ParticleMaterial* materialData = nullptr;
-    materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
-    materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-    materialData->enableLighting = false;
-    materialData->uvTransform = MakeIdentity4x4();
-    materialData->useClampSampler = 0;
-    materialResource->Unmap(0, nullptr);
+    meshes_[ParticleMeshType::kPlane] = std::make_unique<PlaneMesh>(device);
+    meshes_[ParticleMeshType::kRing] = std::make_unique<RingMesh>(device, 32, 1.0f, 0.2f);
+    meshes_[ParticleMeshType::kCylinder] = std::make_unique<CylinderMesh>(device, 32, 1.0f, 1.0f, 3.0f);
+    meshes_[ParticleMeshType::kTorus] = std::make_unique<TorusMesh>(device, 24, 12, 0.5f, 0.2f);
+    meshes_[ParticleMeshType::kCone] = std::make_unique<ConeMesh>(device, 32, 1.0f, 2.0f);
+    meshes_[ParticleMeshType::kHalfCone] = std::make_unique<HalfConeMesh>(device, 32, 1.0f, 2.0f);
 
     // カメラ
     perViewResource = dxCommon->CreateBufferResource(sizeof(PerView));
 
+    // random
     randomResource = dxCommon->CreateBufferResource(sizeof(PreFrame));
     randomResource->Map(0, nullptr, reinterpret_cast<void**>(&PreFrameData_));
     PreFrameData_->time = 0;
     PreFrameData_->deltaTime = 0;
-
-    // パーティクル構造化バッファ生成
-    size_t particleBufferSize = sizeof(Particle) * kMaxParticles;
-
-    D3D12_HEAP_PROPERTIES heapProps { };
-    heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-    D3D12_RESOURCE_DESC resDesc { };
-    resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    resDesc.Width = particleBufferSize;
-    resDesc.Height = 1;
-    resDesc.DepthOrArraySize = 1;
-    resDesc.MipLevels = 1;
-    resDesc.Format = DXGI_FORMAT_UNKNOWN;
-    resDesc.SampleDesc.Count = 1;
-    resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-    device->CreateCommittedResource(
-        &heapProps, D3D12_HEAP_FLAG_NONE, &resDesc,
-        D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&particleResource_));
-
-    instancingSrvIndex = srvManager->Allocate();
-    srvManager->CreateSRVforStructuredBuffer(instancingSrvIndex, particleResource_.Get(), kMaxParticles, sizeof(Particle));
-
-    // カウンター用バッフア
-    size_t counterBufferSize = sizeof(int32_t);
-
-    D3D12_HEAP_PROPERTIES counterHeapProps { };
-    counterHeapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-    D3D12_RESOURCE_DESC counterResDesc { };
-    counterResDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    counterResDesc.Width = counterBufferSize;
-    counterResDesc.Height = 1;
-    counterResDesc.DepthOrArraySize = 1;
-    counterResDesc.MipLevels = 1;
-    counterResDesc.Format = DXGI_FORMAT_UNKNOWN;
-    counterResDesc.SampleDesc.Count = 1;
-    counterResDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    counterResDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-    device->CreateCommittedResource(
-        &counterHeapProps, D3D12_HEAP_FLAG_NONE, &counterResDesc,
-        D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&freeCounterResource));
-
-    // List用(サイズは最大数)
-    size_t ListBufferSize = sizeof(int32_t) * kMaxParticles;
-
-    D3D12_HEAP_PROPERTIES ListHeapProps { };
-    ListHeapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-    D3D12_RESOURCE_DESC ListResDesc { };
-    ListResDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    ListResDesc.Width = ListBufferSize;
-    ListResDesc.Height = 1;
-    ListResDesc.DepthOrArraySize = 1;
-    ListResDesc.MipLevels = 1;
-    ListResDesc.Format = DXGI_FORMAT_UNKNOWN;
-    ListResDesc.SampleDesc.Count = 1;
-    ListResDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    ListResDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-    device->CreateCommittedResource(
-        &ListHeapProps, D3D12_HEAP_FLAG_NONE, &ListResDesc,
-        D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&freeListResource));
 }
