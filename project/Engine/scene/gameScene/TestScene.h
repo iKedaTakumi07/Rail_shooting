@@ -55,14 +55,20 @@ private:
     std::unique_ptr<HitParticle> hitParticle;
     float testTimer = 0.0f;
 
-    size_t gpuEmitterHandle1_ = 0;
-    size_t gpuEmitterHandle2_ = 0;
+   
+    size_t testGpuEmitterHandle_ = 0;
+   
 
-    Vector3 emitterPos_ = { 0.0f, 2.0f, 0.0f };
     Vector3 gravity_ = { 0.0f, -9.8f, 0.0f };
     Vector3 acceleration_ = { 0.0f, 2.0f, 0.0f };
     float airResistance_ = 0.1f;
     float emitTimer_ = 2.0f;
     bool autoEmit_ = true;
     int emitCount_ = 32;
+
+    Vector3 testEmitterPos_ = { 0.0f, 1.0f, 0.0f };
+    Vector4 testStartColor_ = { 1.0f, 0.0f, 0.0f, 1.0f };
+    Vector4 testEndColor_ = { 1.0f, 0.0f, 0.0f, 0.0f };
+    Vector3 testMinScale_ = { 0.2f, 0.2f, 0.2f };
+    Vector3 testMaxScale_ = { 0.8f, 0.8f, 0.8f };
 };

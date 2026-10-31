@@ -218,16 +218,27 @@ struct CPUParticle {
     float currentTime;
     bool isInfinite;
 };
+
 struct Particle {
     Vector3 translate;
-    Vector3 scale;
-    float lifeTime;
-    Vector3 velocity;
     float currentTime;
-    Vector4 color;
-    uint32_t textureIndex;
+    Vector3 velocity;
+    float lifeTime;
     Vector3 acceleration;
     float airResistance;
+
+    Vector3 scale;
+    uint32_t textureIndex;
+    Vector4 color;
+    Vector3 rotation;
+    float padding;
+
+    Vector3 startScale;
+    Vector3 endScale;
+    Vector3 startRotation;
+    Vector3 endRotation;
+    Vector4 startColor;
+    Vector4 endColor;
 };
 
 enum class ParticleMeshType {
@@ -241,17 +252,45 @@ enum class ParticleMeshType {
 
 struct EmitterSphereData {
     Vector3 translate;
-    float radius;
+    float radius; 
     uint32_t count;
-    float frequency;
+    float frequency; 
     float frequencyTime;
-    uint32_t emit;
-    Vector3 gravity;
-    float airResistance;
+    uint32_t emit; 
+    Vector3 gravity; 
+    float airResistance; 
     Vector3 acceleration;
-    float particleLifeTime;
+    float particleLifeTime; 
     uint32_t textureIndex;
-    Vector3 padding;
+    Vector3 padding; 
+
+    Vector3 minVelocity; 
+    float minSpeed; 
+    Vector3 maxVelocity; 
+    float maxSpeed; 
+
+    Vector3 minStartScale; 
+    float pad1; 
+    Vector3 maxStartScale; 
+    float pad2; 
+    Vector3 minEndScale; 
+    float pad3; 
+    Vector3 maxEndScale;
+    float pad4; 
+
+    Vector3 minStartRotation;
+    float pad5; 
+    Vector3 maxStartRotation; 
+    float pad6; 
+    Vector3 minEndRotation; 
+    float pad7; 
+    Vector3 maxEndRotation; 
+    float pad8; 
+
+    Vector4 minStartColor; 
+    Vector4 maxStartColor; 
+    Vector4 minEndColor;
+    Vector4 maxEndColor;
 };
 struct GPUEmitterInstance {
     std::string groupName;

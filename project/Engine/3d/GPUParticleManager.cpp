@@ -10,6 +10,7 @@
 #include "CameraManager.h"
 #include <memory>
 #include <numbers>
+#include <string.h>
 
 std::unique_ptr<GPUParticleManager> GPUParticleManager::instance = nullptr;
 
@@ -237,6 +238,10 @@ size_t GPUParticleManager::AddEmitter(const std::string& groupName,
     newEmitter.bufferResource = dxCommon->CreateBufferResource(sizeof(EmitterSphereData));
     newEmitter.bufferResource->Map(0, nullptr, reinterpret_cast<void**>(&newEmitter.mappedData));
 
+    // メモリのクリア
+    std::memset(newEmitter.mappedData, 0, sizeof(EmitterSphereData));
+
+    // 基本設定
     newEmitter.mappedData->translate = position;
     newEmitter.mappedData->radius = radius;
     newEmitter.mappedData->count = count;
@@ -248,6 +253,28 @@ size_t GPUParticleManager::AddEmitter(const std::string& groupName,
     newEmitter.mappedData->acceleration = acceleration;
     newEmitter.mappedData->airResistance = airResistance;
     newEmitter.mappedData->particleLifeTime = particleLifeTime;
+
+    // ランダム・グラデーション用パラメータのデフォルト初期化
+    newEmitter.mappedData->minVelocity = Vector3(-1.0f, 0.5f, -1.0f);
+    newEmitter.mappedData->maxVelocity = Vector3(1.0f, 2.0f, 1.0f);
+    newEmitter.mappedData->minSpeed = 1.0f;
+    newEmitter.mappedData->maxSpeed = 2.0f;
+
+    newEmitter.mappedData->minStartScale = Vector3(0.3f, 0.3f, 0.3f);
+    newEmitter.mappedData->maxStartScale = Vector3(0.5f, 0.5f, 0.5f);
+    newEmitter.mappedData->minEndScale = Vector3(0.0f, 0.0f, 0.0f);
+    newEmitter.mappedData->maxEndScale = Vector3(0.0f, 0.0f, 0.0f);
+
+    newEmitter.mappedData->minStartRotation = Vector3(0.0f, 0.0f, -3.14f);
+    newEmitter.mappedData->maxStartRotation = Vector3(0.0f, 0.0f, 3.14f);
+    newEmitter.mappedData->minEndRotation = Vector3(0.0f, 0.0f, -6.28f);
+    newEmitter.mappedData->maxEndRotation = Vector3(0.0f, 0.0f, 6.28f);
+
+    // グラデーション
+    newEmitter.mappedData->minStartColor = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+    newEmitter.mappedData->maxStartColor = Vector4(1.0f, 0.2f, 0.0f, 1.0f);
+    newEmitter.mappedData->minEndColor = Vector4(1.0f, 0.0f, 0.0f, 0.0f);
+    newEmitter.mappedData->maxEndColor = Vector4(1.0f, 0.2f, 0.0f, 0.0f);
 
     emitters_.push_back(std::move(newEmitter));
     return emitters_.size() - 1;

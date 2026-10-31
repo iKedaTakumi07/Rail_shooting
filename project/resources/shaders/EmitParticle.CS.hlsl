@@ -1,29 +1,67 @@
 struct EmitterSphere
 {
     float32_t3 translate;
-    float radius; // 射出半径
-    uint32_t count; // 数
-    float frequency; // 射出時間
-    float frequencyTime; // 射出間隔調整用時間
-    uint32_t emit; // 射出許可
-    float32_t3 gravity; // 重力
-    float airResistance; // 空気抵抗
-    float32_t3 acceleration; // 加速度
-    float particleLifeTime; //描画時間
-    uint32_t textureIndex; // Textureのインデックス番号
-    float32_t3 padding; // 12B
+    float radius;
+    uint32_t count;
+    float frequency;
+    float frequencyTime;
+    uint32_t emit;
+    float32_t3 gravity;
+    float airResistance;
+    float32_t3 acceleration;
+    float particleLifeTime;
+    uint32_t textureIndex;
+    float32_t3 padding;
+
+    float32_t3 minVelocity;
+    float32_t minSpeed;
+    float32_t3 maxVelocity;
+    float32_t maxSpeed;
+
+    float32_t3 minStartScale;
+    float32_t pad1;
+    float32_t3 maxStartScale;
+    float32_t pad2;
+    float32_t3 minEndScale;
+    float32_t pad3;
+    float32_t3 maxEndScale;
+    float32_t pad4;
+
+    float32_t3 minStartRotation;
+    float32_t pad5;
+    float32_t3 maxStartRotation;
+    float32_t pad6;
+    float32_t3 minEndRotation;
+    float32_t pad7;
+    float32_t3 maxEndRotation;
+    float32_t pad8;
+
+    float32_t4 minStartColor;
+    float32_t4 maxStartColor;
+    float32_t4 minEndColor;
+    float32_t4 maxEndColor;
 };
 struct Particle
 {
     float32_t3 translate;
-    float32_t3 scale;
-    float32_t lifeTime;
-    float32_t3 velocity;
     float32_t currentTime;
-    float32_t4 color;
-    uint32_t textureIndex;
+    float32_t3 velocity;
+    float32_t lifeTime;
     float32_t3 acceleration;
     float airResistance;
+    
+    float32_t3 scale;
+    uint32_t textureIndex;
+    float32_t4 color;
+    float32_t3 rotation;
+    float32_t padding0;
+    
+    float32_t3 startScale;
+    float32_t3 endScale;
+    float32_t3 startRotation;
+    float32_t3 endRotation;
+    float32_t4 startColor;
+    float32_t4 endColor;
    
 };
 struct PerFrame
@@ -101,15 +139,40 @@ void main(uint32_t3 DTid : SV_DispatchThreadID)
         if (freeListIndex >= 0 && freeListIndex < (int32_t) kMaxParticles)
         {
             uint32_t particleIndex = gFreeList[freeListIndex];
+            
+            float3 r3d1 = generator.Generate3d();
+            float3 r3d2 = generator.Generate3d();
+            float3 r3d3 = generator.Generate3d();
+            float3 r3d4 = generator.Generate3d();
+            float4 r4d1 = float4(generator.Generate3d(), generator.Generate1d());
+            float4 r4d2 = float4(generator.Generate3d(), generator.Generate1d());
 
-            float3 velDir = generator.Generate3d() * 2.0f - 1.0f;
+            // 座標
             float3 offset = generator.Generate3d() * 2.0f - 1.0f;
-
-            gParticles[particleIndex].scale = float3(0.3f, 0.3f, 0.3f);
             gParticles[particleIndex].translate = gEmitter.translate + normalize(offset) * gEmitter.radius * generator.Generate3d().x;
-            gParticles[particleIndex].color = float4(generator.Generate3d(), 1.0f);
+
+            // 速度
+            float3 velDir = lerp(gEmitter.minVelocity, gEmitter.maxVelocity, r3d1);
+            float speed = lerp(gEmitter.minSpeed, gEmitter.maxSpeed, generator.Generate1d());
+            gParticles[particleIndex].velocity = velDir * speed;
+            
+            // スケール
+            gParticles[particleIndex].startScale = lerp(gEmitter.minStartScale, gEmitter.maxStartScale, r3d2);
+            gParticles[particleIndex].endScale = lerp(gEmitter.minEndScale, gEmitter.maxEndScale, r3d3);
+            gParticles[particleIndex].scale = gParticles[particleIndex].startScale;
+
+            // 回転
+            gParticles[particleIndex].startRotation = lerp(gEmitter.minStartRotation, gEmitter.maxStartRotation, r3d4);
+            gParticles[particleIndex].endRotation = lerp(gEmitter.minEndRotation, gEmitter.maxEndRotation, generator.Generate3d());
+            gParticles[particleIndex].rotation = gParticles[particleIndex].startRotation;
+
+            // 色
+            gParticles[particleIndex].startColor = lerp(gEmitter.minStartColor, gEmitter.maxStartColor, r4d1);
+            gParticles[particleIndex].endColor = lerp(gEmitter.minEndColor, gEmitter.maxEndColor, r4d2);
+            gParticles[particleIndex].color = gParticles[particleIndex].startColor;
+            
+            // その他
             gParticles[particleIndex].currentTime = 0.0f;
-            gParticles[particleIndex].velocity = normalize(velDir) * 1.5f;
             gParticles[particleIndex].lifeTime = gEmitter.particleLifeTime;
             gParticles[particleIndex].textureIndex = gEmitter.textureIndex;
             gParticles[particleIndex].acceleration = gEmitter.acceleration + gEmitter.gravity;
