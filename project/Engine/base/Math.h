@@ -252,43 +252,45 @@ enum class ParticleMeshType {
 
 struct EmitterSphereData {
     Vector3 translate;
-    float radius; 
+    float radius;
     uint32_t count;
-    float frequency; 
+    float frequency;
     float frequencyTime;
-    uint32_t emit; 
-    Vector3 gravity; 
-    float airResistance; 
+    uint32_t emit;
+    Vector3 gravity;
+    float airResistance;
     Vector3 acceleration;
-    float particleLifeTime; 
+    float particleLifeTime;
+    Vector3 minEmitOffset;
     uint32_t textureIndex;
-    Vector3 padding; 
+    Vector3 maxEmitOffset;
+    uint32_t emitType;
 
-    Vector3 minVelocity; 
-    float minSpeed; 
-    Vector3 maxVelocity; 
-    float maxSpeed; 
+    Vector3 minVelocity;
+    float minSpeed;
+    Vector3 maxVelocity;
+    float maxSpeed;
 
-    Vector3 minStartScale; 
-    float pad1; 
-    Vector3 maxStartScale; 
-    float pad2; 
-    Vector3 minEndScale; 
-    float pad3; 
+    Vector3 minStartScale;
+    float pad1;
+    Vector3 maxStartScale;
+    float pad2;
+    Vector3 minEndScale;
+    float pad3;
     Vector3 maxEndScale;
-    float pad4; 
+    float pad4;
 
     Vector3 minStartRotation;
-    float pad5; 
-    Vector3 maxStartRotation; 
-    float pad6; 
-    Vector3 minEndRotation; 
-    float pad7; 
-    Vector3 maxEndRotation; 
-    float pad8; 
+    float pad5;
+    Vector3 maxStartRotation;
+    float pad6;
+    Vector3 minEndRotation;
+    float pad7;
+    Vector3 maxEndRotation;
+    float pad8;
 
-    Vector4 minStartColor; 
-    Vector4 maxStartColor; 
+    Vector4 minStartColor;
+    Vector4 maxStartColor;
     Vector4 minEndColor;
     Vector4 maxEndColor;
 };

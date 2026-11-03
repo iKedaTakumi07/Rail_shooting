@@ -10,8 +10,11 @@ struct EmitterSphere
     float airResistance;
     float32_t3 acceleration;
     float particleLifeTime;
+    float32_t3 minEmitOffset;
     uint32_t textureIndex;
-    float32_t3 padding;
+
+    float32_t3 maxEmitOffset;
+    uint32_t emitType;
 
     float32_t3 minVelocity;
     float32_t minSpeed;
@@ -148,8 +151,17 @@ void main(uint32_t3 DTid : SV_DispatchThreadID)
             float4 r4d2 = float4(generator.Generate3d(), generator.Generate1d());
 
             // 座標
-            float3 offset = generator.Generate3d() * 2.0f - 1.0f;
-            gParticles[particleIndex].translate = gEmitter.translate + normalize(offset) * gEmitter.radius * generator.Generate3d().x;
+            if (gEmitter.emitType == 0)
+            {
+                float3 offset = generator.Generate3d() * 2.0f - 1.0f;
+                gParticles[particleIndex].translate = gEmitter.translate + normalize(offset) * gEmitter.radius * generator.Generate3d().x;
+            }
+            else if (gEmitter.emitType == 1)
+            {
+                float3 randomFactor = generator.Generate3d(); 
+                float3 localOffset = lerp(gEmitter.minEmitOffset, gEmitter.maxEmitOffset, randomFactor);
+                gParticles[particleIndex].translate = gEmitter.translate + localOffset;
+            }
 
             // 速度
             float3 velDir = lerp(gEmitter.minVelocity, gEmitter.maxVelocity, r3d1);

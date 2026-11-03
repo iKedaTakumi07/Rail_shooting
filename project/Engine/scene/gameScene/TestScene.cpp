@@ -211,7 +211,19 @@ void TestScene::Update()
                 if (ImGui::DragFloat3("Position (Translate)", &testEmitterPos_.x, 0.1f)) {
                     gpuParticleMgr->SetEmitterPosition(testGpuEmitterHandle_, testEmitterPos_);
                 }
-                ImGui::DragFloat("Radius", &emitterData->radius, 0.1f, 0.0f, 50.0f);
+
+                const char* emitTypes[] = { "Sphere (Sphere Radius)", "Box (AABB Offset Range)" };
+                int currentType = static_cast<int>(emitterData->emitType);
+                if (ImGui::Combo("Emit Shape Type", &currentType, emitTypes, IM_ARRAYSIZE(emitTypes))) {
+                    emitterData->emitType = static_cast<uint32_t>(currentType);
+                }
+
+                if (emitterData->emitType == 0) {
+                    ImGui::DragFloat("Sphere Radius", &emitterData->radius, 0.1f, 0.0f, 50.0f);
+                } else {
+                    ImGui::DragFloat3("Min Emit Offset", &emitterData->minEmitOffset.x, 0.1f);
+                    ImGui::DragFloat3("Max Emit Offset", &emitterData->maxEmitOffset.x, 0.1f);
+                }
 
                 int count = static_cast<int>(emitterData->count);
                 if (ImGui::SliderInt("Emit Count", &count, 1, 512)) {

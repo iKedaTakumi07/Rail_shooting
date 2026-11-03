@@ -254,6 +254,11 @@ size_t GPUParticleManager::AddEmitter(const std::string& groupName,
     newEmitter.mappedData->airResistance = airResistance;
     newEmitter.mappedData->particleLifeTime = particleLifeTime;
 
+    // 射出範囲(射出形状)
+    newEmitter.mappedData->minEmitOffset = Vector3(-1.0f, -1.0f, -1.0f);
+    newEmitter.mappedData->maxEmitOffset = Vector3(1.0f, 1.0f, 1.0f);
+    newEmitter.mappedData->emitType = 0;
+
     // ランダム・グラデーション用パラメータのデフォルト初期化
     newEmitter.mappedData->minVelocity = Vector3(-1.0f, 0.5f, -1.0f);
     newEmitter.mappedData->maxVelocity = Vector3(1.0f, 2.0f, 1.0f);
