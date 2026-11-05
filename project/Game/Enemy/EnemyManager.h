@@ -42,6 +42,12 @@ public:
     baseEnemy* GetEnemyById(uint32_t id) const;
 
     void LoadJsonPopData();
+    void ReloadJson()
+    {
+        enemies_.clear();
+        currentSpawnIndex_ = 0;
+        LoadJsonPopData();
+    }
 
     void PopEnemyCheck(const EnemyPopData& data);
 

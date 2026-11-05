@@ -20,6 +20,7 @@ class SceneTransition;
 class pauseUI;
 class skydome;
 class IntroUI;
+class StageDataEditor;
 
 class GamePlayScene : public BaseScene {
 public:
@@ -78,6 +79,7 @@ private:
 
     // 当たり半テオ
     std::unique_ptr<CollisionManager> collisionManager_;
+    std::unique_ptr<StageDataEditor> stageDataEditor_;
 
     bool isSceneFinished_ = false;
     bool isChange = false; // ステージ変更

@@ -25,6 +25,7 @@
 #include "../../../Game/Enemy/EnemyManager.h"
 #include "../../../Game/Enemy/base/baseEnemy.h"
 #include "../../../Game/Loder/GameScoreManager.h"
+#include "../../../Game/Loder/StageDataEditor.h"
 #include "../../../Game/Loder/stageDataLoad.h"
 #include "../../../Game/OnCollison/CollisionManager.h"
 #include "../../../Game/Player/Player.h"
@@ -114,6 +115,9 @@ void GamePlayScene::Initialize()
     skydome_ = std::make_unique<skydome>();
     skydome_->Initialize();
 
+    stageDataEditor_ = std::make_unique<StageDataEditor>();
+    stageDataEditor_->Initialize(enemyManager_.get(), stageObject_.get());
+
     // 音がうるさいので停止中
     // Audio::GetInstance()->Play(fanfare);
     // Audio::GetInstance()->Play(clearSe);
@@ -141,6 +145,9 @@ void GamePlayScene::Update()
     if (input->TriggerKey(DIK_0)) {
         CameraManager::GetInstance()->SetActiveCamera("PlayBoss");
     }
+
+    stageDataEditor_->DrawImGui();
+
 #endif // DEBUG
 
     skydome_->Update();
