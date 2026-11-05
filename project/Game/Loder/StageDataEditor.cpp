@@ -1,6 +1,7 @@
 #include "StageDataEditor.h"
 #include "../Enemy/EnemyManager.h"
 #include "../Enemy/base/baseEnemy.h"
+#include "../stage/StageManager.h"
 #include "../stage/stageObjectManager.h"
 #include <fstream>
 #include <iostream>
@@ -11,14 +12,19 @@
 
 using json = nlohmann::json;
 
-void StageDataEditor::Initialize(EnemyManager* enemyManager, stageObjectManager* stageObjManager)
+void StageDataEditor::Initialize(EnemyManager* enemyManager, stageObjectManager* stageObjManager, StageManager* stageManager)
 {
     enemyManager_ = enemyManager;
     stageObjManager_ = stageObjManager;
+    stageManager_ = stageManager;
 
     LoadEnemyJson(currentEnemyFilePath_);
     LoadObjectJson(currentObjectFilePath_);
-    LoadRailJson();
+
+    if (stageManager_) {
+        currentRailFilePath_ = stageManager_->GetJsonFilePath();
+    }
+    LoadRailJson(currentRailFilePath_);
 }
 
 void StageDataEditor::DrawImGui()
@@ -36,6 +42,7 @@ void StageDataEditor::DrawImGui()
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("rail Data")) {
+                DrawRailEditor();
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
@@ -123,10 +130,40 @@ void StageDataEditor::SaveObjectJson(const std::string& filePath)
 
 void StageDataEditor::LoadRailJson(const std::string& filePath)
 {
+    std::ifstream file(filePath);
+    if (!file.is_open())
+        return;
+
+    try {
+        file >> rawRailJson_;
+        isRailJsonLoaded_ = true;
+        currentRailFilePath_ = filePath;
+    } catch (const json::parse_error& e) {
+        std::cerr << "Rail JSON Parse Error: " << e.what() << std::endl;
+        isRailJsonLoaded_ = false;
+    }
 }
 
 void StageDataEditor::SaveRailJson(const std::string& filePath)
 {
+    std::ofstream file(filePath);
+    if (!file.is_open())
+        return;
+
+    // Z座標昇順でソートして書き出し
+    if (rawRailJson_.contains("control_points") && rawRailJson_["control_points"].is_array()) {
+        auto& points = rawRailJson_["control_points"];
+        std::sort(points.begin(), points.end(), [](const json& a, const json& b) {
+            return a.value("z", 0.0f) < b.value("z", 0.0f);
+        });
+    }
+
+    file << rawRailJson_.dump(4);
+    std::cout << "Successfully saved rail data: " << filePath << std::endl;
+
+    if (stageManager_) {
+        stageManager_->ReloadJson(); // StageManagerへ即時反映
+    }
 }
 
 void StageDataEditor::DrawEnemyEditor()
@@ -345,4 +382,83 @@ void StageDataEditor::DrawObjectEditor()
 
 void StageDataEditor::DrawRailEditor()
 {
+#ifdef USE_IMGUI
+    static char pathBuffer[256] = "resources/StageData/stageData1.json";
+    ImGui::InputText("File Path##Rail", pathBuffer, sizeof(pathBuffer));
+
+    if (ImGui::Button("Load JSON##Rail")) {
+        LoadRailJson(pathBuffer);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Save JSON##Rail")) {
+        SaveRailJson(pathBuffer);
+    }
+
+    ImGui::Separator();
+
+    //  1. レールの進行・一時停止制御 UI
+    if (stageManager_) {
+        ImGui::Text("[ Rail Playback Control ]");
+        bool isPaused = stageManager_->IsPaused();
+        if (ImGui::Checkbox("Pause Rail Motion", &isPaused)) {
+            stageManager_->SetPause(isPaused);
+        }
+
+        float currentZ = stageManager_->GetCurrentZ();
+        if (ImGui::DragFloat("Current Z Position", &currentZ, 1.0f)) {
+            stageManager_->SetCurrentZ(currentZ);
+        }
+        ImGui::Separator();
+    }
+
+    if (!isRailJsonLoaded_ || !rawRailJson_.contains("control_points"))
+        return;
+
+    auto& points = rawRailJson_["control_points"];
+
+    // 2. 制御点の追加機能
+    if (ImGui::Button("+ Add New Control Point")) {
+        float lastZ = 0.0f;
+        if (!points.empty()) {
+            lastZ = points.back().value("z", 0.0f) + 50.0f;
+        }
+        json newPoint = { { "x", 0.0f }, { "y", 0.0f }, { "z", lastZ } };
+        points.push_back(newPoint);
+    }
+
+    int removeIndex = -1;
+
+    // 3. 制御点ごとの編集・削除 UI
+    for (int i = 0; i < static_cast<int>(points.size()); ++i) {
+        ImGui::PushID(i);
+        auto& item = points[i];
+
+        std::string headerLabel = "Point [" + std::to_string(i) + "] Z: " + std::to_string(item.value("z", 0.0f));
+        if (ImGui::TreeNode(headerLabel.c_str())) {
+
+            float pos[3] = {
+                item.value("x", 0.0f),
+                item.value("y", 0.0f),
+                item.value("z", 0.0f)
+            };
+
+            if (ImGui::DragFloat3("Position (X, Y, Z)", pos, 0.5f)) {
+                item["x"] = pos[0];
+                item["y"] = pos[1];
+                item["z"] = pos[2];
+            }
+
+            if (ImGui::Button("Delete Point")) {
+                removeIndex = i;
+            }
+
+            ImGui::TreePop();
+        }
+        ImGui::PopID();
+    }
+
+    if (removeIndex >= 0) {
+        points.erase(removeIndex);
+    }
+#endif
 }

@@ -116,7 +116,7 @@ void GamePlayScene::Initialize()
     skydome_->Initialize();
 
     stageDataEditor_ = std::make_unique<StageDataEditor>();
-    stageDataEditor_->Initialize(enemyManager_.get(), stageObject_.get());
+    stageDataEditor_->Initialize(enemyManager_.get(), stageObject_.get(),StageManager_.get());
 
     // 音がうるさいので停止中
     // Audio::GetInstance()->Play(fanfare);

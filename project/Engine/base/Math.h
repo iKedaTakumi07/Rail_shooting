@@ -421,3 +421,5 @@ Matrix4x4 MakeTranslateMatrix(const Vector3& translate);
 float EaseOutCubic(float t);
 
 float EaseInQuad(float t);
+
+Vector3 CatmullRom(const Vector3& p0, const Vector3& p1, const Vector3& p2, const Vector3& p3, float t);
