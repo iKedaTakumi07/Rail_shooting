@@ -41,27 +41,13 @@ public:
     /// 毎フレームの座標更新処理 (現在座標を渡して過去座標をシフト保存)
     /// </summary>
     /// <param name="currentPos">現在のワールド座標</param>
-    void UpdatePrevPosition(const Vector3& currentPos)
-    {
-        if (!isPrevPositionInitialized_) {
-            prevPosition_ = currentPos;
-            currentPosition_ = currentPos;
-            isPrevPositionInitialized_ = true;
-            return;
-        }
-        prevPosition_ = currentPosition_;
-        currentPosition_ = currentPos;
-    }
+    void UpdatePrevPosition(const Vector3& currentPos);
+  
 
     /// <summary>
     /// 初期か
     /// </summary>
-    void ResetPrevPosition(const Vector3& pos)
-    {
-        prevPosition_ = pos;
-        currentPosition_ = pos;
-        isPrevPositionInitialized_ = true;
-    }
+    void ResetPrevPosition(const Vector3& pos);
 
     /// <summary>
     /// 前フレームの座標を取得

@@ -47,11 +47,14 @@ void LaserEnemy::Initialize(Vector3 pos)
 
     allIsAvile_ = true; // 両方存在しているか
     allIsDead_ = false; // 両方死んでいるか
+
+    ResetPrevPosition(FromPointTransform_.translate);
 }
 
 void LaserEnemy::Update()
 {
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
+    UpdatePrevPosition(FromPointTransform_.translate);
 
     if (FromPointTransform_.translate.z <= camera_->GetTranslate().z && ToStopTransform_.translate.z <= camera_->GetTranslate().z) {
         allIsAvile_ = false;
@@ -135,26 +138,27 @@ AllOBB LaserEnemy::GetAllOBB() const
 {
     AllOBB compound;
 
-    // 始点側のOBB構築
-    OBB startOBB;
-    startOBB.center = FromPointTransform_.translate;
-    startOBB.orientations[0] = { 1.0f, 0.0f, 0.0f };
-    startOBB.orientations[1] = { 0.0f, 1.0f, 0.0f };
-    startOBB.orientations[2] = { 0.0f, 0.0f, 1.0f };
-    startOBB.size = { size, size, size };
+    if (fromIsAvile_) {
+        OBB startOBB;
+        startOBB.center = FromPointTransform_.translate;
+        startOBB.orientations[0] = { 1.0f, 0.0f, 0.0f };
+        startOBB.orientations[1] = { 0.0f, 1.0f, 0.0f };
+        startOBB.orientations[2] = { 0.0f, 0.0f, 1.0f };
+        startOBB.size = { size, size, size };
+        compound.dividBoxes.push_back(startOBB);
+    }
 
-    // 終点側のOBB構築
-    OBB endOBB;
-    endOBB.center = ToStopTransform_.translate;
-    endOBB.orientations[0] = { 1.0f, 0.0f, 0.0f };
-    endOBB.orientations[1] = { 0.0f, 1.0f, 0.0f };
-    endOBB.orientations[2] = { 0.0f, 0.0f, 1.0f };
-    endOBB.size = { size, size, size };
+    if (toIsAvile_) {
+        OBB endOBB;
+        endOBB.center = ToStopTransform_.translate;
+        endOBB.orientations[0] = { 1.0f, 0.0f, 0.0f };
+        endOBB.orientations[1] = { 0.0f, 1.0f, 0.0f };
+        endOBB.orientations[2] = { 0.0f, 0.0f, 1.0f };
+        endOBB.size = { size, size, size };
+        compound.dividBoxes.push_back(endOBB);
+    }
 
-    compound.dividBoxes.push_back(startOBB);
-    compound.dividBoxes.push_back(endOBB);
-
-    // 全体範囲(AABBもどき)
+    // 全体範囲 (wholeBox) の計算
     Vector3 center = {
         (FromPointTransform_.translate.x + ToStopTransform_.translate.x) * 0.5f,
         (FromPointTransform_.translate.y + ToStopTransform_.translate.y) * 0.5f,
@@ -253,34 +257,30 @@ void LaserEnemy::BulletUpdate()
 void LaserEnemy::partsDamage(Collider* other)
 {
     AllOBB otherAllOBB = other->GetAllOBB();
-    AllOBB myAllOBB = GetAllOBB();
     int damage = other->GetDamage();
 
-    size_t obbIndex = 0;
-    for (auto i = 0; i < myAllOBB.dividBoxes.size(); i++) {
-        const OBB& partOBB = myAllOBB.dividBoxes[i];
-
+    // 始点パーツの判定
+    if (fromIsAvile_) {
+        OBB startOBB { FromPointTransform_.translate, { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } }, { size, size, size } };
         for (const auto& otherBox : otherAllOBB.dividBoxes) {
-
-            if (i == 0 && fromIsAvile_) {
-                for (const auto& otherBox : otherAllOBB.dividBoxes) {
-                    if (CollisionManager::CheckOBB(partOBB, otherBox)) {
-                        starthealth_ = std::max(0, starthealth_ - damage);
-                        break; // 多重ヒット防止
-                    }
-                }
-            } else if (i == 1 && toIsAvile_) {
-                for (const auto& otherBox : otherAllOBB.dividBoxes) {
-                    if (CollisionManager::CheckOBB(partOBB, otherBox)) {
-                        lasthealth_ = std::max(0, lasthealth_ - damage);
-                        break; // 多重ヒット防止
-                    }
-                }
+            if (CollisionManager::CheckOBB(startOBB, otherBox)) {
+                starthealth_ = std::max(0, starthealth_ - damage);
+                break;
             }
         }
     }
 
-    // 死亡演出作るかどうかは未定(爆発パーティクル)
+    // 終点パーツの判定
+    if (toIsAvile_) {
+        OBB endOBB { ToStopTransform_.translate, { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } }, { size, size, size } };
+        for (const auto& otherBox : otherAllOBB.dividBoxes) {
+            if (CollisionManager::CheckOBB(endOBB, otherBox)) {
+                lasthealth_ = std::max(0, lasthealth_ - damage);
+                break;
+            }
+        }
+    }
+
     if (starthealth_ <= 0) {
         fromIsDead_ = true;
         fromIsAvile_ = false;

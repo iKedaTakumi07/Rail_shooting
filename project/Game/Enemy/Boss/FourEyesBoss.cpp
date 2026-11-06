@@ -421,24 +421,26 @@ void FourEyesBoss::partsDamage(Collider* other)
     AllOBB myAllOBB = GetAllOBB();
     int damage = other->GetDamage();
 
-    size_t obbIndex = 0;
+  size_t obbIndex = 0;
     for (auto& part : parts_) {
-        if (part.hp <= 0) {
+        if (part.hp <= 0)
             continue;
-        }
 
-        if (obbIndex >= myAllOBB.dividBoxes.size()) {
+        if (obbIndex >= myAllOBB.dividBoxes.size())
             break;
-        }
-
         const OBB& partOBB = myAllOBB.dividBoxes[obbIndex++];
 
+        bool hit = false;
         for (const auto& otherBox : otherAllOBB.dividBoxes) {
-
             if (CollisionManager::CheckOBB(partOBB, otherBox)) {
                 part.hp = std::max(0, part.hp - damage);
+                hit = true;
                 break;
             }
+        }
+        if (hit) {
+            // 貫通弾でない場合は1部位に当たった時点で破断
+            break;
         }
     }
 }

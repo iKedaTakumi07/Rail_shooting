@@ -168,27 +168,41 @@ bool CollisionManager::CheckSegmentOBB(const Segment& segment, const OBB& obb)
 
 bool CollisionManager::CheckContinuousOBBCollision(const Collider* colA, const Collider* colB)
 {
-    // 現在位置の判定
-    if (CheckOBB(colA->GetAllOBB().wholeBox, colB->GetAllOBB().wholeBox)) {
-        return true;
-    }
+    AllOBB obbA = colA->GetAllOBB();
+    AllOBB obbB = colB->GetAllOBB();
 
-    // colAの過去座標をの判定
-    if (colA->IsPrevPositionInitialized()) {
-        Segment segA = colA->GetSweepSegment();
-        if (Dot(segA.diff, segA.diff) > 1e-4f) { // 一定以上の移動がある場合のみ
-            if (CheckSegmentOBB(segA, colB->GetAllOBB().wholeBox)) {
-                return true;
+    if (!CheckOBB(obbA.wholeBox, obbB.wholeBox)) {
+        bool sweepHit = false;
+
+        if (colA->IsPrevPositionInitialized()) {
+            Segment segA = colA->GetSweepSegment();
+            if (Dot(segA.diff, segA.diff) > 0.0f) {
+                for (const auto& boxB : obbB.dividBoxes) {
+                    if (CheckSegmentOBB(segA, boxB)) {
+                        sweepHit = true;
+                        break;
+                    }
+                }
             }
         }
+        if (!sweepHit && colB->IsPrevPositionInitialized()) {
+            Segment segB = colB->GetSweepSegment();
+            if (Dot(segB.diff, segB.diff) > 0.0f) {
+                for (const auto& boxA : obbA.dividBoxes) {
+                    if (CheckSegmentOBB(segB, boxA)) {
+                        sweepHit = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return sweepHit;
     }
 
-    // colBの過去座標をの判定
-    if (colB->IsPrevPositionInitialized()) {
-        Segment segB = colB->GetSweepSegment();
-        if (Dot(segB.diff, segB.diff) > 1e-4f) {
-            if (CheckSegmentOBB(segB, colA->GetAllOBB().wholeBox)) {
-                return true;
+    for (const auto& boxA : obbA.dividBoxes) {
+        for (const auto& boxB : obbB.dividBoxes) {
+            if (CheckOBB(boxA, boxB)) {
+                return true; // 実際のパーツ同士が交差した
             }
         }
     }
