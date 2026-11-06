@@ -29,11 +29,14 @@ void threeShotsEnemy::Initialize(Vector3 pos)
     transform_.translate = pos;
     transform_.scale = { 1.0f, 1.0f, 1.0f };
     transform_.rotate = { 0.0f, 0.0f, 0.0f };
+
+    ResetPrevPosition(transform_.translate);
 }
 
 void threeShotsEnemy::Update()
 {
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
+    UpdatePrevPosition(transform_.translate);
 
     if (transform_.translate.z - RanAwayOffset_ <= camera_->GetTranslate().z) {
         // カメラに近いので逃走を開始する

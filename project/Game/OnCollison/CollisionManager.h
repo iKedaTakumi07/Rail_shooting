@@ -13,6 +13,10 @@ public:
 
     static bool CheckOBB(const OBB& a, const OBB& b);
 
+    static bool CheckSegmentOBB(const Segment& segment, const OBB& obb);
+
+    static bool CheckContinuousOBBCollision(const Collider* colA, const Collider* colB);
+
 private:
     bool CheckAABB(const AABB& a, const AABB& b) const;
 

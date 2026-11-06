@@ -61,12 +61,15 @@ void FourEyesBoss::Initialize(Vector3 pos)
     parts_[1] = { { 0.0f, 6.0f, 3.0f }, { -1.5f, +4.5f, -3.0f }, { +1.5f, +7.5f, +1.5f }, 200 }; // 上 (Top)
     parts_[2] = { { -6.0f, 0.0f, -3.0f }, { -7.5f, -1.5f, -3.0f }, { -4.5f, +1.5f, +1.5f }, 200 }; // 右 (Right)
     parts_[3] = { { 6.0f, 0.0f, -3.0f }, { +4.5f, -1.5f, -3.0f }, { +7.5f, +1.5f, +1.5f }, 200 }; // 左 (Left)
+
+    ResetPrevPosition(transform_.translate);
 }
 
 void FourEyesBoss::Update()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
+    UpdatePrevPosition(transform_.translate);
 
     if (isAppearing_) {
         // 出現演出中は演出ロジックのみを更新（攻撃は行わない）

@@ -53,11 +53,13 @@ void TargetBullet::Initialize(Vector3 pos, const Vector3& rotation)
 
     // LightManagerに登録
     LightManager::GetInstance()->RegisterPointLight(&pointLight_);
+
+    ResetPrevPosition(transform_.translate);
 }
 
 void TargetBullet::Update(float deltaTime)
 {
-
+    UpdatePrevPosition(transform_.translate);
     MoveUpdate();
 
     deathTimer_ -= deltaTime;

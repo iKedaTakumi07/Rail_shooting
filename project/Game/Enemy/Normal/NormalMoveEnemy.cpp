@@ -30,6 +30,8 @@ void NormalMoveEnemy::Initialize(Vector3 pos)
     transform_.scale = { 1.0f, 1.0f, 1.0f };
     transform_.rotate = { 0.0f, 0.0f, 0.0f };
     transform_.translate = pos;
+
+    ResetPrevPosition(transform_.translate);
 }
 
 void NormalMoveEnemy::Update()
@@ -37,6 +39,8 @@ void NormalMoveEnemy::Update()
 
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
+    UpdatePrevPosition(transform_.translate);
+
     Vector3 velocity = { move.x * deltaTime, move.y * deltaTime, move.z * deltaTime };
 
     if (transform_.translate.z - RanAwayOffset_ <= camera_->GetTranslate().z) {

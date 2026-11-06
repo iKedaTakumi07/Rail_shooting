@@ -39,11 +39,14 @@ void stageObject::Initialize(const std::string& patan, const Vector3& pos, const
         parts_[1] = { { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f } }; // エラー対策
         parts_[2] = { { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f } }; // エラー対策
     }
+
+    ResetPrevPosition(transform_.translate);
 }
 
 void stageObject::Update()
 {
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
+    UpdatePrevPosition(transform_.translate);
 
     Object3d_->SetTranslate(transform_.translate);
     Object3d_->SetScale(transform_.scale);

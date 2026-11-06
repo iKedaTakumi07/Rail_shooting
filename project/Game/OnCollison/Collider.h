@@ -9,6 +9,11 @@ enum class CollisionGroup {
     kStageObject,
 };
 
+struct Segment {
+    Vector3 origin; // 開始点 (前フレームの座標)
+    Vector3 diff; // 移動量ベクトル (現在座標 - 前フレーム座標)
+};
+
 class Collider {
 public:
     // [予定]AABBでの判定作成→OBBの判定に変更→翼、プレイヤーなど本体の分離型OBB判定に変更。
@@ -32,5 +37,57 @@ public:
     /// <returns>デフォルト0</returns>
     virtual int GetDamage() const { return 0; }
 
+    /// <summary>
+    /// 毎フレームの座標更新処理 (現在座標を渡して過去座標をシフト保存)
+    /// </summary>
+    /// <param name="currentPos">現在のワールド座標</param>
+    void UpdatePrevPosition(const Vector3& currentPos)
+    {
+        if (!isPrevPositionInitialized_) {
+            prevPosition_ = currentPos;
+            currentPosition_ = currentPos;
+            isPrevPositionInitialized_ = true;
+            return;
+        }
+        prevPosition_ = currentPosition_;
+        currentPosition_ = currentPos;
+    }
+
+    /// <summary>
+    /// 初期か
+    /// </summary>
+    void ResetPrevPosition(const Vector3& pos)
+    {
+        prevPosition_ = pos;
+        currentPosition_ = pos;
+        isPrevPositionInitialized_ = true;
+    }
+
+    /// <summary>
+    /// 前フレームの座標を取得
+    /// </summary>
+    const Vector3& GetPrevPosition() const { return prevPosition_; }
+
+    /// <summary>
+    /// 現在の座標を取得
+    /// </summary>
+    const Vector3& GetCurrentPosition() const { return currentPosition_; }
+
+    /// <summary>
+    /// 前フレーム〜現フレームの移動線分（Sweep Segment）を取得
+    /// </summary>
+    Segment GetSweepSegment() const
+    {
+        return Segment { prevPosition_, currentPosition_ - prevPosition_ };
+    }
+
+    /// <summary>
+    /// 過去座標が初期化されているか
+    /// </summary>
+    bool IsPrevPositionInitialized() const { return isPrevPositionInitialized_; }
+
 private:
+    Vector3 prevPosition_ { 0.0f, 0.0f, 0.0f };
+    Vector3 currentPosition_ { 0.0f, 0.0f, 0.0f };
+    bool isPrevPositionInitialized_ = false;
 };

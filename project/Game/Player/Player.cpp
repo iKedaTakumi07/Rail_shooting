@@ -80,12 +80,15 @@ void Player::Initialize()
 
     explosionParticle_ = std::make_unique<ExplosionParticle>();
     explosionParticle_->Initialize();
+
+    ResetPrevPosition(basetransform_.translate);
 }
 
 void Player::Update()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
+    UpdatePrevPosition(basetransform_.translate);
 
     // 爆発したのなら煙エフェクトのみ
     if (isExplosion) {

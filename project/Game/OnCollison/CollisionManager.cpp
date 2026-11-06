@@ -35,7 +35,7 @@ void CollisionManager::CheckAllCollisions()
                 continue;
 
             // 交差していれば、お互いのオーバーライドされたOnCollisionを呼び出す
-            if (CheckAllOBBCollision(colA->GetAllOBB(), colB->GetAllOBB())) {
+            if (CheckContinuousOBBCollision(colA, colB)) {
                 colA->OnCollision(colB);
                 colB->OnCollision(colA);
             }
@@ -124,6 +124,76 @@ bool CollisionManager::CheckOBB(const OBB& a, const OBB& b)
 
     // 15軸すべてで分離軸が見つからない場合は交差している
     return true;
+}
+
+bool CollisionManager::CheckSegmentOBB(const Segment& segment, const OBB& obb)
+{
+    Vector3 p = segment.origin - obb.center;
+    Vector3 d = segment.diff; // 移動量ベクトル
+
+    float tMin = 0.0f;
+    float tMax = 1.0f;
+
+    // OBBの3つのローカル軸に対してスラブ判定を実行
+    for (int i = 0; i < 3; ++i) {
+        const Vector3& axis = obb.orientations[i];
+        float halfSize = (i == 0) ? obb.size.x : (i == 1) ? obb.size.y
+                                                          : obb.size.z;
+
+        float e = Dot(axis, p);
+        float f = Dot(axis, d);
+
+        if (std::abs(f) > 1e-6f) {
+            float t1 = (-e - halfSize) / f;
+            float t2 = (-e + halfSize) / f;
+
+            if (t1 > t2)
+                std::swap(t1, t2);
+
+            tMin = (std::max)(tMin, t1);
+            tMax = (std::min)(tMax, t2);
+
+            if (tMin > tMax)
+                return false; // 共通範囲が存在しないため非交差
+        } else {
+            // 線分が軸に平行な場合、OBBの範囲外であれば非交差
+            if (-e - halfSize > 0.0f || -e + halfSize < 0.0f) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool CollisionManager::CheckContinuousOBBCollision(const Collider* colA, const Collider* colB)
+{
+    // 現在位置の判定
+    if (CheckOBB(colA->GetAllOBB().wholeBox, colB->GetAllOBB().wholeBox)) {
+        return true;
+    }
+
+    // colAの過去座標をの判定
+    if (colA->IsPrevPositionInitialized()) {
+        Segment segA = colA->GetSweepSegment();
+        if (Dot(segA.diff, segA.diff) > 1e-4f) { // 一定以上の移動がある場合のみ
+            if (CheckSegmentOBB(segA, colB->GetAllOBB().wholeBox)) {
+                return true;
+            }
+        }
+    }
+
+    // colBの過去座標をの判定
+    if (colB->IsPrevPositionInitialized()) {
+        Segment segB = colB->GetSweepSegment();
+        if (Dot(segB.diff, segB.diff) > 1e-4f) {
+            if (CheckSegmentOBB(segB, colA->GetAllOBB().wholeBox)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 bool CollisionManager::CheckAllOBBCollision(const AllOBB& a, const AllOBB& b) const
