@@ -3,6 +3,7 @@
 #include "../base/baseBossEnemy.h "
 #include <memory>
 #include <numbers>
+#include <random>
 
 class Player;
 class Model;
@@ -56,7 +57,19 @@ private:
     void UIUpdate();
     void partsDamage(Collider* other);
 
+    void UpdateSpecialAttack(float deltaTime);
+    void ExecuteStaggeredFire();
+    void ExecuteLaserFire();
+
 private:
+    // 必殺技ステートパターン
+    enum class SpecialState {
+        kNone,
+        kReturnToCenter, // 画面中央への復帰移動
+        kMinigunFire, // 3秒間のミニガン連射
+        kStunned // 3秒間の棒立ち（大隙）
+    };
+
     Camera* camera_ = nullptr; // カメラ(ポインタ)
     Player* player_ = nullptr;
 
@@ -104,4 +117,21 @@ private:
     int currentPhase_ = 1;
     bool isAppearing_ = true;
     bool isDeathProdiction_ = false;
+
+    // 追加行動
+    // 時差発射（2発→0.5s→2発）用
+    bool isStaggeredFiring_ = false;
+    float staggeredTimer_ = 0.0f;
+    std::vector<size_t> pendingPartIndices_;
+
+    // HP50%以下（1回限定）ミニガン＆隙状態用
+    bool hasTriggeredHalfHpSpecial_ = false;
+    bool isSpecialAttacking_ = false;
+    SpecialState specialState_ = SpecialState::kNone;
+    float specialTimer_ = 0.0f;
+    float minigunIntervalTimer_ = 0.0f;
+    Vector3 specialStartPos_ = { 0.0f, 0.0f, 0.0f };
+    size_t currentMinigunPartIndex_ = 0;
+
+    std::mt19937 randomEngine;
 };
