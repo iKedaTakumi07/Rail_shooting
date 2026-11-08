@@ -25,6 +25,14 @@ void CollisionManager::CheckAllCollisions()
             // 同じ陣営はスキップ
             if (colA->GetCollisionGroup() == colB->GetCollisionGroup())
                 continue;
+            if (colA->GetCollisionGroup() == CollisionGroup::kPlayer && colB->GetCollisionGroup() == CollisionGroup::kPlayerDodge)
+                continue;
+            if (colA->GetCollisionGroup() == CollisionGroup::kPlayerDodge && colB->GetCollisionGroup() == CollisionGroup::kPlayer)
+                continue;
+            if (colA->GetCollisionGroup() == CollisionGroup::kPlayerDodge && colB->GetCollisionGroup() == CollisionGroup::kPlayerBullet)
+                continue;
+            if (colA->GetCollisionGroup() == CollisionGroup::kPlayerBullet && colB->GetCollisionGroup() == CollisionGroup::kPlayerDodge)
+                continue;
             if (colA->GetCollisionGroup() == CollisionGroup::kPlayer && colB->GetCollisionGroup() == CollisionGroup::kPlayerBullet)
                 continue;
             if (colA->GetCollisionGroup() == CollisionGroup::kPlayerBullet && colB->GetCollisionGroup() == CollisionGroup::kPlayer)

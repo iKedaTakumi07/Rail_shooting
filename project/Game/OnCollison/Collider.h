@@ -3,6 +3,7 @@
 
 enum class CollisionGroup {
     kPlayer,
+    kPlayerDodge,
     kPlayerBullet,
     kEnemy,
     kEnemyBullet,
@@ -42,7 +43,6 @@ public:
     /// </summary>
     /// <param name="currentPos">現在のワールド座標</param>
     void UpdatePrevPosition(const Vector3& currentPos);
-  
 
     /// <summary>
     /// 初期か

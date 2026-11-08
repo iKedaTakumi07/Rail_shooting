@@ -9,7 +9,7 @@
 class Model;
 class Object3d;
 class Skybox;
-class Player;
+class PlayerManager;
 class clearUI;
 class EnemyManager;
 class CollisionManager;
@@ -57,7 +57,7 @@ private:
     std::unique_ptr<Skybox> skydox;
 
     // プレイヤー
-    std::unique_ptr<Player> player_;
+    std::unique_ptr<PlayerManager> playerManager_;
     // 敵
     std::unique_ptr<EnemyManager> enemyManager_;
 

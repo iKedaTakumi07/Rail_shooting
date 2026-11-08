@@ -9,16 +9,26 @@
 
 #include "../OnCollison/Collider.h"
 
+#include "../Particle/ExplosionParticle.h"
 #include "../Particle/PlayerPowerUnitLaser.h"
 #include "../Particle/blackSmokeParticle.h"
-#include "../Particle/ExplosionParticle.h"
 #include "PlayerBullet.h"
 #include <numbers>
+#include <vector>
 class EnemyManager;
 class baseEnemy;
 
 class Player : public Collider {
 public:
+    struct AfterImage {
+        Transform transform;
+        float alpha = 0.2f; // 初期透明度
+        float maxLifeTime = 0.2f; // 表示時間
+        float currentLifeTime = 0.0f;
+        std::unique_ptr<Object3d> object3d;
+        std::unique_ptr<Model> AfterImageModel;
+    };
+
     void Initialize();
 
     void Update();
@@ -38,7 +48,8 @@ public:
     float GetLimitX() const { return kMoveLimitX; }
     float GetLimitY() const { return kMoveLimitY; }
     AllAABB GetAllAABB() const override;
-    AllOBB GetAllOBB() const override;
+    AllOBB GetDodgeOBB() const;
+    AllOBB GetAllOBB() const override; // 極限回避座標
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kPlayer; }
     int GetDamage() const override { return damage_; }
 
@@ -52,6 +63,12 @@ public:
 
     // その他
     void OnCollision(Collider* other) override;
+    bool HasInstantCharge() const { return hasInstantCharge_; }
+    void SetInstantCharge(bool enable);
+
+    bool IsInvincible() const { return isinvincible; } // 無敵状態ゲッター
+
+    void CreateAfterImage(); // 残像生成
 
 private:
     // 更新系列
@@ -156,17 +173,18 @@ private:
     const float kShortDistancePlayerTo3DReticle = 25.0f; // 半分ぐらいの距離
     bool isChargeLocked_ = false;
 
+    bool hasInstantCharge_ = false;
+
     // 3dモデル
     std::unique_ptr<Model> playerModel;
     std::unique_ptr<Object3d> playerObject3d;
 
-    std::unique_ptr<Model> ShortReticleModel;
-    std::unique_ptr<Object3d> ShortReticleObject3d;
-
-    std::unique_ptr<Model> LongReticleModel;
-    std::unique_ptr<Object3d> LongReticleObject3d;
+    std::unique_ptr<Sprite> ShortReticleSprite;
+    std::unique_ptr<Sprite> LongReticleSprite;
 
     std::unique_ptr<Sprite> ChargeReticleSprite;
+
+    std::vector<AfterImage> afterImages_; // 残像
 
     // UI(スプライト)
     std::unique_ptr<Sprite> PlayerMaxHpUI;
