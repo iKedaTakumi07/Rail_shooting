@@ -48,9 +48,9 @@ private:
     float size = 0.5f; // OBBに移植後は知らん。
 
     Vector3 acceleration_ { }; // 弾の速さ(個別で設定)
-    float accelerationScalar = 0.15f; // 加速度の強さ
+    float accelerationScalar = 0.10f; // 加速度の強さ
     Vector3 velocity_ = { 0.0f, 0.0f, 0.0f }; // 移動ベクトル
-    static inline const float maxSpeed = 0.80f; // 弾の最高速度(青天井でおk)
+    static inline const float maxSpeed = 1.20f; // 弾の最高速度(青天井でおk)
     float deathTimer_ = 3.0f; // 弾の寿命（秒）
     bool isDead_ = false;
 
