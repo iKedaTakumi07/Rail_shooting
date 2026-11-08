@@ -29,7 +29,7 @@ void Player::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/player/1x1white.png");
     ModelManager::GetInstance()->LoadModel("player/Player.obj");
     TextureManager::getInstance()->LoadTexture("resources/player/playerReticle.png");
-    ModelManager::GetInstance()->LoadModel("player/playerReticle.obj");
+
     TextureManager::getInstance()->LoadTexture("resources/player/ChargeReticle.png");
     TextureManager::getInstance()->LoadTexture("resources/player/playerHpUI2.png");
     TextureManager::getInstance()->LoadTexture("resources/player/playerHpUI3.png");
@@ -47,19 +47,16 @@ void Player::Initialize()
     playerObject3d->SetModel(playerModel.get());
     playerObject3d->SetScale(basetransform_.scale);
 
-    ShortReticleObject3d = std::make_unique<Object3d>();
-    ShortReticleObject3d->Initialize();
+    ShortReticleSprite = std::make_unique<Sprite>();
+    ShortReticleSprite->Initialize("resources/player/playerReticle.png");
+    ShortReticleSprite->SetAnchorPoint(Vector2(0.5f, 0.5f));
+    ShortReticleSprite->SetSize({ 64.0f, 64.0f }); // 近距離用サイズ調整
+    ShortReticleSprite->SetColor(Vector4(1.0f, 1.0f, 1.0f, 0.6f));
 
-    ShortReticleModel = std::make_unique<Model>();
-    ShortReticleModel->Initialize("resources/player", "playerReticle.obj");
-    ShortReticleObject3d->SetModel(ShortReticleModel.get());
-
-    LongReticleObject3d = std::make_unique<Object3d>();
-    LongReticleObject3d->Initialize();
-
-    LongReticleModel = std::make_unique<Model>();
-    LongReticleModel->Initialize("resources/player", "playerReticle.obj");
-    LongReticleObject3d->SetModel(LongReticleModel.get());
+    LongReticleSprite = std::make_unique<Sprite>();
+    LongReticleSprite->Initialize("resources/player/playerReticle.png");
+    LongReticleSprite->SetAnchorPoint(Vector2(0.5f, 0.5f));
+    LongReticleSprite->SetSize({ 48.0f, 48.0f }); // 長距離用サイズ調整
 
     ChargeReticleSprite = std::make_unique<Sprite>();
     ChargeReticleSprite->Initialize("resources/player/ChargeReticle.png");
@@ -80,12 +77,15 @@ void Player::Initialize()
 
     explosionParticle_ = std::make_unique<ExplosionParticle>();
     explosionParticle_->Initialize();
+
+    ResetPrevPosition(basetransform_.translate);
 }
 
 void Player::Update()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
+    UpdatePrevPosition(basetransform_.translate);
 
     // 爆発したのなら煙エフェクトのみ
     if (isExplosion) {
@@ -116,6 +116,22 @@ void Player::Update()
         ReticleUpdate();
     } else {
         UpdateDead();
+    }
+
+    for (auto it = afterImages_.begin(); it != afterImages_.end();) {
+        it->currentLifeTime += deltaTime;
+        if (it->currentLifeTime >= it->maxLifeTime) {
+            it = afterImages_.erase(it);
+        } else {
+            float progress = it->currentLifeTime / it->maxLifeTime;
+            float currentAlpha = it->alpha * (1.0f - progress);
+
+            if (it->object3d) {
+                it->AfterImageModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, currentAlpha));
+                it->object3d->Update();
+            }
+            ++it;
+        }
     }
 
     playerPowerUnitLaser_->NewParticle(PrePos_, transform_, kPowerUnitPos);
@@ -208,13 +224,14 @@ void Player::Draw()
         bullet_->Draw();
     }
 
-    if (!isExplosion) {
-        playerObject3d->Draw();
+    for (auto& afterImage : afterImages_) {
+        if (afterImage.object3d) {
+            afterImage.object3d->Draw();
+        }
     }
 
-    if (!isClear && !isIntro) {
-        ShortReticleObject3d->Draw();
-        LongReticleObject3d->Draw();
+    if (!isExplosion) {
+        playerObject3d->Draw();
     }
 }
 
@@ -222,6 +239,11 @@ void Player::SpritDraw()
 {
     if (isClear || isIntro) {
         return;
+    }
+
+    if (!isClear && !isIntro) {
+        ShortReticleSprite->Draw();
+        LongReticleSprite->Draw();
     }
 
     PlayerMaxHpUI->Draw();
@@ -241,6 +263,21 @@ AllAABB Player::GetAllAABB() const
     AllAABB compound;
     compound.wholeBox = box;
     compound.dividBoxes.push_back(box); // 単一コライダーでも配列に1つ入れることで共通化
+    return compound;
+}
+
+AllOBB Player::GetDodgeOBB() const
+{
+    AllOBB compound = GetAllOBB(); // 本尊の OBB をベースにする
+
+    // XY(Z除外) 方向に ±1.0f 拡大 (半径ベースのため size.x, size.y に +1.0f)
+    compound.wholeBox.size.x += 1.0f;
+    compound.wholeBox.size.y += 1.0f;
+
+    for (auto& box : compound.dividBoxes) {
+        box.size.x += 1.0f;
+        box.size.y += 1.0f;
+    }
     return compound;
 }
 
@@ -264,6 +301,8 @@ void Player::OnCollision(Collider* other)
         int damege = other->GetDamage();
         hp_ -= damege;
 
+        hasInstantCharge_ = false;
+
         // 死んだら墜落状態
         if (hp_ <= 0) {
             isDead_ = true;
@@ -282,6 +321,8 @@ void Player::OnCollision(Collider* other)
         isinvincible = true;
         invincibleTime = kInvincibleTime;
 
+        hasInstantCharge_ = false;
+
         if (hp_ <= 0) {
             // 即爆発
             isExplosion = true;
@@ -294,6 +335,35 @@ void Player::OnCollision(Collider* other)
         // 押し出し処理
         ColliderUpdate(other);
     }
+}
+
+void Player::SetInstantCharge(bool enable)
+{
+    hasInstantCharge_ = enable;
+    if (enable) {
+        CreateAfterImage();
+    }
+}
+
+void Player::CreateAfterImage()
+{
+    AfterImage image;
+    image.transform = transform_;
+    image.alpha = 0.5f;
+    image.maxLifeTime = 0.5f;
+    image.currentLifeTime = 0.0f;
+    image.AfterImageModel = std::make_unique<Model>();
+    image.AfterImageModel->Initialize("resources/player", "Player.obj");
+
+    image.object3d = std::make_unique<Object3d>();
+    image.object3d->Initialize();
+    image.object3d->SetModel(image.AfterImageModel.get());
+    image.object3d->SetTranslate(transform_.translate);
+    image.object3d->SetRotate(transform_.rotate);
+    image.object3d->SetScale(transform_.scale);
+    image.object3d->Update();
+
+    afterImages_.push_back(std::move(image));
 }
 
 void Player::MoveUpdate()
@@ -467,18 +537,19 @@ void Player::ReticleUpdate()
     shortPos.y = basetransform_.translate.y + (forwardDir.y * kShortDistancePlayerTo3DReticle);
     shortPos.z = basetransform_.translate.z + (forwardDir.z * kShortDistancePlayerTo3DReticle);
 
-    ShortReticleObject3d->SetTranslate(shortPos);
-    ShortReticleObject3d->SetRotate(basetransform_.rotate);
-    ShortReticleObject3d->Update();
-
     Vector3 longPos;
     longPos.x = basetransform_.translate.x + (forwardDir.x * kLongDistancePlayerTo3DReticle);
     longPos.y = basetransform_.translate.y + (forwardDir.y * kLongDistancePlayerTo3DReticle);
     longPos.z = basetransform_.translate.z + (forwardDir.z * kLongDistancePlayerTo3DReticle);
 
-    LongReticleObject3d->SetTranslate(longPos);
-    LongReticleObject3d->SetRotate(basetransform_.rotate);
-    LongReticleObject3d->Update();
+    Vector2 shortScreenPos = WorldToScreen(shortPos, camera_);
+    Vector2 longScreenPos = WorldToScreen(longPos, camera_);
+
+    ShortReticleSprite->SetPosition(shortScreenPos);
+    ShortReticleSprite->Update();
+
+    LongReticleSprite->SetPosition(longScreenPos);
+    LongReticleSprite->Update();
 }
 
 void Player::BulletUpdate()
@@ -508,6 +579,7 @@ void Player::BulletUpdate()
     }
 
     bool isChargePushed = Input::GetInstance()->PushKey(DIK_SPACE) || (Input::GetInstance()->GetRightTrigger() > kTriggerThreshold);
+
     if (isChargePushed) {
         // チャージ
         chargeTimer_ += deltaTime;
@@ -570,7 +642,7 @@ void Player::BulletUpdate()
         BulletCharge();
     } else {
         // チャージ時間が満たしているならちゃ―初
-        if (chargeTimer_ >= kChargeTime) {
+        if (hasInstantCharge_ || chargeTimer_ >= kChargeTime) {
             auto playerbullet = std::make_unique<PlayerBullet>();
             playerbullet->Initialize(camera_, basetransform_.translate, basetransform_.rotate);
             playerbullet->SetisChargeBullet(true); // チャージショット扱い
@@ -580,6 +652,8 @@ void Player::BulletUpdate()
             }
             playerBullets_.push_back(std::move(playerbullet));
             coolTime = kCoolTime;
+
+            hasInstantCharge_ = false;
         } else if (chargeTimer_ > 0.0f && coolTime <= 0.0f) {
             // チャージ時間未達なら通常化
             auto playerbullet = std::make_unique<PlayerBullet>();
@@ -639,7 +713,7 @@ void Player::BulletCharge()
 
     // イージングもどき
     if (isChargeLocked_) {
-        float progress = chargeTimer_ / kChargeTime;
+        float progress = hasInstantCharge_ ? 1.0f : (chargeTimer_ / kChargeTime);
 
         if (progress > 1.0f)
             progress = 1.0f; // t

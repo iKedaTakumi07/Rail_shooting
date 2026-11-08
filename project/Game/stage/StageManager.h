@@ -14,9 +14,21 @@ public:
 
     void Draw3D();
 
+    void ReloadJson()
+    {
+        LoadStageData(jsonFilePath_);
+    }
+
 public:
     // Get関数
     float GetCurrentZ() const { return currentZ_; }
+    void SetCurrentZ(float z) { currentZ_ = z; }
+
+    bool IsPaused() const { return isPaused_; }
+    void SetPause(bool pause) { isPaused_ = pause; }
+
+    StageData& GetStageData() { return stageData_; }
+    const std::string& GetJsonFilePath() const { return jsonFilePath_; }
 
     // レールの中心座標を求める
     Vector3 CalcRailPosition();
@@ -38,6 +50,7 @@ private:
     float currentZ_ = 0.0f; // 現在の進行Z座標
     const float kScrollSpeed = 20.0f; // 前進する速度(ブースト頭で切り替わるカモメ)
 
+    bool isPaused_ = false; // 特殊停止
     bool isBossCutscene_ = false; // 演出
     bool isBossBattle_ = false; // ボス戦中フラグ
 };

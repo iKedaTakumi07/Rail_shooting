@@ -25,6 +25,14 @@ void CollisionManager::CheckAllCollisions()
             // 同じ陣営はスキップ
             if (colA->GetCollisionGroup() == colB->GetCollisionGroup())
                 continue;
+            if (colA->GetCollisionGroup() == CollisionGroup::kPlayer && colB->GetCollisionGroup() == CollisionGroup::kPlayerDodge)
+                continue;
+            if (colA->GetCollisionGroup() == CollisionGroup::kPlayerDodge && colB->GetCollisionGroup() == CollisionGroup::kPlayer)
+                continue;
+            if (colA->GetCollisionGroup() == CollisionGroup::kPlayerDodge && colB->GetCollisionGroup() == CollisionGroup::kPlayerBullet)
+                continue;
+            if (colA->GetCollisionGroup() == CollisionGroup::kPlayerBullet && colB->GetCollisionGroup() == CollisionGroup::kPlayerDodge)
+                continue;
             if (colA->GetCollisionGroup() == CollisionGroup::kPlayer && colB->GetCollisionGroup() == CollisionGroup::kPlayerBullet)
                 continue;
             if (colA->GetCollisionGroup() == CollisionGroup::kPlayerBullet && colB->GetCollisionGroup() == CollisionGroup::kPlayer)
@@ -35,7 +43,7 @@ void CollisionManager::CheckAllCollisions()
                 continue;
 
             // 交差していれば、お互いのオーバーライドされたOnCollisionを呼び出す
-            if (CheckAllOBBCollision(colA->GetAllOBB(), colB->GetAllOBB())) {
+            if (CheckContinuousOBBCollision(colA, colB)) {
                 colA->OnCollision(colB);
                 colB->OnCollision(colA);
             }
@@ -124,6 +132,90 @@ bool CollisionManager::CheckOBB(const OBB& a, const OBB& b)
 
     // 15軸すべてで分離軸が見つからない場合は交差している
     return true;
+}
+
+bool CollisionManager::CheckSegmentOBB(const Segment& segment, const OBB& obb)
+{
+    Vector3 p = segment.origin - obb.center;
+    Vector3 d = segment.diff; // 移動量ベクトル
+
+    float tMin = 0.0f;
+    float tMax = 1.0f;
+
+    // OBBの3つのローカル軸に対してスラブ判定を実行
+    for (int i = 0; i < 3; ++i) {
+        const Vector3& axis = obb.orientations[i];
+        float halfSize = (i == 0) ? obb.size.x : (i == 1) ? obb.size.y
+                                                          : obb.size.z;
+
+        float e = Dot(axis, p);
+        float f = Dot(axis, d);
+
+        if (std::abs(f) > 1e-6f) {
+            float t1 = (-e - halfSize) / f;
+            float t2 = (-e + halfSize) / f;
+
+            if (t1 > t2)
+                std::swap(t1, t2);
+
+            tMin = (std::max)(tMin, t1);
+            tMax = (std::min)(tMax, t2);
+
+            if (tMin > tMax)
+                return false; // 共通範囲が存在しないため非交差
+        } else {
+            // 線分が軸に平行な場合、OBBの範囲外であれば非交差
+            if (-e - halfSize > 0.0f || -e + halfSize < 0.0f) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool CollisionManager::CheckContinuousOBBCollision(const Collider* colA, const Collider* colB)
+{
+    AllOBB obbA = colA->GetAllOBB();
+    AllOBB obbB = colB->GetAllOBB();
+
+    if (!CheckOBB(obbA.wholeBox, obbB.wholeBox)) {
+        bool sweepHit = false;
+
+        if (colA->IsPrevPositionInitialized()) {
+            Segment segA = colA->GetSweepSegment();
+            if (Dot(segA.diff, segA.diff) > 0.0f) {
+                for (const auto& boxB : obbB.dividBoxes) {
+                    if (CheckSegmentOBB(segA, boxB)) {
+                        sweepHit = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!sweepHit && colB->IsPrevPositionInitialized()) {
+            Segment segB = colB->GetSweepSegment();
+            if (Dot(segB.diff, segB.diff) > 0.0f) {
+                for (const auto& boxA : obbA.dividBoxes) {
+                    if (CheckSegmentOBB(segB, boxA)) {
+                        sweepHit = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return sweepHit;
+    }
+
+    for (const auto& boxA : obbA.dividBoxes) {
+        for (const auto& boxB : obbB.dividBoxes) {
+            if (CheckOBB(boxA, boxB)) {
+                return true; // 実際のパーツ同士が交差した
+            }
+        }
+    }
+
+    return false;
 }
 
 bool CollisionManager::CheckAllOBBCollision(const AllOBB& a, const AllOBB& b) const

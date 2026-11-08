@@ -145,16 +145,37 @@ void TestScene::Initialize()
     auto* gpuParticleMgr = GPUParticleManager::getInstance();
 
     gpuParticleMgr->CreateParticleGroup(
-        "GPUSparkAdd", "resources/circle2.png", ParticleMeshType::kPlane, kBlendModeAdd, Vector4(1.0f, 0.3f, 0.1f, 1.0f));
+        "TestRandomGroup", "resources/circle2.png", ParticleMeshType::kPlane, kBlendModeAdd, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 
-    gpuParticleMgr->CreateParticleGroup(
-        "GPURingNormal", "resources/circle2.png", ParticleMeshType::kRing, kBlendModeNormal, Vector4(0.2f, 0.6f, 1.0f, 0.8f));
+    // 2. エミッターの生成
+    testGpuEmitterHandle_ = gpuParticleMgr->AddEmitter(
+        "TestRandomGroup", testEmitterPos_, 0.5f, emitCount_, 0.05f, emitTimer_, gravity_, acceleration_, airResistance_);
 
-    gpuEmitterHandle1_ = gpuParticleMgr->AddEmitter(
-        "GPUSparkAdd", emitterPos_, 1.0f, emitCount_, 0.1f, emitTimer_, gravity_, acceleration_, airResistance_);
+    // 3. テスト条件の直接セット (要求仕様の実装)
+    EmitterSphereData* emitterData = gpuParticleMgr->GetEmitterData(testGpuEmitterHandle_);
+    if (emitterData) {
+        // [ランダム生成設定] スケール・回転・速度の幅をセット
+        emitterData->minVelocity = Vector3(-2.0f, 1.0f, -2.0f);
+        emitterData->maxVelocity = Vector3(2.0f, 4.0f, 2.0f);
+        emitterData->minSpeed = 0.8f;
+        emitterData->maxSpeed = 2.5f;
 
-    gpuEmitterHandle2_ = gpuParticleMgr->AddEmitter(
-        "GPURingNormal", Vector3(3.0f, 1.0f, 0.0f), 1.5f, 16, 0.2f, emitTimer_, Vector3(0.0f, -2.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f), 0.05f);
+        emitterData->minStartScale = Vector3(0.2f, 0.2f, 0.2f);
+        emitterData->maxStartScale = Vector3(0.8f, 0.8f, 0.8f);
+        emitterData->minEndScale = Vector3(0.0f, 0.0f, 0.0f); // 徐々に小さく
+        emitterData->maxEndScale = Vector3(0.0f, 0.0f, 0.0f);
+
+        emitterData->minStartRotation = Vector3(0.0f, 0.0f, -3.1415f);
+        emitterData->maxStartRotation = Vector3(0.0f, 0.0f, 3.1415f);
+        emitterData->minEndRotation = Vector3(0.0f, 0.0f, -6.2831f);
+        emitterData->maxEndRotation = Vector3(0.0f, 0.0f, 6.2831f);
+
+        // [時間経過グラデーション設定] lifeTime 1.0f (誕生時) = 赤 / 0.0f (死亡時) = 透明
+        emitterData->minStartColor = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+        emitterData->maxStartColor = Vector4(1.0f, 0.2f, 0.0f, 1.0f);
+        emitterData->minEndColor = Vector4(1.0f, 0.0f, 0.0f, 0.0f);
+        emitterData->maxEndColor = Vector4(1.0f, 0.2f, 0.0f, 0.0f);
+    }
 }
 
 void TestScene::Finalize()
@@ -181,44 +202,90 @@ void TestScene::Update()
         CameraManager::GetInstance()->SetActiveCamera("SubView");
     }
 
-    if (ImGui::Begin("GPU Particle Debug Inspector")) {
+    if (ImGui::Begin("Particle Random & Gradient Test Inspector")) {
         auto* gpuParticleMgr = GPUParticleManager::getInstance();
+        EmitterSphereData* emitterData = gpuParticleMgr->GetEmitterData(testGpuEmitterHandle_);
 
-        ImGui::Text("Emitter [1] Settings (GPUSparkAdd)");
-        ImGui::Separator();
+        if (emitterData) {
+            if (ImGui::CollapsingHeader("1. Emitter Basic Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+                if (ImGui::DragFloat3("Position (Translate)", &testEmitterPos_.x, 0.1f)) {
+                    gpuParticleMgr->SetEmitterPosition(testGpuEmitterHandle_, testEmitterPos_);
+                }
 
-        // 座標変更
-        if (ImGui::DragFloat3("Position", &emitterPos_.x, 0.1f)) {
-            gpuParticleMgr->SetEmitterPosition(gpuEmitterHandle1_, emitterPos_);
+                const char* emitTypes[] = { "Sphere (Sphere Radius)", "Box (AABB Offset Range)" };
+                int currentType = static_cast<int>(emitterData->emitType);
+                if (ImGui::Combo("Emit Shape Type", &currentType, emitTypes, IM_ARRAYSIZE(emitTypes))) {
+                    emitterData->emitType = static_cast<uint32_t>(currentType);
+                }
+
+                if (emitterData->emitType == 0) {
+                    ImGui::DragFloat("Sphere Radius", &emitterData->radius, 0.1f, 0.0f, 50.0f);
+                } else {
+                    ImGui::DragFloat3("Min Emit Offset", &emitterData->minEmitOffset.x, 0.1f);
+                    ImGui::DragFloat3("Max Emit Offset", &emitterData->maxEmitOffset.x, 0.1f);
+                }
+
+                int count = static_cast<int>(emitterData->count);
+                if (ImGui::SliderInt("Emit Count", &count, 1, 512)) {
+                    emitterData->count = static_cast<uint32_t>(count);
+                }
+                ImGui::DragFloat("Frequency Interval", &emitterData->frequency, 0.01f, 0.001f, 5.0f);
+
+                if (ImGui::SliderFloat("LifeTime", &emitTimer_, 0.1f, 10.0f)) {
+                    gpuParticleMgr->SetEmitterParticleLifeTime(testGpuEmitterHandle_, emitTimer_);
+                }
+            }
+            if (ImGui::CollapsingHeader("2. Physics Parameters", ImGuiTreeNodeFlags_DefaultOpen)) {
+                bool physicsChanged = false;
+                physicsChanged |= ImGui::DragFloat3("Gravity", &gravity_.x, 0.1f);
+                physicsChanged |= ImGui::DragFloat3("Acceleration", &acceleration_.x, 0.1f);
+                physicsChanged |= ImGui::SliderFloat("Air Resistance", &airResistance_, 0.0f, 1.0f);
+
+                if (physicsChanged) {
+                    gpuParticleMgr->SetEmitterPhysics(testGpuEmitterHandle_, gravity_, acceleration_, airResistance_);
+                }
+            }
+            if (ImGui::CollapsingHeader("3. Velocity & Speed (Random Range)")) {
+                ImGui::DragFloat3("Min Velocity Dir", &emitterData->minVelocity.x, 0.1f);
+                ImGui::DragFloat3("Max Velocity Dir", &emitterData->maxVelocity.x, 0.1f);
+                ImGui::SliderFloat("Min Speed", &emitterData->minSpeed, 0.0f, 20.0f);
+                ImGui::SliderFloat("Max Speed", &emitterData->maxSpeed, 0.0f, 20.0f);
+            }
+            if (ImGui::CollapsingHeader("4. Scale (Start -> End)")) {
+                ImGui::Text("[Start Scale]");
+                ImGui::DragFloat3("Min Start Scale", &emitterData->minStartScale.x, 0.05f, 0.0f, 10.0f);
+                ImGui::DragFloat3("Max Start Scale", &emitterData->maxStartScale.x, 0.05f, 0.0f, 10.0f);
+
+                ImGui::Separator();
+                ImGui::Text("[End Scale]");
+                ImGui::DragFloat3("Min End Scale", &emitterData->minEndScale.x, 0.05f, 0.0f, 10.0f);
+                ImGui::DragFloat3("Max End Scale", &emitterData->maxEndScale.x, 0.05f, 0.0f, 10.0f);
+            }
+            if (ImGui::CollapsingHeader("5. Rotation (Start -> End)")) {
+                ImGui::Text("[Start Rotation (Rad)]");
+                ImGui::DragFloat3("Min Start Rotation", &emitterData->minStartRotation.x, 0.05f, -6.28f, 6.28f);
+                ImGui::DragFloat3("Max Start Rotation", &emitterData->maxStartRotation.x, 0.05f, -6.28f, 6.28f);
+
+                ImGui::Separator();
+                ImGui::Text("[End Rotation (Rad)]");
+                ImGui::DragFloat3("Min End Rotation", &emitterData->minEndRotation.x, 0.05f, -6.28f, 6.28f);
+                ImGui::DragFloat3("Max End Rotation", &emitterData->maxEndRotation.x, 0.05f, -6.28f, 6.28f);
+            }
+            if (ImGui::CollapsingHeader("6. Color & Gradient (Start -> End)")) {
+                ImGui::Text("[Start Color (Life 1.0)]");
+                ImGui::ColorEdit4("Min Start Color", &emitterData->minStartColor.x);
+                ImGui::ColorEdit4("Max Start Color", &emitterData->maxStartColor.x);
+
+                ImGui::Separator();
+                ImGui::Text("[End Color (Life 0.0)]");
+                ImGui::ColorEdit4("Min End Color", &emitterData->minEndColor.x);
+                ImGui::ColorEdit4("Max End Color", &emitterData->maxEndColor.x);
+            }
+            ImGui::Separator();
+            if (ImGui::Button("Trigger Test Burst (One-Shot)", ImVec2(-1, 30))) {
+                gpuParticleMgr->TriggerOneShot(testGpuEmitterHandle_, emitterData->count);
+            }
         }
-
-        // 重力・加速度・空気抵抗のリアルタイム変更
-        bool physicsChanged = false;
-        bool lifeTime = false;
-        physicsChanged |= ImGui::DragFloat3("Gravity", &gravity_.x, 0.1f);
-        physicsChanged |= ImGui::DragFloat3("Acceleration", &acceleration_.x, 0.1f);
-        physicsChanged |= ImGui::SliderFloat("Air Resistance", &airResistance_, 0.0f, 1.0f);
-        lifeTime |= ImGui::SliderFloat("emitTimer", &emitTimer_, 0.0f, 10.0f);
-
-        if (physicsChanged) {
-            gpuParticleMgr->SetEmitterPhysics(gpuEmitterHandle1_, gravity_, acceleration_, airResistance_);
-        }
-        if (lifeTime) {
-            gpuParticleMgr->SetEmitterParticleLifeTime(gpuEmitterHandle1_, emitTimer_);
-        }
-
-        // 射出タイミング制御 (自動 / 手動トリガー)
-        if (ImGui::Checkbox("Auto Emit", &autoEmit_)) {
-            gpuParticleMgr->SetEmitterAutoEmit(gpuEmitterHandle1_, autoEmit_);
-        }
-
-        ImGui::SliderInt("Emit Count", &emitCount_, 1, 128);
-
-        // 手動単発トリガーボタン
-        if (ImGui::Button("Trigger Instant One-Shot")) {
-            gpuParticleMgr->TriggerOneShot(gpuEmitterHandle1_, static_cast<uint32_t>(emitCount_));
-        }
-
         ImGui::End();
     }
 #endif // USE_IMGUI

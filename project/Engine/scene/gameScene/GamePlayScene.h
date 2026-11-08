@@ -9,7 +9,7 @@
 class Model;
 class Object3d;
 class Skybox;
-class Player;
+class PlayerManager;
 class clearUI;
 class EnemyManager;
 class CollisionManager;
@@ -20,6 +20,7 @@ class SceneTransition;
 class pauseUI;
 class skydome;
 class IntroUI;
+class StageDataEditor;
 
 class GamePlayScene : public BaseScene {
 public:
@@ -56,7 +57,7 @@ private:
     std::unique_ptr<Skybox> skydox;
 
     // プレイヤー
-    std::unique_ptr<Player> player_;
+    std::unique_ptr<PlayerManager> playerManager_;
     // 敵
     std::unique_ptr<EnemyManager> enemyManager_;
 
@@ -78,6 +79,7 @@ private:
 
     // 当たり半テオ
     std::unique_ptr<CollisionManager> collisionManager_;
+    std::unique_ptr<StageDataEditor> stageDataEditor_;
 
     bool isSceneFinished_ = false;
     bool isChange = false; // ステージ変更

@@ -2,21 +2,21 @@
   "enemies": [
     {
       "type": "FixedEnemy",
-      "spawn_z": 50.0,
+      "spawn_z": 0.0,
       "pos": { "x": 3.0, "y": -6.5, "z":90.0 },
       "UseBullet" : "TargetBullet",
       "hp": 5
     },
      {
       "type": "FixedEnemy",
-      "spawn_z": 50.0,
+      "spawn_z": 0.0,
       "pos": { "x": -3.0, "y": -6.5, "z":90.0 },
       "UseBullet" : "TargetBullet",
       "hp": 5
     },
     {
       "type": "NormalMoveEnemy",
-      "spawn_z": 70.0,
+      "spawn_z": 20.0,
       "pos": { "x": 5.0, "y": 0.5, "z":110.0 },
       "MoveDirection": { "x": 0.0, "y": -6.0, "z": 0.0},
       "UseBullet" : "TargetBullet",
@@ -24,7 +24,7 @@
     },
     {
       "type": "NormalMoveEnemy",
-      "spawn_z": 70.0,
+      "spawn_z": 20.0,
       "pos": { "x": -5.0, "y": 0.5, "z":110.0 },
       "MoveDirection": { "x": 0.0, "y": -6.0, "z": 0.0},
       "UseBullet" : "TargetBullet",
@@ -32,7 +32,7 @@
     },
     {
       "type": "CircleMoveEnemy",
-      "spawn_z": 70.0,
+      "spawn_z": 20.0,
       "pos": { "x": 0.0, "y": 0.0, "z":120.0 },
       "MoveDirection": { "x": 1.0, "y": 0.0, "z": 0.0},
       "UseBullet" : "HomingBullet",
@@ -40,7 +40,7 @@
     },
     {
       "type": "threeShotsEnemy",
-      "spawn_z": 80.0,
+      "spawn_z": 30.0,
       "pos": { "x": -5.0, "y": 1.0, "z":150.0 },
       "MoveDirection": { "x": 0.0, "y": -6.0, "z": 0.0},
       "UseBullet" : "TargetBullet",
@@ -48,7 +48,7 @@
     },
     {
       "type": "threeShotsEnemy",
-      "spawn_z": 80.0,
+      "spawn_z": 30.0,
       "pos": { "x": 5.0, "y": 1.0, "z":150.0 },
       "MoveDirection": { "x": 0.0, "y": 6.0, "z": 0.0},
       "UseBullet" : "TargetBullet",
@@ -56,7 +56,7 @@
     },
     {
       "type": "LaserEnemy",
-      "spawn_z": 80.0,
+      "spawn_z": 30.0,
       "pos": { "x": 5.0, "y": 1.0, "z":160.0 },
       "MoveDirection": { "x": 0.0, "y": 6.0, "z": 0.0},
       "UseBullet" : "TargetBullet",
@@ -64,7 +64,7 @@
     },
     {
       "type": "LaserEnemy",
-      "spawn_z": 80.0,
+      "spawn_z": 30.0,
       "pos": { "x": -5.0, "y": 1.0, "z":180.0 },
       "MoveDirection": { "x": 5.0, "y": 6.0, "z": 0.0},
       "UseBullet" : "TargetBullet",
@@ -72,7 +72,7 @@
     },
     {
       "type": "LaserEnemy",
-      "spawn_z": 80.0,
+      "spawn_z": 30.0,
       "pos": { "x": -5.0, "y": 1.0, "z":200.0 },
       "MoveDirection": { "x": -5.0, "y": -6.0, "z": 0.0},
       "UseBullet" : "TargetBullet",

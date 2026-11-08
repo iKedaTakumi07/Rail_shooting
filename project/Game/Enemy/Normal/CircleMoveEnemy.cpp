@@ -37,11 +37,15 @@ void CircleMoveEnemy::Initialize(Vector3 pos)
     transform_.translate.x = centerPos_.x + radius_ * std::cos(angle_);
     transform_.translate.y = centerPos_.y + radius_ * std::sin(angle_);
     transform_.translate.z = centerPos_.z;
+
+    ResetPrevPosition(transform_.translate);
 }
+
 void CircleMoveEnemy::Update()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
+    UpdatePrevPosition(transform_.translate);
 
     if (transform_.translate.z - RanAwayOffset_ <= camera_->GetTranslate().z) {
         // カメラに近いので逃走を開始する

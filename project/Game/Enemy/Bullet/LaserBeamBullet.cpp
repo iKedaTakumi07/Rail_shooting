@@ -62,6 +62,7 @@ void LaserBeamBullet::Initialize(Vector3 pos, const Vector3& rotation)
 
 void LaserBeamBullet::Update(float deltaTime)
 {
+
     if (isDead_) {
         return;
     }

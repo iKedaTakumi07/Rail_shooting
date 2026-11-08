@@ -28,6 +28,12 @@ public:
 
 public:
     void LoadJsonPopData(const std::string& filePath);
+    void ReloadJson()
+    {
+        stageObjects_.clear();
+        currentSpawnIndex_ = 0;
+        LoadJsonPopData(PopObjFilePath_);
+    }
 
     // 当たり判定は死亡状態時のみ登録
     AllAABB GetAllAABB() const override;

@@ -94,6 +94,14 @@ public:
     /// <param name="count">個数</param>
     void TriggerEmitForDuration(size_t emitterIndex, float duration, uint32_t count = 0);
 
+    EmitterSphereData* GetEmitterData(size_t emitterIndex)
+    {
+        if (emitterIndex < emitters_.size()) {
+            return emitters_[emitterIndex].mappedData;
+        }
+        return nullptr;
+    }
+
     void SetEmitterPosition(size_t emitterIndex, const Vector3& position);
     void SetEmitterPhysics(size_t emitterIndex, const Vector3& gravity, const Vector3& accel, float drag);
     void SetEmitterParticleLifeTime(size_t emitterIndex, float lifeTime);

@@ -25,9 +25,10 @@
 #include "../../../Game/Enemy/EnemyManager.h"
 #include "../../../Game/Enemy/base/baseEnemy.h"
 #include "../../../Game/Loder/GameScoreManager.h"
+#include "../../../Game/Loder/StageDataEditor.h"
 #include "../../../Game/Loder/stageDataLoad.h"
 #include "../../../Game/OnCollison/CollisionManager.h"
-#include "../../../Game/Player/Player.h"
+#include "../../../Game/Player/PlayerManager.h"
 #include "../../../Game/SceneTransition.h"
 #include "../../../Game/UI/Game/IntroUI.h"
 #include "../../../Game/UI/Game/pauseUI.h"
@@ -78,23 +79,23 @@ void GamePlayScene::Initialize()
     StageManager_ = std::make_unique<StageManager>();
     StageManager_->Initialize(stageDataLoad::GetInstance()->GetStageData());
 
-    player_ = std::make_unique<Player>();
-    player_->Initialize();
+    playerManager_ = std::make_unique<PlayerManager>();
+    playerManager_->Initialize();
+    Player* player = playerManager_->GetPlayer();
 
     enemyManager_ = std::make_unique<EnemyManager>();
-    enemyManager_->Initialize(player_.get(), stageDataLoad::GetInstance()->GetEnemyPopData()); // 読み込むファイルを決めるクラス(インスタンス化)で作成する
-    player_->SetEnemyManager(enemyManager_.get());
+    enemyManager_->Initialize(player, stageDataLoad::GetInstance()->GetEnemyPopData()); // 読み込むファイルを決めるクラス(インスタンス化)で作成する
 
     collisionManager_ = std::make_unique<CollisionManager>();
 
     cameraController_ = std::make_unique<CameraController>();
-    cameraController_->Initialize(player_.get());
+    cameraController_->Initialize(player);
 
     Transition_ = std::make_unique<SceneTransition>();
     Transition_->Initialize("resources/noise2.png");
 
     stageObject_ = std::make_unique<stageObjectManager>();
-    stageObject_->Initialize(stageDataLoad::GetInstance()->GetStageObjectData(), player_.get());
+    stageObject_->Initialize(stageDataLoad::GetInstance()->GetStageObjectData(), player);
 
     ClearUI_ = std::make_unique<clearUI>();
     ClearUI_->Initialize();
@@ -113,6 +114,9 @@ void GamePlayScene::Initialize()
 
     skydome_ = std::make_unique<skydome>();
     skydome_->Initialize();
+
+    stageDataEditor_ = std::make_unique<StageDataEditor>();
+    stageDataEditor_->Initialize(enemyManager_.get(), stageObject_.get(), StageManager_.get());
 
     // 音がうるさいので停止中
     // Audio::GetInstance()->Play(fanfare);
@@ -141,6 +145,9 @@ void GamePlayScene::Update()
     if (input->TriggerKey(DIK_0)) {
         CameraManager::GetInstance()->SetActiveCamera("PlayBoss");
     }
+
+    stageDataEditor_->DrawImGui();
+
 #endif // DEBUG
 
     skydome_->Update();
@@ -158,7 +165,8 @@ void GamePlayScene::Update()
             sceneState_ = SceneState::kPause;
         }
 
-        player_->SetBasePosition(railPos);
+        Player* player = playerManager_->GetPlayer();
+        player->SetBasePosition(railPos);
 
         // 進行速度の5秒分
         float currentZ = StageManager_->GetCurrentZ();
@@ -170,7 +178,7 @@ void GamePlayScene::Update()
             introUI_->SetIntroEnd(true);
         }
 
-        player_->UpdateIntro(progress); // 操作不能
+        playerManager_->UpdateIntro(progress); // 操作不能
         cameraController_->UpdateIntro(railPos);
         introUI_->Update(progress);
 
@@ -190,14 +198,15 @@ void GamePlayScene::Update()
             sceneState_ = SceneState::kPause;
         }
 
-        player_->SetBasePosition(railPos);
-        player_->Update();
+        Player* player = playerManager_->GetPlayer();
+        player->SetBasePosition(railPos);
+        playerManager_->Update();
 
-        if (player_->IsExplosion()) {
+        if (player->IsExplosion()) {
             sceneState_ = SceneState::kGameOver;
             gameOverUI_->Start(true);
             break;
-        } else if (player_->IsDead()) {
+        } else if (player->IsDead()) {
             sceneState_ = SceneState::kDead;
             gameOverUI_->Start(false);
             break;
@@ -210,10 +219,8 @@ void GamePlayScene::Update()
 
         // 当たり判定一括
         collisionManager_->Clear();
-        collisionManager_->AddCollider(player_.get());
-        for (auto& bullet : player_->GetBullets()) {
-            collisionManager_->AddCollider(bullet.get());
-        }
+        playerManager_->RegisterColliders(collisionManager_.get());
+
         for (auto& enemy : enemyManager_->GetEnemyes()) {
             collisionManager_->AddCollider(enemy.get());
             for (auto& enemyBullet : enemy->GetBullets()) {
@@ -229,22 +236,23 @@ void GamePlayScene::Update()
         // 終了条件
         if (enemyManager_->IsAllEnemiesCleared()) {
             sceneState_ = SceneState::kClear;
-            player_->SetisClear(true);
+            player->SetisClear(true);
             clearTimer_ = 0.0f;
         }
 
         break;
     }
     case GamePlayScene::SceneState::kDead: {
+        Player* player = playerManager_->GetPlayer();
         StageManager_->Update();
         Vector3 railPos = StageManager_->CalcRailPosition();
 
-        player_->SetBasePosition(railPos);
-        player_->Update();
+        player->SetBasePosition(railPos);
+        playerManager_->Update();
 
         gameOverUI_->Update(deltaTime);
 
-        if (player_->IsExplosion()) {
+        if (player->IsExplosion()) {
             gameOverUI_->ClearExplosionTrigger();
             sceneState_ = SceneState::kGameOver;
             break;
@@ -257,10 +265,7 @@ void GamePlayScene::Update()
 
         // 当たり判定(敵の攻撃では爆発しない予定)
         collisionManager_->Clear();
-        collisionManager_->AddCollider(player_.get());
-        for (auto& bullet : player_->GetBullets()) {
-            collisionManager_->AddCollider(bullet.get());
-        }
+        playerManager_->RegisterColliders(collisionManager_.get());
         for (auto& enemy : enemyManager_->GetEnemyes()) {
             collisionManager_->AddCollider(enemy.get());
             for (auto& enemyBullet : enemy->GetBullets()) {
@@ -277,7 +282,7 @@ void GamePlayScene::Update()
     }
     case GamePlayScene::SceneState::kGameOver: {
 
-        player_->Update();
+        playerManager_->Update();
         enemyManager_->Update();
         stageObject_->Update();
 
@@ -302,7 +307,7 @@ void GamePlayScene::Update()
 
         clearTimer_ += deltaTime;
 
-        player_->UpdateClear();
+        playerManager_->UpdateClear();
 
         if (clearTimer_ >= 4.0f && Transition_->GetState() == SceneTransition::State::None) {
             Transition_->Start(SceneTransition::State::Out, 1.0f);
@@ -365,7 +370,7 @@ void GamePlayScene::Draw()
     // モデルデータ
     //
     skydome_->Draw();
-    player_->Draw();
+    playerManager_->Draw();
     enemyManager_->Draw();
 
     stageObject_->Draw();
@@ -379,7 +384,7 @@ void GamePlayScene::Draw()
     //
     SpriteCommon::GetInstance()->PrepareSpriteDraw();
     introUI_->SpritDraw();
-    player_->SpritDraw();
+    playerManager_->SpritDraw();
     enemyManager_->SpriteDraw();
     ClearUI_->SpritDraw();
     PauseUI_->SpritDraw();

@@ -27,6 +27,7 @@ void stageObjectManager::Initialize(const std::string& filePath, Player* player)
 
 void stageObjectManager::Update()
 {
+
     if (player_) {
         Vector3 pos = player_->GetTranslate();
         while (currentSpawnIndex_ < popDatas_.size() && pos.z >= popDatas_[currentSpawnIndex_].spawn_Z) {

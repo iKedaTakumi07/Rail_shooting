@@ -55,10 +55,13 @@ void EnemyHomingBullet::Initialize(Vector3 pos, const Vector3& rotation)
 
     // LightManager に登録
     LightManager::GetInstance()->RegisterPointLight(&pointLight_);
+    ResetPrevPosition(transform_.translate);
 }
 
 void EnemyHomingBullet::Update(float deltaTime)
 {
+    UpdatePrevPosition(transform_.translate);
+
     MoveUpdate();
     CheckCameraCulling();
 

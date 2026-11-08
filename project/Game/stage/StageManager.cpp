@@ -20,7 +20,7 @@ void StageManager::Initialize(const std::string& filePath)
 
 void StageManager::Update()
 {
-    if (isBossCutscene_) {
+    if (isBossCutscene_ || isPaused_) {
         return;
     }
 
@@ -49,20 +49,19 @@ Vector3 StageManager::CalcRailPosition()
     }
 
     for (size_t i = 0; i < points.size() - 1; ++i) {
-        const Vector3& p0 = points[i];
-        const Vector3& p1 = points[i + 1];
+        const Vector3& p1 = points[i];
+        const Vector3& p2 = points[i + 1];
 
-        // p0 と p1 の間にいる場合
-        if (currentZ_ >= p0.z && currentZ_ <= p1.z) {
-            // Z座標の進行割合を計算
-            float t = (currentZ_ - p0.z) / (p1.z - p0.z);
+        if (currentZ_ >= p1.z && currentZ_ <= p2.z) {
+            float dz = p2.z - p1.z;
+            float t = (dz > 0.0001f) ? (currentZ_ - p1.z) / dz : 0.0f;
 
-            // XとYを線形補間(Lerp)
-            Vector3 result;
-            result.x = p0.x + (p1.x - p0.x) * t;
-            result.y = p0.y + (p1.y - p0.y) * t;
-            result.z = currentZ_;
-            return result;
+            // 端点のガード処理
+            const Vector3& p0 = (i == 0) ? p1 : points[i - 1];
+            const Vector3& p3 = (i + 2 < points.size()) ? points[i + 2] : p2;
+
+            // Catmull-Rom スプライン補間を実施
+            return CatmullRom(p0, p1, p2, p3, t);
         }
     }
 
@@ -108,7 +107,9 @@ void StageManager::LoadStageData(const std::string& filePath)
                 stageData_.controlPoints.push_back(pos);
             }
         }
-    } else {
-        std::cerr << "Warning: 'control_points' is missing or not an array." << std::endl; // エラー
     }
+
+    // z順にsort
+    std::sort(stageData_.controlPoints.begin(), stageData_.controlPoints.end(),
+        [](const Vector3& a, const Vector3& b) { return a.z < b.z; });
 }

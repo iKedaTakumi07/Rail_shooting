@@ -76,11 +76,14 @@ void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vec
     // チャージショット用のパーティクル
     chargeParticle_ = std::make_unique<chargeParticle>();
     chargeParticle_->Initialize();
+
+    ResetPrevPosition(transform_.translate);
 }
 
 void PlayerBullet::Update(float deltaTime)
 {
     Pretransform_ = transform_;
+    UpdatePrevPosition(transform_.translate);
 
     baseEnemy* target = nullptr;
     if (targetId_ != 0 && enemyManager_) {
