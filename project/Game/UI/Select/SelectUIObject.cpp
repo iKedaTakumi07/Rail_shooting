@@ -26,7 +26,7 @@ void SelectUIObject::Initialize()
 {
     TextureManager::getInstance()->LoadTexture("resources/skydone/sky_sphere.png");
     TextureManager::getInstance()->LoadTexture("resources/player/1x1white.png");
-    TextureManager::getInstance()->LoadTexture("resources/stage/uvChecker.png");
+    TextureManager::getInstance()->LoadTexture("resources/stage/Lab.png");
     TextureManager::getInstance()->LoadTexture("resources/stage/1x1white.png");
     TextureManager::getInstance()->LoadTexture("resources/stage/test.png");
 

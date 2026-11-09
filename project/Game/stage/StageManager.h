@@ -23,6 +23,13 @@ public:
     // Get関数
     float GetCurrentZ() const { return currentZ_; }
     void SetCurrentZ(float z) { currentZ_ = z; }
+    bool IsReachedEnd() const
+    {
+        if (stageData_.controlPoints.empty()) {
+            return false;
+        }
+        return currentZ_ >= stageData_.controlPoints.back().z;
+    }
 
     bool IsPaused() const { return isPaused_; }
     void SetPause(bool pause) { isPaused_ = pause; }

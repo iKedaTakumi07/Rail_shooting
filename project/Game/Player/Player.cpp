@@ -220,6 +220,10 @@ void Player::UpdateClear()
 
 void Player::Draw()
 {
+    if (!isExplosion) {
+        playerObject3d->Draw();
+    }
+
     for (auto& bullet_ : playerBullets_) {
         bullet_->Draw();
     }
@@ -228,10 +232,6 @@ void Player::Draw()
         if (afterImage.object3d) {
             afterImage.object3d->Draw();
         }
-    }
-
-    if (!isExplosion) {
-        playerObject3d->Draw();
     }
 }
 

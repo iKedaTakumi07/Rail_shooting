@@ -234,7 +234,7 @@ void GamePlayScene::Update()
         collisionManager_->CheckAllCollisions();
 
         // 終了条件
-        if (enemyManager_->IsAllEnemiesCleared()) {
+        if (enemyManager_->IsAllEnemiesCleared() && StageManager_->IsReachedEnd()) {
             sceneState_ = SceneState::kClear;
             player->SetisClear(true);
             clearTimer_ = 0.0f;
