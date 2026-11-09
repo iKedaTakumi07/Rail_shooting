@@ -375,6 +375,13 @@ void GamePlayScene::Draw()
 
     stageObject_->Draw();
 
+#ifdef USE_IMGUI
+    // リリース版使用不可
+    Object3dCommon::GetInstance()->PreLineObjectDraw();
+    collisionManager_->DrawDebug(CameraManager::GetInstance()->GetActiveCamera());
+
+#endif // DEBUG
+
     SkyBoxCommon::GetInstance()->PrepareObjectDraw();
 
     CPUParticleManager::getInstance()->Draw();

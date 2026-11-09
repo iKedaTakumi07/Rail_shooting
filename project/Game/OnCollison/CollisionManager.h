@@ -21,7 +21,7 @@ public:
     static bool CheckContinuousOBBCollision(const Collider* colA, const Collider* colB);
 
 private:
-    static std::vector<Vector3> GenerateOBBLineVertices(const OBB& obb);
+    static std::vector<Vector4> GenerateOBBLineVertices(const OBB& obb);
 
     bool CheckAABB(const AABB& a, const AABB& b) const;
 

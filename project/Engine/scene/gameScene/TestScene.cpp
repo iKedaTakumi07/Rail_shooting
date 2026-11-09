@@ -322,7 +322,9 @@ void TestScene::Draw()
     object3d_2->Draw();
     player_->Draw();
 
+
 #ifdef USE_IMGUI
+    Object3dCommon::GetInstance()->PreLineObjectDraw();
     object3d_2->DrawSkeleton();
 #endif // USE_IMGUI
 

@@ -1,4 +1,6 @@
 #include "CollisionManager.h"
+#include "../../Engine/3d/Camera.h"
+#include "../../Engine/3d/Object3dCommon.h"
 
 void CollisionManager::AddCollider(Collider* collider)
 {
@@ -57,71 +59,63 @@ void CollisionManager::DrawDebug(Camera* camera)
     if (!camera || colliders_.empty())
         return;
 
-    std::vector<Vector3> allLineVertices;
+    std::vector<Vector4> allLineVertices;
 
-    // 登録されている全コライダーの OBB（wholeBox および dividBoxes）を頂点配列に集積
+    // 登録されている全コライダーの OBB を Vector4 頂点配列に集積
     for (Collider* col : colliders_) {
         if (!col)
             continue;
 
         AllOBB allOBB = col->GetAllOBB();
 
-        // 全体包囲ボックスの線分
+        // 全体包囲ボックス
         auto wholeVerts = GenerateOBBLineVertices(allOBB.wholeBox);
         allLineVertices.insert(allLineVertices.end(), wholeVerts.begin(), wholeVerts.end());
 
-        // 分割コライダーがある場合の線分
+        // 分割コライダー
         for (const auto& box : allOBB.dividBoxes) {
             auto divVerts = GenerateOBBLineVertices(box);
             allLineVertices.insert(allLineVertices.end(), divVerts.begin(), divVerts.end());
         }
     }
 
-    if (allLineVertices.empty())
-        return;
-
-    // -------------------------------------------------------------------
-    // ⭐️ エンジンの LineDrawer / DebugPrimitive レンダラーへの流し込みロジック
-    // （プロジェクトの DirectX12 描画コマンド発行部に合わせて呼び出します）
-    // -------------------------------------------------------------------
-    // 例: DynamicVertexBuffer に allLineVertices をマップし、
-    // 提示されたシェーダー（VS/PS）を設定した LinePipeline で DrawInstanced を呼び出す。
-    //
-    // CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-    // Matrix4x4 vpMatrix = camera->GetViewProjectionMatrix();
-    // ConstantBuffer(b0)->Copy(vpMatrix);
-    // CommandList->DrawInstanced(static_cast<UINT>(allLineVertices.size()), 1, 0, 0);
+    // フレームワーク層の描画機能へ処理を委譲（ゲーム層で低レイヤー処理を行わない）
+    Object3dCommon::GetInstance()->DrawLines(allLineVertices, camera);
 #endif // USE_IMGUI
 }
 
-std::vector<Vector3> CollisionManager::GenerateOBBLineVertices(const OBB& obb)
-{// 各軸の拡がりベクトル (Extents)
+std::vector<Vector4> CollisionManager::GenerateOBBLineVertices(const OBB& obb)
+{
     Vector3 extX = Multiply(obb.orientations[0], obb.size.x);
     Vector3 extY = Multiply(obb.orientations[1], obb.size.y);
     Vector3 extZ = Multiply(obb.orientations[2], obb.size.z);
 
-    // OBBの8つの頂点を計算
-    Vector3 v[8];
-    v[0] = obb.center - extX - extY - extZ;
-    v[1] = obb.center + extX - extY - extZ;
-    v[2] = obb.center + extX + extY - extZ;
-    v[3] = obb.center - extX + extY - extZ;
-    v[4] = obb.center - extX - extY + extZ;
-    v[5] = obb.center + extX - extY + extZ;
-    v[6] = obb.center + extX + extY + extZ;
-    v[7] = obb.center - extX + extY + extZ;
+    // OBBの8つの頂点を Vector4 (w = 1.0f) で計算
+    Vector4 v[8];
+    Vector3 p[8] = {
+        obb.center - extX - extY - extZ,
+        obb.center + extX - extY - extZ,
+        obb.center + extX + extY - extZ,
+        obb.center - extX + extY - extZ,
+        obb.center - extX - extY + extZ,
+        obb.center + extX - extY + extZ,
+        obb.center + extX + extY + extZ,
+        obb.center - extX + extY + extZ
+    };
 
-    // 12本の辺（線分ペア24頂点）
-    std::vector<Vector3> lineVertices = {
+    for (int i = 0; i < 8; ++i) {
+        v[i] = { p[i].x, p[i].y, p[i].z, 1.0f };
+    }
+
+    // 12本の辺（24頂点）
+    return {
         // 底面
         v[0], v[1], v[1], v[2], v[2], v[3], v[3], v[0],
         // 上面
         v[4], v[5], v[5], v[6], v[6], v[7], v[7], v[4],
-        // 柱（側面4本）
+        // 側面
         v[0], v[4], v[1], v[5], v[2], v[6], v[3], v[7]
     };
-
-    return lineVertices;
 }
 
 bool CollisionManager::CheckAABB(const AABB& a, const AABB& b) const
