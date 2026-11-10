@@ -234,6 +234,12 @@ void TestScene::Update()
                 if (ImGui::SliderFloat("LifeTime", &emitTimer_, 0.1f, 10.0f)) {
                     gpuParticleMgr->SetEmitterParticleLifeTime(testGpuEmitterHandle_, emitTimer_);
                 }
+                bool isEmit = autoEmit_;
+                ImGui::Checkbox("Auto Emit", &isEmit);
+                if (autoEmit_ != isEmit) {
+                    autoEmit_ = isEmit;
+                    gpuParticleMgr->SetEmitterAutoEmit(testGpuEmitterHandle_, autoEmit_);
+                }
             }
             if (ImGui::CollapsingHeader("2. Physics Parameters", ImGuiTreeNodeFlags_DefaultOpen)) {
                 bool physicsChanged = false;
@@ -321,7 +327,6 @@ void TestScene::Draw()
     object3d->Draw();
     object3d_2->Draw();
     player_->Draw();
-
 
 #ifdef USE_IMGUI
     Object3dCommon::GetInstance()->PreLineObjectDraw();

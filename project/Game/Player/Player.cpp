@@ -60,6 +60,7 @@ void Player::Initialize()
 
     ChargeReticleSprite = std::make_unique<Sprite>();
     ChargeReticleSprite->Initialize("resources/player/ChargeReticle.png");
+    ChargeReticleSprite->SetAnchorPoint(Vector2(0.5f, 0.5f));
 
     PlayerMaxHpUI = std::make_unique<Sprite>();
     PlayerMaxHpUI->Initialize("resources/player/playerHpUI2.png");
@@ -241,16 +242,16 @@ void Player::SpritDraw()
         return;
     }
 
-    if (!isClear && !isIntro) {
-        ShortReticleSprite->Draw();
-        LongReticleSprite->Draw();
-    }
-
     PlayerMaxHpUI->Draw();
     PlayerHpUI->Draw();
 
     if (isChargeLocked_) {
         ChargeReticleSprite->Draw();
+    }
+
+    if (!isClear && !isIntro) {
+        ShortReticleSprite->Draw();
+        LongReticleSprite->Draw();
     }
 }
 
@@ -271,8 +272,8 @@ AllOBB Player::GetDodgeOBB() const
     AllOBB compound = GetAllOBB(); // 本尊の OBB をベースにする
 
     // XY(Z除外) 方向に ±1.0f 拡大 (半径ベースのため size.x, size.y に +1.0f)
-    compound.wholeBox.size.x += 1.0f;
-    compound.wholeBox.size.y += 1.0f;
+    compound.wholeBox.size.x += 0.3f;
+    compound.wholeBox.size.y += 0.3f;
 
     for (auto& box : compound.dividBoxes) {
         box.size.x += 1.0f;
@@ -584,6 +585,12 @@ void Player::BulletUpdate()
         // チャージ
         chargeTimer_ += deltaTime;
 
+        // 回避フラグが成立中なら
+        if (hasInstantCharge_) {
+            chargeTimer_ = 1.0f;
+            hasInstantCharge_ = false;
+        }
+
         lockonTargetId_ = 0;
 
         uint32_t bestCandidateId = 0;
@@ -642,7 +649,7 @@ void Player::BulletUpdate()
         BulletCharge();
     } else {
         // チャージ時間が満たしているならちゃ―初
-        if (hasInstantCharge_ || chargeTimer_ >= kChargeTime) {
+        if (chargeTimer_ >= kChargeTime) {
             auto playerbullet = std::make_unique<PlayerBullet>();
             playerbullet->Initialize(camera_, basetransform_.translate, basetransform_.rotate);
             playerbullet->SetisChargeBullet(true); // チャージショット扱い
@@ -653,7 +660,6 @@ void Player::BulletUpdate()
             playerBullets_.push_back(std::move(playerbullet));
             coolTime = kCoolTime;
 
-            hasInstantCharge_ = false;
         } else if (chargeTimer_ > 0.0f && coolTime <= 0.0f) {
             // チャージ時間未達なら通常化
             auto playerbullet = std::make_unique<PlayerBullet>();
@@ -718,33 +724,29 @@ void Player::BulletCharge()
         if (progress > 1.0f)
             progress = 1.0f; // t
 
-        // 0.15f未満なら表示しない
-        if (progress > 0.1f) {
-            float easeT = progress * progress * progress; // EaseInCubic
+        float easeT = progress * progress * progress; // EaseInCubic
 
-            const float kStartScale = 1.5f;
-            const float kEndScale = 1.0f;
-            float currentScale = kStartScale + (kEndScale - kStartScale) * easeT;
+        const float kStartScale = 1.5f;
+        const float kEndScale = 1.0f;
+        float currentScale = kStartScale + (kEndScale - kStartScale) * easeT;
 
-            // 回転
-            const float kMaxRotateZ = static_cast<float>(std::numbers::pi) * 2.0f;
-            float currentRotateZ = (1.0f - easeT) * kMaxRotateZ;
+        // 回転
+        const float kMaxRotateZ = static_cast<float>(std::numbers::pi) * 2.0f;
+        float currentRotateZ = (1.0f - easeT) * kMaxRotateZ;
 
-            Vector2 baseSize = ChargeReticleSprite->GetextureSize();
-            ChargeReticleSprite->SetSize({ baseSize.x * currentScale, baseSize.y * currentScale });
-            ChargeReticleSprite->SetRotation(currentRotateZ);
+        Vector2 baseSize = ChargeReticleSprite->GetextureSize();
+        ChargeReticleSprite->SetSize({ baseSize.x * currentScale, baseSize.y * currentScale });
+        ChargeReticleSprite->SetRotation(currentRotateZ);
 
-            if (progress >= 1.0f) {
-                ChargeReticleSprite->SetColor(Vector4(1.0f, 0.2f, 0.2f, 1.0f)); // チャージ完了時赤点滅等
-            } else {
-                ChargeReticleSprite->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            }
+        if (progress <= 0.15f) {
+            ChargeReticleSprite->SetColor(Vector4(1.0f, 1.0f, 1.0f, 0.0f)); // 始めの10%は透明
+        } else if (progress >= 1.0f) {
+            ChargeReticleSprite->SetColor(Vector4(1.0f, 0.2f, 0.2f, 1.0f)); // チャージ完了時（赤）
         } else {
-            isChargeLocked_ = false;
+            ChargeReticleSprite->SetColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f)); // チャージ中（白）
         }
     }
 
-    ChargeReticleSprite->SetAnchorPoint(Vector2(0.5f, 0.5f));
     ChargeReticleSprite->Update();
 }
 

@@ -48,8 +48,8 @@ public:
     float GetLimitX() const { return kMoveLimitX; }
     float GetLimitY() const { return kMoveLimitY; }
     AllAABB GetAllAABB() const override;
-    AllOBB GetDodgeOBB() const;
-    AllOBB GetAllOBB() const override; // 極限回避座標
+    AllOBB GetDodgeOBB() const; // 極限回避座標
+    AllOBB GetAllOBB() const override;
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kPlayer; }
     int GetDamage() const override { return damage_; }
 
@@ -103,7 +103,7 @@ private:
     Vector3 PrePos_ = { 0.0f, 0.0f, 0.0f };
 
     // 当たり判定
-    float size = 0.8f; // AABB
+    float size = 0.4f; // AABB
     static constexpr Vector3 kModelExtents = { 2.8f, 0.6f, 2.3f }; // objの大きさ
     static constexpr Vector3 kPowerUnitPos = { 0.0f, 0.05f, -0.75f }; // 動力射出位置
 
