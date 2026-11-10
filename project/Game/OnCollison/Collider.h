@@ -10,6 +10,12 @@ enum class CollisionGroup {
     kStageObject,
 };
 
+enum class ColliderShape {
+    kAABB, // min,max
+    kOBB,
+    kSphere,
+};
+
 struct Segment {
     Vector3 origin; // 開始点 (前フレームの座標)
     Vector3 diff; // 移動量ベクトル (現在座標 - 前フレーム座標)
@@ -23,8 +29,10 @@ public:
 
     virtual AllAABB GetAllAABB() const = 0;
     virtual AllOBB GetAllOBB() const = 0;
+    virtual Sphere GetSphere() const { return Sphere { currentPosition_, 1.0f }; }
 
     virtual CollisionGroup GetCollisionGroup() const = 0;
+    virtual ColliderShape GetColliderShape() const { return ColliderShape::kOBB; }
 
     /// <summary>
     /// 当たり半テオ

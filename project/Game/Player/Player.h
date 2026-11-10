@@ -169,7 +169,7 @@ private:
     uint32_t keepLookOnId_ = 0; // ロックオン範囲内に敵がいない時の最後にロックオンした敵
     int keepLookOnIndex_ = 0; // ロックオン範囲内に敵がいない時の最後にロックオンした敵のパーツ番号
     // 3d照準の距離
-    const float kLongDistancePlayerTo3DReticle = 50.0f; // 長距離射程(実際は70.0fぐらい飛ぶ)
+    const float kLongDistancePlayerTo3DReticle = 50.0f; // 長距離射程(実際は130.0fぐらい飛ぶ)
     const float kShortDistancePlayerTo3DReticle = 25.0f; // 半分ぐらいの距離
     bool isChargeLocked_ = false;
 

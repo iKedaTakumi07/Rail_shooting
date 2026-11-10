@@ -135,15 +135,15 @@ void GamePlayScene::Update()
 
 #ifdef USE_IMGUI
     // リリース版使用不可
-    if (input->TriggerKey(DIK_1)) {
+    if (input->TriggerKey(DIK_T)) {
         isSceneFinished_ = true;
         SceneManager::GetInstance()->ChangeScene("TITLE");
     }
 
-    if (input->TriggerKey(DIK_9)) {
+    if (input->TriggerKey(DIK_P)) {
         CameraManager::GetInstance()->SetActiveCamera("PlayMain");
     }
-    if (input->TriggerKey(DIK_0)) {
+    if (input->TriggerKey(DIK_B)) {
         CameraManager::GetInstance()->SetActiveCamera("PlayBoss");
     }
 
@@ -379,7 +379,9 @@ void GamePlayScene::Draw()
 #ifdef USE_IMGUI
     // リリース版使用不可
     Object3dCommon::GetInstance()->PreLineObjectDraw();
-    collisionManager_->DrawDebug(CameraManager::GetInstance()->GetActiveCamera());
+    if (sceneState_ == SceneState::kPlay) {
+        collisionManager_->DrawDebug(CameraManager::GetInstance()->GetActiveCamera());
+    }
 
 #endif // DEBUG
 

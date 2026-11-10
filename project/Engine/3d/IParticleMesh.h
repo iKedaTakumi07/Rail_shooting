@@ -52,6 +52,19 @@ private:
     float vBottom = 0.0f;
 };
 
+// 球体
+class SphereMesh : public IParticleMesh {
+public:
+    SphereMesh(ID3D12Device* device, uint32_t latDivide = 16, uint32_t longDivide = 32, float radius = 1.0f);
+    const D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView() const override { return vertexBufferView_; }
+    uint32_t GetVertexCount() const override { return vertexCount_; }
+
+private:
+    Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView_ { };
+    uint32_t vertexCount_ = 0;
+};
+
 // TorusMesh
 class TorusMesh : public IParticleMesh {
 public:

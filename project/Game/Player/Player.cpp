@@ -910,6 +910,13 @@ void Player::UpdateDead()
     transform_.rotate = basetransform_.rotate;
 
     blackSmokeParticle_->NewParticle(basetransform_);
+
+    for (auto& bullet : playerBullets_) {
+        bullet->Update(deltaTime);
+    }
+    std::erase_if(playerBullets_, [](const std::unique_ptr<PlayerBullet>& bullet) {
+        return bullet->IsDead();
+    });
 }
 
 void Player::explosionInitialize()
@@ -920,4 +927,12 @@ void Player::explosionInitialize()
 void Player::UpdateExplosion()
 {
     blackSmokeParticle_->NewParticle(basetransform_);
+
+    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+    for (auto& bullet : playerBullets_) {
+        bullet->Update(deltaTime);
+    }
+    std::erase_if(playerBullets_, [](const std::unique_ptr<PlayerBullet>& bullet) {
+        return bullet->IsDead();
+    });
 }

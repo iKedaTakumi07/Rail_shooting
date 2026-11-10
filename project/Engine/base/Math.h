@@ -38,6 +38,11 @@ struct Transform {
     Vector3 translate;
 };
 
+struct Sphere {
+    Vector3 center;
+    float radius;
+};
+
 struct AABB {
     Vector3 min;
     Vector3 max;
@@ -245,6 +250,7 @@ enum class ParticleMeshType {
     kPlane,
     kRing,
     kCylinder,
+    kSphere,
     kTorus,
     kCone,
     kHalfCone
