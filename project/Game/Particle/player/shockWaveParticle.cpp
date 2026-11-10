@@ -4,13 +4,13 @@
 
 void shockWaveParticle::Initialize()
 {
-    TextureManager::getInstance()->LoadTexture("resources/testSnockWave.png");
+    TextureManager::getInstance()->LoadTexture("resources/powerUnitLaser.png");
     TextureManager::getInstance()->LoadTexture("resources/gradationLine.png");
 
     auto* gpuParticleMgr = GPUParticleManager::getInstance();
     // 新規登録
     gpuParticleMgr->CreateParticleGroup(
-        "testSnockWave", "resources/testSnockWave.png", ParticleMeshType::kSphere, kBlendModeAdd, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        "testSnockWave", "resources/powerUnitLaser.png", ParticleMeshType::kSphere, kBlendModeAdd, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 
     // 生成
     testSphereEmit_ = gpuParticleMgr->AddEmitter(
@@ -39,8 +39,8 @@ void shockWaveParticle::Initialize()
         emitterData->maxEndRotation = Vector3(0.0f, 0.0f, 6.28f);
 
         // [時間経過グラデーション設定] 
-        emitterData->minStartColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-        emitterData->maxStartColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+        emitterData->minStartColor = Vector4(1.0f, 1.0f, 1.0f, 0.4f);
+        emitterData->maxStartColor = Vector4(1.0f, 1.0f, 1.0f, 0.4f);
         emitterData->minEndColor = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
         emitterData->maxEndColor = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
     }

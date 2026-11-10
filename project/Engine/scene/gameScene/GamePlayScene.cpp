@@ -36,6 +36,7 @@
 #include "../../../Game/stage/StageManager.h"
 #include "../../../Game/stage/skydome.h"
 #include "../../../Game/stage/stageObjectManager.h"
+#include "../../3d/GPUParticleManager.h"
 
 #include "math.h"
 
@@ -388,6 +389,8 @@ void GamePlayScene::Draw()
     SkyBoxCommon::GetInstance()->PrepareObjectDraw();
 
     CPUParticleManager::getInstance()->Draw();
+
+    GPUParticleManager::getInstance()->Draw();
 
     //
     // 2d/スプライト

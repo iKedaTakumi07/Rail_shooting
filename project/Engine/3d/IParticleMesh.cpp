@@ -191,13 +191,13 @@ SphereMesh::SphereMesh(ID3D12Device* device, uint32_t latDivide, uint32_t longDi
 
             // 三角形 1
             vertexData[vIndex++] = p00;
-            vertexData[vIndex++] = p10;
             vertexData[vIndex++] = p01;
+            vertexData[vIndex++] = p10;
 
             // 三角形 2
             vertexData[vIndex++] = p01;
-            vertexData[vIndex++] = p10;
             vertexData[vIndex++] = p11;
+            vertexData[vIndex++] = p10;
         }
     }
 

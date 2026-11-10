@@ -14,7 +14,7 @@ private:
 
     Vector3 ParticlePos = { 0.0f, 0.0f, 0.0f };
     Vector3 gravity_ = { 0.0f, 0.0f, 0.0f };
-    Vector3 acceleration_ = { 1.0f, 1.0f, 1.0f };
+    Vector3 acceleration_ = { 0.0f, 0.0f, 0.0f };
     float airResistance_ = 0.1f;
     float emitTimer_ = 1.0f;
     bool autoEmit_ = false;
