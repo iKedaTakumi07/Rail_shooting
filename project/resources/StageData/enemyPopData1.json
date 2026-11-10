@@ -5,7 +5,7 @@
             "hp": 5,
             "pos": {
                 "x": 3.0,
-                "y": -6.5,
+                "y": -5.0,
                 "z": 120.0
             },
             "spawn_z": 0.0,
@@ -16,7 +16,7 @@
             "hp": 5,
             "pos": {
                 "x": -3.0,
-                "y": -6.5,
+                "y": -5.0,
                 "z": 120.0
             },
             "spawn_z": 0.0,
@@ -33,9 +33,9 @@
             "pos": {
                 "x": 5.0,
                 "y": 0.5,
-                "z": 110.0
+                "z": 170.0
             },
-            "spawn_z": 20.0,
+            "spawn_z": 0.0,
             "type": "NormalMoveEnemy"
         },
         {
@@ -49,9 +49,9 @@
             "pos": {
                 "x": -5.0,
                 "y": 0.5,
-                "z": 110.0
+                "z": 170.0
             },
-            "spawn_z": 20.0,
+            "spawn_z": 0.0,
             "type": "NormalMoveEnemy"
         },
         {
@@ -67,7 +67,39 @@
                 "y": 0.0,
                 "z": 120.0
             },
-            "spawn_z": 20.0,
+            "spawn_z": 0.0,
+            "type": "CircleMoveEnemy"
+        },
+        {
+            "MoveDirection": {
+                "x": 1.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "UseBullet": "HomingBullet",
+            "hp": 5,
+            "pos": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 125.0
+            },
+            "spawn_z": 0.0,
+            "type": "CircleMoveEnemy"
+        },
+        {
+            "MoveDirection": {
+                "x": 1.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "UseBullet": "HomingBullet",
+            "hp": 5,
+            "pos": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 130.0
+            },
+            "spawn_z": 0.0,
             "type": "CircleMoveEnemy"
         },
         {
@@ -81,11 +113,18 @@
             "pos": {
                 "x": -5.0,
                 "y": 1.0,
-                "z": 150.0
+                "z": 250.0
             },
-            "spawn_z": 30.0,
+            "spawn_z": 0.0,
             "type": "threeShotsEnemy"
         },
+       {
+      "type": "FourEyesBoss",
+      "spawn_z": 300.0,
+      "pos": { "x": 0.0, "y": 20.0, "z": 350.0 },
+      "UseBullet" : "TargetBullet",
+      "hp": 400
+    },
         {
             "MoveDirection": {
                 "x": 0.0,
@@ -97,7 +136,7 @@
             "pos": {
                 "x": 5.0,
                 "y": 1.0,
-                "z": 150.0
+                "z": 250.0
             },
             "spawn_z": 30.0,
             "type": "threeShotsEnemy"

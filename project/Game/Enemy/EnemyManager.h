@@ -34,6 +34,8 @@ public:
 
     void SpriteDraw();
 
+    void ReloadJson(const std::string& filePath = "");
+
 public:
     // Get関数
     const std::vector<std::unique_ptr<baseEnemy>>& GetEnemyes() const { return enemies_; } // 弾の入手
@@ -42,12 +44,6 @@ public:
     baseEnemy* GetEnemyById(uint32_t id) const;
 
     void LoadJsonPopData();
-    void ReloadJson()
-    {
-        enemies_.clear();
-        currentSpawnIndex_ = 0;
-        LoadJsonPopData();
-    }
 
     void PopEnemyCheck(const EnemyPopData& data);
 

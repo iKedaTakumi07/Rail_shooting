@@ -157,6 +157,25 @@ AllOBB stageObjectManager::GetAllOBB() const
     return compound;
 }
 
+void stageObjectManager::ReloadJson(const std::string& filePath)
+{
+    if (!filePath.empty()) {
+        PopObjFilePath_ = filePath;
+    }
+
+    stageObjects_.clear();
+    LoadJsonPopData(PopObjFilePath_);
+
+    // 進行中のプレイヤー位置に合わせてスポンインデックスをスキップ同期
+    currentSpawnIndex_ = 0;
+    if (player_) {
+        float currentZ = player_->GetTranslate().z;
+        while (currentSpawnIndex_ < popDatas_.size() && popDatas_[currentSpawnIndex_].spawn_Z <= currentZ) {
+            currentSpawnIndex_++;
+        }
+    }
+}
+
 void stageObjectManager::PopEnemyCheck(const stageObjectPopData& data)
 {
     auto newObj = std::make_unique<stageObject>();

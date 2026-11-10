@@ -71,6 +71,25 @@ void EnemyManager::SpriteDraw()
     }
 }
 
+void EnemyManager::ReloadJson(const std::string& filePath)
+{
+    if (!filePath.empty()) {
+        PopEnemyFilePath_ = filePath;
+    }
+
+    enemies_.clear();
+    LoadJsonPopData();
+
+    // 進行中のプレイヤー位置に合わせてスポンインデックスをスキップ同期
+    currentSpawnIndex_ = 0;
+    if (player_) {
+        float currentZ = player_->GetTranslate().z;
+        while (currentSpawnIndex_ < popDatas_.size() && popDatas_[currentSpawnIndex_].spawn_Z <= currentZ) {
+            currentSpawnIndex_++;
+        }
+    }
+}
+
 baseEnemy* EnemyManager::GetEnemyById(uint32_t id) const
 {
     if (id == 0)

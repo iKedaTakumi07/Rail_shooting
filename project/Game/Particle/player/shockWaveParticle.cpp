@@ -10,7 +10,7 @@ void shockWaveParticle::Initialize()
     auto* gpuParticleMgr = GPUParticleManager::getInstance();
     // 新規登録
     gpuParticleMgr->CreateParticleGroup(
-        "testSnockWave", "resources/testSnockWave.png", ParticleMeshType::kPlane, kBlendModeAdd, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        "testSnockWave", "resources/testSnockWave.png", ParticleMeshType::kSphere, kBlendModeAdd, Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 
     // 生成
     testSphereEmit_ = gpuParticleMgr->AddEmitter(
@@ -38,7 +38,7 @@ void shockWaveParticle::Initialize()
         emitterData->minEndRotation = Vector3(0.0f, 0.0f, 3.14f);
         emitterData->maxEndRotation = Vector3(0.0f, 0.0f, 6.28f);
 
-        // [時間経過グラデーション設定] lifeTime 1.0f (誕生時) = 赤 / 0.0f (死亡時) = 透明
+        // [時間経過グラデーション設定] 
         emitterData->minStartColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
         emitterData->maxStartColor = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
         emitterData->minEndColor = Vector4(1.0f, 1.0f, 1.0f, 0.0f);
@@ -53,8 +53,8 @@ void shockWaveParticle::Initialize()
     gpuParticleMgr->SetEmitterAutoEmit(testRingEmit_, autoEmit_);
 
     if (EmitterSphereData* ringData = gpuParticleMgr->GetEmitterData(testRingEmit_)) {
-        emitterData->minVelocity = Vector3(0.0f, 0.0f, 0.0f);
-        emitterData->maxVelocity = Vector3(0.0f, 0.0f, 0.0f);
+        ringData->minVelocity = Vector3(0.0f, 0.0f, 0.0f);
+        ringData->maxVelocity = Vector3(0.0f, 0.0f, 0.0f);
         ringData->minVelocity = Vector3(0.0f, 0.0f, 0.0f);
         ringData->maxVelocity = Vector3(0.0f, 0.0f, 0.0f);
 

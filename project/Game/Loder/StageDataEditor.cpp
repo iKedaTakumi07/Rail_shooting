@@ -87,7 +87,7 @@ void StageDataEditor::SaveEnemyJson(const std::string& filePath)
 
     // マネージャーへ即時リロード反映
     if (enemyManager_) {
-        enemyManager_->ReloadJson();
+        enemyManager_->ReloadJson(filePath);
     }
 }
 
@@ -124,7 +124,7 @@ void StageDataEditor::SaveObjectJson(const std::string& filePath)
     std::cout << "Successfully saved: " << filePath << std::endl;
 
     if (stageObjManager_) {
-        stageObjManager_->ReloadJson();
+        stageObjManager_->ReloadJson(filePath);
     }
 }
 

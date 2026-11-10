@@ -615,7 +615,7 @@ void Player::BulletUpdate()
                     // 正規化
 
                     float dist = std::sqrt(toEnemy.x * toEnemy.x + toEnemy.y * toEnemy.y + toEnemy.z * toEnemy.z);
-                    if (dist > kLongDistancePlayerTo3DReticle || dist <= 0.0f) {
+                    if (dist > kChageReticle || dist <= 0.0f) {
                         continue;
                     }
 
