@@ -1,5 +1,6 @@
 #include "Object3dCommon.h"
 #include "../base/Logger.h"
+#include "Camera.h"
 #include <cassert>
 #include <d3d12.h>
 #include <wrl.h>
@@ -57,6 +58,50 @@ void Object3dCommon::PreLineObjectDraw()
 
     // 描画トポロジを LINELIST に変更
     dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+}
+
+void Object3dCommon::DrawLines(const std::vector<Vector4>& lineVertices, Camera* camera)
+{
+    if (lineVertices.empty() || !camera)
+        return;
+
+    auto device = dxCommon_->GetDevice();
+    auto commandList = dxCommon_->GetCommandList();
+    UINT vertexCount = static_cast<UINT>(lineVertices.size());
+    UINT bufferSize = static_cast<UINT>(sizeof(Vector4) * vertexCount);
+
+    // 1. 頂点バッファの動的リサイズ / 再生成
+    if (!lineVertexBuffer_ || lineVertexBufferSize_ < bufferSize) {
+        lineVertexBuffer_ = dxCommon_->CreateBufferResource(bufferSize);
+        lineVertexBufferSize_ = bufferSize;
+
+        lineVertexBufferView_.BufferLocation = lineVertexBuffer_->GetGPUVirtualAddress();
+        lineVertexBufferView_.SizeInBytes = bufferSize;
+        lineVertexBufferView_.StrideInBytes = sizeof(Vector4);
+    }
+
+    // 2. 頂点データの転送 (Map -> Copy -> Unmap)
+    void* mappedData = nullptr;
+    lineVertexBuffer_->Map(0, nullptr, &mappedData);
+    std::memcpy(mappedData, lineVertices.data(), bufferSize);
+    lineVertexBuffer_->Unmap(0, nullptr);
+
+    // 3. WVP定数バッファの準備と転送 (b0)
+    if (!lineWvpResource_) {
+        lineWvpResource_ = dxCommon_->CreateBufferResource(sizeof(Matrix4x4));
+        lineWvpResource_->Map(0, nullptr, reinterpret_cast<void**>(&lineWvpData_));
+    }
+    *lineWvpData_ = camera->GetViewProjectionMatrix();
+
+    // 4. パイプライン状態の設定（PreLineObjectDraw を利用）
+    PreLineObjectDraw();
+
+    // 5. ルートパラメータ・バッファのセット
+    commandList->SetGraphicsRootConstantBufferView(0, lineWvpResource_->GetGPUVirtualAddress());
+    commandList->IASetVertexBuffers(0, 1, &lineVertexBufferView_);
+
+    // 6. ドローコール発行
+    commandList->DrawInstanced(vertexCount, 1, 0, 0);
 }
 #endif // USE_IMGUI
 

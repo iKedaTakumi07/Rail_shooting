@@ -862,6 +862,7 @@ void GPUParticleManager::ResourceInitialize()
 
     meshes_[ParticleMeshType::kPlane] = std::make_unique<PlaneMesh>(device);
     meshes_[ParticleMeshType::kRing] = std::make_unique<RingMesh>(device, 32, 1.0f, 0.2f);
+    meshes_[ParticleMeshType::kSphere] = std::make_unique<SphereMesh>(device, 16, 32, 1.0f);
     meshes_[ParticleMeshType::kCylinder] = std::make_unique<CylinderMesh>(device, 32, 1.0f, 1.0f, 3.0f);
     meshes_[ParticleMeshType::kTorus] = std::make_unique<TorusMesh>(device, 24, 12, 0.5f, 0.2f);
     meshes_[ParticleMeshType::kCone] = std::make_unique<ConeMesh>(device, 32, 1.0f, 2.0f);

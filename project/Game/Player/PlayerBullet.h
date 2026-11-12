@@ -4,10 +4,12 @@
 #include "../../Engine/3d/Object3d.h"
 #include "../../Engine/base/Math.h"
 #include <memory>
+#include <unordered_set>
 
 #include "../OnCollison/Collider.h"
 #include "../Particle/LaserParticle.h"
 #include "../Particle/chargeParticle.h"
+#include "../Particle/player/shockWaveParticle.h"
 
 class Camera;
 class EnemyManager;
@@ -27,9 +29,18 @@ public:
     // Get関数
     bool IsDead() const { return isDead_; }
     bool IsChargBullet() const { return isChargeBullet; }
+    bool IsAlive() const { return isAlive_; }
 
     AllAABB GetAllAABB() const override;
     AllOBB GetAllOBB() const override;
+    ColliderShape GetColliderShape() const override
+    {
+        return isShockWave ? ColliderShape::kSphere : ColliderShape::kOBB;
+    }
+    Sphere GetSphere() const override
+    {
+        return Sphere { transform_.translate, radius };
+    }
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kPlayerBullet; }
     void OnCollision(Collider* other) override;
     int GetDamage() const override;
@@ -57,12 +68,16 @@ public:
         UpdateVelocity();
     }
 
-    void SpawnImpact();
-
 private:
     void UpdateVelocity();
 
+    void SpawnImpact();
+    void shockwaveUpdate(float deltaTime);
+
 private:
+    // 多重ヒット防止
+    std::unordered_set<Collider*> hitColliders_;
+
     Transform transform_ = { 0.0f, 0.0f, 0.0f }; // 座標
     Transform Pretransform_ = { 0.0f, 0.0f, 0.0f }; // 座標
 
@@ -82,6 +97,14 @@ private:
     float chageSpeed_ = 50.0f; // 弾速
     float chageDeathTimer_ = 3.0f; // 弾の寿命（秒）
     bool isDead_ = false;
+    bool isAlive_ = false; // 衝撃波含め消滅したか
+
+    // チャージ弾衝撃波
+    float shockwaveTimer = 0.2f; // 衝撃波の寿命
+    float radius = 1.0f; // 衝撃波の半径
+    const float kExpandSpeed = 10.0f;
+    bool isShockWave = false; // 衝撃波があるか
+    bool isShockWaveDead_ = false; //
 
     uint32_t targetId_ = 0; // 追尾する対象
     int targetIndex_ = 0; // 追尾する部位の番号
@@ -89,8 +112,9 @@ private:
     EnemyManager* enemyManager_ = nullptr;
     float homingStrength_ = 0.0f; // 追ビ性能(ほぼ必中で良い)
     bool isChargeBullet = false;
-    int Dameg = 2;
-    int ChageDameg = 10;
+    int Dameg = 5; // 通常弾
+    int ChageDameg = 10; // チャージ弾(衝撃波含む)
+
     int life = 2;
 
     PointLigth pointLight_ { };
@@ -101,4 +125,5 @@ private:
 
     std::unique_ptr<LaserParticle> laserParticle_;
     std::unique_ptr<chargeParticle> chargeParticle_;
+    std::unique_ptr<shockWaveParticle> shockWaveParticle_;
 };

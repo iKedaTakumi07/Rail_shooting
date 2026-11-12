@@ -60,7 +60,7 @@ Vector3 StageManager::CalcRailPosition()
             const Vector3& p0 = (i == 0) ? p1 : points[i - 1];
             const Vector3& p3 = (i + 2 < points.size()) ? points[i + 2] : p2;
 
-            // Catmull-Rom スプライン補間を実施
+            // Catmill-Rom スプライン補間を実施
             return CatmullRom(p0, p1, p2, p3, t);
         }
     }

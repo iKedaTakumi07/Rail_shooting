@@ -139,6 +139,71 @@ CylinderMesh::CylinderMesh(ID3D12Device* device, uint32_t divide, float kTopRadi
     vertexResource_->Unmap(0, nullptr);
 }
 
+SphereMesh::SphereMesh(ID3D12Device* device, uint32_t latDivide, uint32_t longDivide, float radius)
+{
+    // 1セルにつき 2個の三角形（6頂点）
+    vertexCount_ = latDivide * longDivide * 6;
+    size_t size = sizeof(VertexData) * vertexCount_;
+    vertexResource_ = CreateBuffer(device, size);
+
+    vertexBufferView_.BufferLocation = vertexResource_->GetGPUVirtualAddress();
+    vertexBufferView_.SizeInBytes = static_cast<UINT>(size);
+    vertexBufferView_.StrideInBytes = sizeof(VertexData);
+
+    VertexData* vertexData = nullptr;
+    vertexResource_->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
+
+    float latStep = std::numbers::pi_v<float> / float(latDivide);
+    float longStep = 2.0f * std::numbers::pi_v<float> / float(longDivide);
+
+    uint32_t vIndex = 0;
+
+    for (uint32_t i = 0; i < latDivide; ++i) {
+        float phi = i * latStep;
+        float nextPhi = (i + 1) * latStep;
+
+        float v = float(i) / float(latDivide);
+        float vNext = float(i + 1) / float(latDivide);
+
+        for (uint32_t j = 0; j < longDivide; ++j) {
+            float theta = j * longStep;
+            float nextTheta = (j + 1) * longStep;
+
+            float u = float(j) / float(longDivide);
+            float uNext = float(j + 1) / float(longDivide);
+
+            // 球面座標系の計算ヘルパー
+            auto CalculateVertex = [&](float p, float t, float uVal, float vVal) -> VertexData {
+                float sinPhi = std::sin(p);
+                float cosPhi = std::cos(p);
+                float sinTheta = std::sin(t);
+                float cosTheta = std::cos(t);
+
+                Vector3 normal = { sinPhi * cosTheta, cosPhi, sinPhi * sinTheta };
+                Vector4 pos = { normal.x * radius, normal.y * radius, normal.z * radius, 1.0f };
+                return VertexData { pos, { uVal, vVal }, normal };
+            };
+
+            VertexData p00 = CalculateVertex(phi, theta, u, v);
+            VertexData p10 = CalculateVertex(nextPhi, theta, u, vNext);
+            VertexData p01 = CalculateVertex(phi, nextTheta, uNext, v);
+            VertexData p11 = CalculateVertex(nextPhi, nextTheta, uNext, vNext);
+
+            // 三角形 1
+            vertexData[vIndex++] = p00;
+            vertexData[vIndex++] = p01;
+            vertexData[vIndex++] = p10;
+
+            // 三角形 2
+            vertexData[vIndex++] = p01;
+            vertexData[vIndex++] = p11;
+            vertexData[vIndex++] = p10;
+        }
+    }
+
+    vertexResource_->Unmap(0, nullptr);
+}
+
 TorusMesh::TorusMesh(ID3D12Device* device, uint32_t tubularDivide, uint32_t radialDivide, float majorRadius, float minorRadius)
 {
     vertexCount_ = tubularDivide * radialDivide * 6;

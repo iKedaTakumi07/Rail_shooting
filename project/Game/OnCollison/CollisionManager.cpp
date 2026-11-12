@@ -1,4 +1,9 @@
 #include "CollisionManager.h"
+#include "../../Engine/3d/Camera.h"
+#include "../../Engine/3d/Object3dCommon.h"
+#include <algorithm>
+#include <numbers>
+#include <cmath>
 
 void CollisionManager::AddCollider(Collider* collider)
 {
@@ -43,12 +48,107 @@ void CollisionManager::CheckAllCollisions()
                 continue;
 
             // 交差していれば、お互いのオーバーライドされたOnCollisionを呼び出す
-            if (CheckContinuousOBBCollision(colA, colB)) {
+            if (CheckCollisionPair(colA, colB)) {
                 colA->OnCollision(colB);
                 colB->OnCollision(colA);
             }
         }
     }
+}
+
+void CollisionManager::DrawDebug(Camera* camera)
+{
+#ifdef USE_IMGUI
+    if (!camera || colliders_.empty())
+        return;
+
+    std::vector<Vector4> allLineVertices;
+
+    // 登録されている全コライダーの OBB を Vector4 頂点配列に集積
+    for (Collider* col : colliders_) {
+        if (!col)
+            continue;
+
+        if (col->GetColliderShape() == ColliderShape::kSphere) {
+            auto sphereVerts = GenerateSphereLineVertices(col->GetSphere());
+            allLineVertices.insert(allLineVertices.end(), sphereVerts.begin(), sphereVerts.end());
+        } else {
+
+            AllOBB allOBB = col->GetAllOBB();
+
+            // 全体包囲ボックス
+            auto wholeVerts = GenerateOBBLineVertices(allOBB.wholeBox);
+            allLineVertices.insert(allLineVertices.end(), wholeVerts.begin(), wholeVerts.end());
+
+            // 分割コライダー
+            for (const auto& box : allOBB.dividBoxes) {
+                auto divVerts = GenerateOBBLineVertices(box);
+                allLineVertices.insert(allLineVertices.end(), divVerts.begin(), divVerts.end());
+            }
+        }
+    }
+
+    // フレームワーク層の描画機能へ処理を委譲（ゲーム層で低レイヤー処理を行わない）
+    Object3dCommon::GetInstance()->DrawLines(allLineVertices, camera);
+#endif // USE_IMGUI
+}
+
+std::vector<Vector4> CollisionManager::GenerateOBBLineVertices(const OBB& obb)
+{
+    Vector3 extX = Multiply(obb.orientations[0], obb.size.x);
+    Vector3 extY = Multiply(obb.orientations[1], obb.size.y);
+    Vector3 extZ = Multiply(obb.orientations[2], obb.size.z);
+
+    // OBBの8つの頂点を Vector4 (w = 1.0f) で計算
+    Vector4 v[8];
+    Vector3 p[8] = {
+        obb.center - extX - extY - extZ,
+        obb.center + extX - extY - extZ,
+        obb.center + extX + extY - extZ,
+        obb.center - extX + extY - extZ,
+        obb.center - extX - extY + extZ,
+        obb.center + extX - extY + extZ,
+        obb.center + extX + extY + extZ,
+        obb.center - extX + extY + extZ
+    };
+
+    for (int i = 0; i < 8; ++i) {
+        v[i] = { p[i].x, p[i].y, p[i].z, 1.0f };
+    }
+
+    // 12本の辺（24頂点）
+    return {
+        // 底面
+        v[0], v[1], v[1], v[2], v[2], v[3], v[3], v[0],
+        // 上面
+        v[4], v[5], v[5], v[6], v[6], v[7], v[7], v[4],
+        // 側面
+        v[0], v[4], v[1], v[5], v[2], v[6], v[3], v[7]
+    };
+}
+
+std::vector<Vector4> CollisionManager::GenerateSphereLineVertices(const Sphere& sphere, uint32_t segments)
+{
+    std::vector<Vector4> vertices;
+    float step = 2.0f * std::numbers::pi_v<float> / float(segments);
+    for (uint32_t i = 0; i < segments; ++i) {
+        float r1 = i * step;
+        float r2 = (i + 1) * step;
+        float cos1 = std::cos(r1) * sphere.radius;
+        float sin1 = std::sin(r1) * sphere.radius;
+        float cos2 = std::cos(r2) * sphere.radius;
+        float sin2 = std::sin(r2) * sphere.radius;
+        // XY平面の円
+        vertices.push_back({ sphere.center.x + cos1, sphere.center.y + sin1, sphere.center.z, 1.0f });
+        vertices.push_back({ sphere.center.x + cos2, sphere.center.y + sin2, sphere.center.z, 1.0f });
+        // YZ平面の円
+        vertices.push_back({ sphere.center.x, sphere.center.y + cos1, sphere.center.z + sin1, 1.0f });
+        vertices.push_back({ sphere.center.x, sphere.center.y + cos2, sphere.center.z + sin2, 1.0f });
+        // ZX平面の円
+        vertices.push_back({ sphere.center.x + sin1, sphere.center.y, sphere.center.z + cos1, 1.0f });
+        vertices.push_back({ sphere.center.x + sin2, sphere.center.y, sphere.center.z + cos2, 1.0f });
+    }
+    return vertices;
 }
 
 bool CollisionManager::CheckAABB(const AABB& a, const AABB& b) const
@@ -134,6 +234,32 @@ bool CollisionManager::CheckOBB(const OBB& a, const OBB& b)
     return true;
 }
 
+bool CollisionManager::CheckSphereOBB(const Sphere& sphere, const OBB& obb)
+{
+    Vector3 d = sphere.center - obb.center;
+    Vector3 closestPoint = obb.center;
+
+    float sizes[3] = { obb.size.x, obb.size.y, obb.size.z };
+    for (int i = 0; i < 3; ++i) {
+        float dist = Dot(d, obb.orientations[i]);
+        dist = std::clamp(dist, -sizes[i], sizes[i]);
+        closestPoint = closestPoint + Multiply(obb.orientations[i], dist);
+    }
+
+    Vector3 diff = sphere.center - closestPoint;
+    float sqDistance = Dot(diff, diff);
+
+    return sqDistance <= (sphere.radius * sphere.radius);
+}
+
+bool CollisionManager::CheckSphereSphere(const Sphere& a, const Sphere& b)
+{
+    Vector3 diff = a.center - b.center;
+    float sqDistance = Dot(diff, diff);
+    float radiusSum = a.radius + b.radius;
+    return sqDistance <= (radiusSum * radiusSum);
+}
+
 bool CollisionManager::CheckSegmentOBB(const Segment& segment, const OBB& obb)
 {
     Vector3 p = segment.origin - obb.center;
@@ -151,7 +277,7 @@ bool CollisionManager::CheckSegmentOBB(const Segment& segment, const OBB& obb)
         float e = Dot(axis, p);
         float f = Dot(axis, d);
 
-        if (std::abs(f) > 1e-6f) {
+        if (std::abs(f) > 0.0f) {
             float t1 = (-e - halfSize) / f;
             float t2 = (-e + halfSize) / f;
 
@@ -215,6 +341,43 @@ bool CollisionManager::CheckContinuousOBBCollision(const Collider* colA, const C
         }
     }
 
+    return false;
+}
+
+bool CollisionManager::CheckCollisionPair(Collider* colA, Collider* colB)
+{
+    ColliderShape shapeA = colA->GetColliderShape();
+    ColliderShape shapeB = colB->GetColliderShape();
+
+    // 球体同士
+    if (shapeA == ColliderShape::kSphere && shapeB == ColliderShape::kSphere) {
+        return CheckSphereSphere(colA->GetSphere(), colB->GetSphere());
+    }
+
+    // 片方球体/片方OBB
+    if (shapeA == ColliderShape::kSphere && shapeB == ColliderShape::kOBB) {
+        for (const auto& box : colB->GetAllOBB().dividBoxes) {
+            if (CheckSphereOBB(colA->GetSphere(), box)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    if (shapeA == ColliderShape::kOBB && shapeB == ColliderShape::kSphere) {
+        for (const auto& box : colA->GetAllOBB().dividBoxes) {
+            if (CheckSphereOBB(colB->GetSphere(), box)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 両方OBB
+    if (shapeA == ColliderShape::kOBB && shapeB == ColliderShape::kOBB) {
+        return CheckContinuousOBBCollision(colA, colB);
+    }
+
+    // ここを通る時点で該当判定がない
     return false;
 }
 

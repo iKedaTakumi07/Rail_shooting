@@ -77,6 +77,9 @@ void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vec
     chargeParticle_ = std::make_unique<chargeParticle>();
     chargeParticle_->Initialize();
 
+    shockWaveParticle_ = std::make_unique<shockWaveParticle>();
+    shockWaveParticle_->Initialize();
+
     ResetPrevPosition(transform_.translate);
 }
 
@@ -84,6 +87,11 @@ void PlayerBullet::Update(float deltaTime)
 {
     Pretransform_ = transform_;
     UpdatePrevPosition(transform_.translate);
+
+    if (isShockWave) {
+        shockwaveUpdate(deltaTime);
+        return;
+    }
 
     baseEnemy* target = nullptr;
     if (targetId_ != 0 && enemyManager_) {
@@ -176,7 +184,9 @@ void PlayerBullet::Update(float deltaTime)
 
 void PlayerBullet::Draw()
 {
-    object3d->Draw();
+    if (!isShockWave) {
+        object3d->Draw();
+    }
 }
 
 AllAABB PlayerBullet::GetAllAABB() const
@@ -231,12 +241,25 @@ AllOBB PlayerBullet::GetAllOBB() const
 
 void PlayerBullet::OnCollision(Collider* other)
 {
+    if (!other)
+        return;
+
+    // 重複ヒットチェック（衝撃波含む）
+    if (hitColliders_.contains(other)) {
+        return;
+    }
+
     // 当たったもの次第で分岐
     if (other->GetCollisionGroup() == CollisionGroup::kEnemy) {
-        SpawnImpact();
-        isDead_ = true;
+        hitColliders_.insert(other);
+
+        if (isChargeBullet && !isShockWave) {
+            SpawnImpact();
+        } else if (!isShockWave) {
+            isDead_ = true;
+        }
     } else if (other->GetCollisionGroup() == CollisionGroup::kStageObject) {
-        SpawnImpact();
+        hitColliders_.insert(other);
         // 弾削除
         isDead_ = true;
     } else if (other->GetCollisionGroup() == CollisionGroup::kEnemyBullet) {
@@ -261,6 +284,28 @@ int PlayerBullet::GetDamage() const
 
 void PlayerBullet::SpawnImpact()
 {
+    if (shockWaveParticle_) {
+        shockWaveParticle_->Emit(transform_.translate);
+    }
+
+    isShockWave = true;
+    velocity_ = { 0.0f, 0.0f, 0.0f };
+    radius = 1.0f;
+}
+
+void PlayerBullet::shockwaveUpdate(float deltaTime)
+{
+    shockwaveTimer -= deltaTime;
+
+    // 衝撃波の半径を徐々に拡大する（広範攻撃判定）
+
+    radius += kExpandSpeed * deltaTime;
+
+    // 寿命到達で完全消滅
+    if (shockwaveTimer <= 0.0f) {
+        isShockWaveDead_ = true;
+        isDead_ = true;
+    }
 }
 
 void PlayerBullet::UpdateVelocity()

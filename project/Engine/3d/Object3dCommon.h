@@ -30,6 +30,13 @@ public:
     void PrepareCSObjectDraw();
 #ifdef USE_IMGUI
     void PreLineObjectDraw();
+
+    /// <summary>
+    /// デバッグ用の線描画を一括実行する（フレームワーク層）
+    /// </summary>
+    /// <param name="lineVertices">描画する線の頂点リスト（Vector4: x,y,z,1.0f）</param>
+    /// <param name="camera">使用するカメラ</param>
+    void DrawLines(const std::vector<Vector4>& lineVertices, Camera* camera);
 #endif // USE_IMGUI
 
     // get
@@ -85,4 +92,11 @@ private:
     // lineDraw用
     Microsoft::WRL::ComPtr<ID3D12RootSignature> lineRootSignature = nullptr;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> linePipelineState = nullptr;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> lineVertexBuffer_ = nullptr;
+    D3D12_VERTEX_BUFFER_VIEW lineVertexBufferView_ { };
+    UINT lineVertexBufferSize_ = 0;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> lineWvpResource_ = nullptr;
+    Matrix4x4* lineWvpData_ = nullptr;
 };

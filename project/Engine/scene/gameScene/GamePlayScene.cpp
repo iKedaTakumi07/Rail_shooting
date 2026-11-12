@@ -36,6 +36,7 @@
 #include "../../../Game/stage/StageManager.h"
 #include "../../../Game/stage/skydome.h"
 #include "../../../Game/stage/stageObjectManager.h"
+#include "../../3d/GPUParticleManager.h"
 
 #include "math.h"
 
@@ -85,6 +86,7 @@ void GamePlayScene::Initialize()
 
     enemyManager_ = std::make_unique<EnemyManager>();
     enemyManager_->Initialize(player, stageDataLoad::GetInstance()->GetEnemyPopData()); // 読み込むファイルを決めるクラス(インスタンス化)で作成する
+    player->SetEnemyManager(enemyManager_.get());
 
     collisionManager_ = std::make_unique<CollisionManager>();
 
@@ -134,15 +136,15 @@ void GamePlayScene::Update()
 
 #ifdef USE_IMGUI
     // リリース版使用不可
-    if (input->TriggerKey(DIK_1)) {
+    if (input->TriggerKey(DIK_T)) {
         isSceneFinished_ = true;
         SceneManager::GetInstance()->ChangeScene("TITLE");
     }
 
-    if (input->TriggerKey(DIK_9)) {
+    if (input->TriggerKey(DIK_P)) {
         CameraManager::GetInstance()->SetActiveCamera("PlayMain");
     }
-    if (input->TriggerKey(DIK_0)) {
+    if (input->TriggerKey(DIK_B)) {
         CameraManager::GetInstance()->SetActiveCamera("PlayBoss");
     }
 
@@ -234,7 +236,7 @@ void GamePlayScene::Update()
         collisionManager_->CheckAllCollisions();
 
         // 終了条件
-        if (enemyManager_->IsAllEnemiesCleared()) {
+        if (enemyManager_->IsAllEnemiesCleared() && StageManager_->IsReachedEnd()) {
             sceneState_ = SceneState::kClear;
             player->SetisClear(true);
             clearTimer_ = 0.0f;
@@ -375,9 +377,20 @@ void GamePlayScene::Draw()
 
     stageObject_->Draw();
 
+#ifdef USE_IMGUI
+    // リリース版使用不可
+    Object3dCommon::GetInstance()->PreLineObjectDraw();
+    if (sceneState_ == SceneState::kPlay) {
+        collisionManager_->DrawDebug(CameraManager::GetInstance()->GetActiveCamera());
+    }
+
+#endif // DEBUG
+
     SkyBoxCommon::GetInstance()->PrepareObjectDraw();
 
     CPUParticleManager::getInstance()->Draw();
+
+    GPUParticleManager::getInstance()->Draw();
 
     //
     // 2d/スプライト
