@@ -241,35 +241,27 @@ AllOBB PlayerBullet::GetAllOBB() const
 
 void PlayerBullet::OnCollision(Collider* other)
 {
-    if (!other)
-        return;
-
     // 重複ヒットチェック（衝撃波含む）
-    if (hitColliders_.contains(other)) {
+    if (!other || hitColliders_.contains(other)) {
         return;
     }
 
     // 当たったもの次第で分岐
     if (other->GetCollisionGroup() == CollisionGroup::kEnemy) {
+        // ヒットした対象を記録
         hitColliders_.insert(other);
 
         if (isChargeBullet && !isShockWave) {
+            // チャージショットなら巻き込みを発生
             SpawnImpact();
         } else if (!isShockWave) {
+            // 通常はそのまま消滅
             isDead_ = true;
         }
     } else if (other->GetCollisionGroup() == CollisionGroup::kStageObject) {
-        hitColliders_.insert(other);
+        hitColliders_.insert(other); // 判定のジャマ―なのでリスト入り
         // 弾削除
         isDead_ = true;
-    } else if (other->GetCollisionGroup() == CollisionGroup::kEnemyBullet) {
-        // 耐久力を消費
-        life--;
-
-        // 0なら消滅
-        if (life <= 0) {
-            isDead_ = true;
-        }
     }
 }
 

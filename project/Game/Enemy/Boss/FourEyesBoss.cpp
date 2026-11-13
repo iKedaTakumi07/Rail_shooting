@@ -273,8 +273,14 @@ void FourEyesBoss::OnCollision(Collider* other)
     // 当たったもの次第で分岐
     if (other->GetCollisionGroup() == CollisionGroup::kPlayerBullet) {
         // ダメージ処理
-        currentHp_ -= other->GetDamage();
 
+        // p弾型で変数を入れヒット済みかをチェックする
+        auto* bullet = static_cast<PlayerBullet*>(other);
+        if (bullet->HasHit(this)) {
+            return;
+        }
+
+        currentHp_ -= other->GetDamage();
         partsDamage(other);
 
         if (currentHp_ <= 0) {
@@ -359,7 +365,7 @@ void FourEyesBoss::UpdateDeathProduction(float deltaTime)
         transform_.translate.y = std::lerp(deadPos_.y, centerPos_.y, t);
 
     } else {
-        // 死亡時間までパーティクルとsclaeいじいじ
+        // 死亡時間までパーティクルとscaleいじいじ
         float scaleTimer = deathTimer - (kdeathTimer * 0.5f);
 
         const float kFrequency = 19.0f;
@@ -546,7 +552,6 @@ void FourEyesBoss::UpdateSpecialAttack(float deltaTime)
         minigunIntervalTimer_ -= deltaTime;
         if (minigunIntervalTimer_ <= 0.0f) {
 
-           
             for (size_t i = 0; i < parts_.size(); ++i) {
                 size_t targetIdx = (currentMinigunPartIndex_ + i) % parts_.size();
 
@@ -565,13 +570,12 @@ void FourEyesBoss::UpdateSpecialAttack(float deltaTime)
                     }
                     AddBullet(std::move(bullet));
 
-                    
                     currentMinigunPartIndex_ = (targetIdx + 1) % parts_.size();
                     break; // 1発発射したらループを抜ける
                 }
             }
 
-            minigunIntervalTimer_ = 0.08f; 
+            minigunIntervalTimer_ = 0.08f;
         }
 
         if (specialTimer_ >= 3.0f) {

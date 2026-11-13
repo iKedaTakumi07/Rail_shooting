@@ -30,7 +30,7 @@ public:
     void Draw();
     void SpritDraw();
 
-    // ゲッター & セッター
+    // ゲッター/セッター
     Player* GetPlayer() const { return player_.get(); }
     Collider* GetDodgeCollider() const { return dodgeCollider_.get(); }
 

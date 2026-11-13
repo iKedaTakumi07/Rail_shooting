@@ -15,11 +15,11 @@ public:
 public:
     void SetStage(int loadstage);
 
-    std::string GetStageObjectData() const { return loadStageObjectData; };
-    std::string GetStageData() const { return loadStageData; };
-    std::string GetEnemyPopData() const { return loadEnemyPopDat; };
-    int GetloadNumber() const { return loadNumber; };
-    int GetMaxStage() const { return maxStage; }
+    const std::string& GetStageObjectData() const { return loadStageObjectData; };
+    const std::string& GetStageData() const { return loadStageData; };
+    const std::string& GetEnemyPopData() const { return loadEnemyPopDat; };
+    const int GetloadNumber() const { return loadNumber; };
+    const int GetMaxStage() const { return maxStage; }
 
 private:
     stageDataLoad() = default;

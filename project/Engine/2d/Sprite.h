@@ -23,13 +23,13 @@ public:
 
     // getter
     const Vector2& GetPosition() const { return position; }
-    float GetRotation() const { return rotation; }
+    const float GetRotation() const { return rotation; }
     const Vector4& GetColor() const { return materialData->color; }
     const Vector2& GetSize() const { return size; }
     const uint32_t GettextureIndex() const { return textureIndex; }
     const Vector2& GetAnchorPoint() const { return anchorPoint; }
-    bool GetisFlipX_() const { return isFlipX_; }
-    bool GetisFlipY_() const { return isFlipY_; }
+    const bool GetisFlipX_() const { return isFlipX_; }
+    const bool GetisFlipY_() const { return isFlipY_; }
     const Vector2& GettextureLeftTop() const { return textureLeftTop; }
     const Vector2& GetextureSize() const { return textureSize; }
 
@@ -44,12 +44,12 @@ public:
         this->anchorPoint = anchorPoint;
         TransferVertices();
     }
-    void SetisFlipX_(bool isFlipX_)
+    void SetisFlipX_(const bool isFlipX_)
     {
         this->isFlipX_ = isFlipX_;
         TransferVertices();
     }
-    void SetisFlipY_(bool isFlipY_)
+    void SetisFlipY_(const bool isFlipY_)
     {
         this->isFlipY_ = isFlipY_;
         TransferVertices();
@@ -64,12 +64,12 @@ public:
         this->textureSize = textureSize;
         TransferVertices();
     }
-    void SetGaugeRateRight(float rate)
+    void SetGaugeRateRight(const float rate)
     {
         this->gaugeRateRiget_ = std::clamp(rate, 0.0f, 1.0f);
         TransferVertices();
     }
-    void SetGaugeRateTop(float rate)
+    void SetGaugeRateTop(const float rate)
     {
         this->gaugeRateTop_ = std::clamp(rate, 0.0f, 1.0f);
         TransferVertices();

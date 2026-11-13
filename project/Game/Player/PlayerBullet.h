@@ -27,9 +27,13 @@ public:
 
 public:
     // Get関数
-    bool IsDead() const { return isDead_; }
-    bool IsChargBullet() const { return isChargeBullet; }
-    bool IsAlive() const { return isAlive_; }
+    const bool IsDead() const { return isDead_; }
+    const bool IsChargBullet() const { return isChargeBullet; }
+    const bool IsAlive() const { return isAlive_; }
+    const bool HasHit(const Collider* other) const
+    {
+        return hitColliders_.contains(const_cast<Collider*>(other));
+    }
 
     AllAABB GetAllAABB() const override;
     AllOBB GetAllOBB() const override;
@@ -112,7 +116,7 @@ private:
     EnemyManager* enemyManager_ = nullptr;
     float homingStrength_ = 0.0f; // 追ビ性能(ほぼ必中で良い)
     bool isChargeBullet = false;
-    int Dameg = 5; // 通常弾
+    int Dameg = 2; // 通常弾
     int ChageDameg = 10; // チャージ弾(衝撃波含む)
 
     int life = 2;

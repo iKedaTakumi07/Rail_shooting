@@ -76,7 +76,7 @@ void StageManager::LoadStageData(const std::string& filePath)
     if (!file.is_open())
         return;
 
-    json data; // ← 注意: ここの変数名も data
+    json data; 
     try {
         file >> data;
     } catch (const json::parse_error& e) {
