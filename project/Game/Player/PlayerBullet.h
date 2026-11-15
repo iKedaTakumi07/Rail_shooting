@@ -47,6 +47,7 @@ public:
     }
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kPlayerBullet; }
     void OnCollision(Collider* other) override;
+    void PostCollisionUpdate() override;
     int GetDamage() const override;
 
     // set
@@ -81,6 +82,8 @@ private:
 private:
     // 多重ヒット防止
     std::unordered_set<Collider*> hitColliders_;
+    std::unordered_set<Collider*> pendingHitColliders_; // 現フレームでヒットしたものを記録
+    bool pendingImpact_ = false;
 
     Transform transform_ = { 0.0f, 0.0f, 0.0f }; // 座標
     Transform Pretransform_ = { 0.0f, 0.0f, 0.0f }; // 座標

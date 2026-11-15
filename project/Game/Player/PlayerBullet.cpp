@@ -249,11 +249,11 @@ void PlayerBullet::OnCollision(Collider* other)
     // 当たったもの次第で分岐
     if (other->GetCollisionGroup() == CollisionGroup::kEnemy) {
         // ヒットした対象を記録
-        hitColliders_.insert(other);
+        pendingHitColliders_.insert(other);
 
         if (isChargeBullet && !isShockWave) {
             // チャージショットなら巻き込みを発生
-            SpawnImpact();
+            pendingImpact_ = true;
         } else if (!isShockWave) {
             // 通常はそのまま消滅
             isDead_ = true;
@@ -262,6 +262,19 @@ void PlayerBullet::OnCollision(Collider* other)
         hitColliders_.insert(other); // 判定のジャマ―なのでリスト入り
         // 弾削除
         isDead_ = true;
+    }
+}
+
+void PlayerBullet::PostCollisionUpdate()
+{
+    if (!pendingHitColliders_.empty()) {
+        hitColliders_.insert(pendingHitColliders_.begin(), pendingHitColliders_.end());
+        pendingHitColliders_.clear();
+    }
+
+    if (pendingImpact_) {
+        pendingImpact_ = false;
+        SpawnImpact();
     }
 }
 

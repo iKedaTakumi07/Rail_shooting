@@ -33,6 +33,11 @@ public:
 
     virtual CollisionGroup GetCollisionGroup() const = 0;
     virtual ColliderShape GetColliderShape() const { return ColliderShape::kOBB; }
+    
+    /// <summary>
+    /// 状態更新
+    /// </summary>
+    virtual void PostCollisionUpdate() { }
 
     /// <summary>
     /// 当たり半テオ

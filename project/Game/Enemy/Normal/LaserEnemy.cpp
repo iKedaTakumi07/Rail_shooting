@@ -179,7 +179,9 @@ AllOBB LaserEnemy::GetAllOBB() const
 }
 
 void LaserEnemy::OnCollision(Collider* other)
-{ // 当たったもの次第で分岐
+{
+
+    // 当たったもの次第で分岐
     if (other->GetCollisionGroup() == CollisionGroup::kPlayerBullet) {
         // p弾型で変数を入れヒット済みかをチェックする
         auto* bullet = static_cast<PlayerBullet*>(other);
@@ -262,28 +264,36 @@ void LaserEnemy::BulletUpdate()
 
 void LaserEnemy::partsDamage(Collider* other)
 {
-    AllOBB otherAllOBB = other->GetAllOBB();
     int damage = other->GetDamage();
+    ColliderShape otherShape = other->GetColliderShape();
+
+    auto isHitPart = [&](const OBB& partOBB) -> bool {
+        if (otherShape == ColliderShape::kSphere) {
+            return CollisionManager::CheckSphereOBB(other->GetSphere(), partOBB);
+        } else {
+            AllOBB otherAllOBB = other->GetAllOBB();
+            for (const auto& otherBox : otherAllOBB.dividBoxes) {
+                if (CollisionManager::CheckOBB(partOBB, otherBox)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    };
 
     // 始点パーツの判定
     if (fromIsAvile_) {
         OBB startOBB { FromPointTransform_.translate, { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } }, { size, size, size } };
-        for (const auto& otherBox : otherAllOBB.dividBoxes) {
-            if (CollisionManager::CheckOBB(startOBB, otherBox)) {
-                starthealth_ = std::max(0, starthealth_ - damage);
-                break;
-            }
+        if (isHitPart(startOBB)) {
+            starthealth_ = std::max(0, starthealth_ - damage);
         }
     }
 
     // 終点パーツの判定
     if (toIsAvile_) {
         OBB endOBB { ToStopTransform_.translate, { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } }, { size, size, size } };
-        for (const auto& otherBox : otherAllOBB.dividBoxes) {
-            if (CollisionManager::CheckOBB(endOBB, otherBox)) {
-                lasthealth_ = std::max(0, lasthealth_ - damage);
-                break;
-            }
+        if (isHitPart(endOBB)) {
+            lasthealth_ = std::max(0, lasthealth_ - damage);
         }
     }
 
