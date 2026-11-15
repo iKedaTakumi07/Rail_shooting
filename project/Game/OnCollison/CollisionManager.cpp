@@ -2,8 +2,8 @@
 #include "../../Engine/3d/Camera.h"
 #include "../../Engine/3d/Object3dCommon.h"
 #include <algorithm>
-#include <numbers>
 #include <cmath>
+#include <numbers>
 
 void CollisionManager::AddCollider(Collider* collider)
 {
@@ -52,6 +52,12 @@ void CollisionManager::CheckAllCollisions()
                 colA->OnCollision(colB);
                 colB->OnCollision(colA);
             }
+        }
+    }
+
+    for (Collider* col : colliders_) {
+        if (col) {
+            col->PostCollisionUpdate();
         }
     }
 }

@@ -123,6 +123,12 @@ void NormalMoveEnemy::OnCollision(Collider* other)
 {
     // 当たったもの次第で分岐
     if (other->GetCollisionGroup() == CollisionGroup::kPlayerBullet) {
+        // p弾型で変数を入れヒット済みかをチェックする
+        auto* bullet = static_cast<PlayerBullet*>(other);
+        if (bullet->HasHit(this)) {
+            return;
+        }
+
         // ダメージ処理
 
         health_ -= other->GetDamage();

@@ -37,11 +37,6 @@ void FixedEnemy::Update()
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
     UpdatePrevPosition(transform_.translate);
 
-    if (transform_.translate.z - RanAwayOffset_ <= camera_->GetTranslate().z) {
-        // カメラに近いので逃走を開始する
-        isRanAway_ = true;
-    }
-
     BulletUpdate();
     if (isRanAway_) {
         WithdrawalUpdate();
@@ -103,6 +98,12 @@ void FixedEnemy::OnCollision(Collider* other)
 {
     // 当たったもの次第で分岐
     if (other->GetCollisionGroup() == CollisionGroup::kPlayerBullet) {
+        // p弾型で変数を入れヒット済みかをチェックする
+        auto* bullet = static_cast<PlayerBullet*>(other);
+        if (bullet->HasHit(this)) {
+            return;
+        }
+
         // ダメージ処理
         health_ -= other->GetDamage();
 

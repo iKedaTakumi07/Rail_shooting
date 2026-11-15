@@ -10,7 +10,7 @@
 #include "../externals/imgui/imgui.h"
 #endif
 
-using json = nlohmann::json;
+using json = nlohmann::ordered_json;
 
 void StageDataEditor::Initialize(EnemyManager* enemyManager, stageObjectManager* stageObjManager, StageManager* stageManager)
 {
@@ -80,12 +80,46 @@ void StageDataEditor::SaveEnemyJson(const std::string& filePath)
         std::sort(enemies.begin(), enemies.end(), [](const json& a, const json& b) {
             return a.value("spawn_z", 0.0f) < b.value("spawn_z", 0.0f);
         });
+
+        // 羅列を設定
+        for (auto& item : enemies) {
+            json orderedItem = json::object();
+            orderedItem["type"] = item.value("type", "FixedEnemy");
+            orderedItem["spawn_z"] = item.value("spawn_z", 0.0f);
+
+            if (item.contains("pos") && item["pos"].is_object()) {
+                orderedItem["pos"] = {
+                    { "x", item["pos"].value("x", 0.0f) },
+                    { "y", item["pos"].value("y", 0.0f) },
+                    { "z", item["pos"].value("z", 40.0f) }
+                };
+            } else {
+                orderedItem["pos"] = { { "x", 0.0f }, { "y", 0.0f }, { "z", 40.0f } };
+            }
+
+            orderedItem["UseBullet"] = item.value("UseBullet", "TargetBullet");
+            if (orderedItem["UseBullet"] == "HomingBullet" && item.contains("homingPower")) {
+                orderedItem["homingPower"] = item.value("homingPower", 0.1f);
+            }
+
+            orderedItem["hp"] = item.value("hp", 5);
+
+            if (orderedItem["type"] != "FixedEnemy" && item.contains("MoveDirection") && item["MoveDirection"].is_object()) {
+                orderedItem["MoveDirection"] = {
+                    { "x", item["MoveDirection"].value("x", 0.0f) },
+                    { "y", item["MoveDirection"].value("y", 0.0f) },
+                    { "z", item["MoveDirection"].value("z", 1.0f) }
+                };
+            }
+
+            item = std::move(orderedItem);
+        }
     }
 
-    file << rawEnemyJson_.dump(4); // インデント4で保存
+    file << rawEnemyJson_.dump(4); // 見やすいようにインデント幅を入れる
     std::cout << "Successfully saved: " << filePath << std::endl;
 
-    // マネージャーへ即時リロード反映
+    // 変更をセーブしたらマネージャーのリロード
     if (enemyManager_) {
         enemyManager_->ReloadJson(filePath);
     }
@@ -169,6 +203,7 @@ void StageDataEditor::SaveRailJson(const std::string& filePath)
 void StageDataEditor::DrawEnemyEditor()
 {
 #ifdef USE_IMGUI
+
     static char pathBuffer[256] = "resources/StageData/enemyPopData1.json";
     ImGui::InputText("File Path##Enemy", pathBuffer, sizeof(pathBuffer));
 
@@ -188,13 +223,12 @@ void StageDataEditor::DrawEnemyEditor()
     auto& enemies = rawEnemyJson_["enemies"];
 
     if (ImGui::Button("+ Add New Enemy")) {
-        json newEnemy = {
-            { "type", "FixedEnemy" },
-            { "spawn_z", 0.0f },
-            { "pos", { { "x", 0.0f }, { "y", 0.0f }, { "z", 40.0f } } },
-            { "UseBullet", "TargetBullet" },
-            { "hp", 5 }
-        };
+        json newEnemy = json::object(
+            { { "type", "FixedEnemy" },
+                { "spawn_z", 0.0f },
+                { "pos", json::object({ { "x", 0.0f }, { "y", 0.0f }, { "z", 40.0f } }) },
+                { "UseBullet", "TargetBullet" },
+                { "hp", 5 } });
         enemies.push_back(newEnemy);
     }
 
@@ -218,6 +252,7 @@ void StageDataEditor::DrawEnemyEditor()
             }
             if (ImGui::Combo("Type", &currentTypeIdx, enemyTypes, IM_ARRAYSIZE(enemyTypes))) {
                 item["type"] = enemyTypes[currentTypeIdx];
+                currentType = enemyTypes[currentTypeIdx];
             }
 
             // Spawn Z
@@ -227,6 +262,9 @@ void StageDataEditor::DrawEnemyEditor()
             }
 
             // Position
+            if (!item.contains("pos") || !item["pos"].is_object()) {
+                item["pos"] = { { "x", 0.0f }, { "y", 0.0f }, { "z", 0.0f } };
+            }
             float pos[3] = {
                 item["pos"].value("x", 0.0f),
                 item["pos"].value("y", 0.0f),
@@ -261,6 +299,11 @@ void StageDataEditor::DrawEnemyEditor()
 
             // Move Direction (Fixed以外)
             if (currentType != "FixedEnemy") {
+                // 項目がない場合初期化
+                if (!item.contains("MoveDirection") || !item["MoveDirection"].is_object()) {
+                    item["MoveDirection"] = { { "x", 0.0f }, { "y", 0.0f }, { "z", 1.0f } };
+                }
+
                 float moveDir[3] = {
                     item["MoveDirection"].value("x", 0.0f),
                     item["MoveDirection"].value("y", 0.0f),

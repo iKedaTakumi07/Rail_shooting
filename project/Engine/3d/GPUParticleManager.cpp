@@ -56,7 +56,7 @@ void GPUParticleManager::Update()
         if (!emitter.active || !emitter.mappedData)
             continue;
 
-        // 1. 任意時限射出 (TriggerEmitForDuration)
+        // 任意時間射出
         if (emitter.emitDurationTimer > 0.0f) {
             emitter.emitDurationTimer -= deltaTime;
 
@@ -70,12 +70,12 @@ void GPUParticleManager::Update()
 
             // 指定時間が経過した瞬間
             if (emitter.emitDurationTimer <= 0.0f) {
-                // 次フレームで安全にフラグを消去するため -1.0f に移行させる
+                // 次フレームで削除
                 emitter.emitDurationTimer = -1.0f;
             }
         }
-        // 2. 常時自動射出 (autoEmit)
         else if (emitter.autoEmit) {
+            // オート射出
             emitter.mappedData->frequencyTime += deltaTime;
             if (emitter.mappedData->frequency <= emitter.mappedData->frequencyTime) {
                 emitter.mappedData->frequencyTime -= emitter.mappedData->frequency;
@@ -84,16 +84,15 @@ void GPUParticleManager::Update()
                 emitter.mappedData->emit = 0;
             }
         }
-        // 3. 単発射出 (TriggerOneShot) と消去の遅延処理
         else {
-            // 外部から emit = 1, timer = 0 に設定された「トリガー直後」のフレーム
+            // 単発射出処理
             if (emitter.emitDurationTimer == 0.0f && emitter.mappedData->emit == 1) {
-                // 今フレームは emit = 1 を維持してCSEmitへ渡し、次フレームで消去させる状態へ移行
+                // 生成状態を維持し、次フレームで消去させる
                 emitter.emitDurationTimer = -1.0f;
             }
-            // 射出コマンド発行から1フレーム経過した状態 (GPU側での前フレーム処理が開始/完了している見込み)
             else if (emitter.emitDurationTimer < 0.0f) {
-                emitter.mappedData->emit = 0; // ここで初めて安全にリセット
+                // 次フレームで射出したなら削除
+                emitter.mappedData->emit = 0; // emit止め
                 emitter.emitDurationTimer = 0.0f; // 待機状態に戻す
             }
         }
@@ -108,7 +107,7 @@ void GPUParticleManager::Update()
     billboardMatrix.m[3][1] = 0.0f;
     billboardMatrix.m[3][2] = 0.0f;
 
-    // 構文エラー修正: PerView* へのポインタ宣言
+    // ビルボード
     PerView* perViewData = nullptr;
     perViewResource->Map(0, nullptr, reinterpret_cast<void**>(&perViewData));
     perViewData->viewProjection = viewProjection;

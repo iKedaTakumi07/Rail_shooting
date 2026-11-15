@@ -27,9 +27,13 @@ public:
 
 public:
     // Get関数
-    bool IsDead() const { return isDead_; }
-    bool IsChargBullet() const { return isChargeBullet; }
-    bool IsAlive() const { return isAlive_; }
+    const bool IsDead() const { return isDead_; }
+    const bool IsChargBullet() const { return isChargeBullet; }
+    const bool IsAlive() const { return isAlive_; }
+    const bool HasHit(const Collider* other) const
+    {
+        return hitColliders_.contains(const_cast<Collider*>(other));
+    }
 
     AllAABB GetAllAABB() const override;
     AllOBB GetAllOBB() const override;
@@ -43,6 +47,7 @@ public:
     }
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kPlayerBullet; }
     void OnCollision(Collider* other) override;
+    void PostCollisionUpdate() override;
     int GetDamage() const override;
 
     // set
@@ -77,6 +82,8 @@ private:
 private:
     // 多重ヒット防止
     std::unordered_set<Collider*> hitColliders_;
+    std::unordered_set<Collider*> pendingHitColliders_; // 現フレームでヒットしたものを記録
+    bool pendingImpact_ = false;
 
     Transform transform_ = { 0.0f, 0.0f, 0.0f }; // 座標
     Transform Pretransform_ = { 0.0f, 0.0f, 0.0f }; // 座標
@@ -112,7 +119,7 @@ private:
     EnemyManager* enemyManager_ = nullptr;
     float homingStrength_ = 0.0f; // 追ビ性能(ほぼ必中で良い)
     bool isChargeBullet = false;
-    int Dameg = 5; // 通常弾
+    int Dameg = 2; // 通常弾
     int ChageDameg = 10; // チャージ弾(衝撃波含む)
 
     int life = 2;

@@ -14,7 +14,7 @@ public:
     ~StageDataEditor() = default;
 
     /// <summary>
-    /// 初期化（対象のマネージャー参照をバインド）
+    /// 初期化
     /// </summary>
     void Initialize(EnemyManager* enemyManager, stageObjectManager* stageObjManager, StageManager* stageManager);
 
@@ -48,10 +48,10 @@ private:
     std::string currentObjectFilePath_ = "resources/StageData/stageObjectData1.json";
     std::string currentRailFilePath_ = "resources/StageData/stageData1.json";
 
-    // 編集用一時データ構造（nlohmann::json との相互変換用）
-    nlohmann::json rawEnemyJson_;
-    nlohmann::json rawObjectJson_;
-    nlohmann::json rawRailJson_;
+    // 編集用データ
+    nlohmann::ordered_json rawEnemyJson_;
+    nlohmann::ordered_json rawObjectJson_;
+    nlohmann::ordered_json rawRailJson_;
 
     bool isEnemyJsonLoaded_ = false;
     bool isObjectJsonLoaded_ = false;
