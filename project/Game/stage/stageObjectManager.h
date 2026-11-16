@@ -64,6 +64,8 @@ private:
     const float grauondSize = 200.0f;
     int section = 0;
 
+    const float kDespawnDistance = -50.0f; // 破棄する基準となるプレイヤーからの相対距離
+
     Player* player_ = nullptr; // ポインタ
 
     std::unique_ptr<Model> grauondModel;

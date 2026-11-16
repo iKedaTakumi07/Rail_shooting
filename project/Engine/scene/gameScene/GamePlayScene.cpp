@@ -372,10 +372,10 @@ void GamePlayScene::Draw()
     // モデルデータ
     //
     skydome_->Draw();
+    stageObject_->Draw();
+
     playerManager_->Draw();
     enemyManager_->Draw();
-
-    stageObject_->Draw();
 
 #ifdef USE_IMGUI
     // リリース版使用不可

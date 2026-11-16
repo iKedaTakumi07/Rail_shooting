@@ -85,6 +85,9 @@ void EnemyManager::ReloadJson(const std::string& filePath)
     if (player_) {
         float currentZ = player_->GetTranslate().z;
         while (currentSpawnIndex_ < popDatas_.size() && popDatas_[currentSpawnIndex_].spawn_Z <= currentZ) {
+            if (popDatas_[currentSpawnIndex_].popPosition.z >= currentZ) {
+                PopEnemyCheck(popDatas_[currentSpawnIndex_]);
+            }
             currentSpawnIndex_++;
         }
     }
@@ -112,7 +115,7 @@ void EnemyManager::LoadJsonPopData()
     if (!file.is_open())
         return;
 
-    json data; 
+    json data;
     try {
         file >> data;
     } catch (const json::parse_error& e) {
