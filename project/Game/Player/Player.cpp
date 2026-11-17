@@ -135,7 +135,7 @@ void Player::Update()
         }
     }
 
-    playerPowerUnitLaser_->NewParticle(PrePos_, transform_, kPowerUnitPos);
+    playerPowerUnitLaser_->NewParticle(PrePos_, basetransform_, kPowerUnitPos);
 
     playerObject3d->SetTranslate(transform_.translate);
     playerObject3d->SetRotate(transform_.rotate);

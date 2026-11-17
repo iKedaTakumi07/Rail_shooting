@@ -1,16 +1,18 @@
 #include "ResultUI.h"
+#include "../../Loder/GameScoreManager.h"
 #include "../Engine/base/TextureManager.h"
 #include "../Engine/base/WinApp.h"
+#include "../Engine/io/Input.h"
+#include "../Engine/scene/SceneManager.h"
 #include "../Game/Loder/stageDataLoad.h"
-#include "../../Loder/GameScoreManager.h"
 #include "../resources/nlohmann/json.hpp"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-using json = nlohmann::json;
-#include "../Engine/io/Input.h"
-#include "../Engine/scene/SceneManager.h"
 #include <random>
+#include <string>
+
+using json = nlohmann::json;
 
 void ResultUI::Initialize()
 {
@@ -18,12 +20,30 @@ void ResultUI::Initialize()
     std::random_device seedGenerator;
     randomEngine = std::mt19937(seedGenerator());
 
-    // 数字
-    for (int i = 0; i < 10; ++i) {
-        std::string path = "resources/UI/number/number" + std::to_string(i) + ".png";
-        TextureManager::getInstance()->LoadTexture(path);
-        numberList_[i] = path;
-    }
+    // Listに溜めて特定の処理でアップする仕様追加後直す
+    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber0.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber1.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber2.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber3.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber4.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber5.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber6.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber7.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber8.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber9.png");
+
+    numberList_ = {
+        "resources/UI/number/GameNumber0.png",
+        "resources/UI/number/GameNumber1.png",
+        "resources/UI/number/GameNumber2.png",
+        "resources/UI/number/GameNumber3.png",
+        "resources/UI/number/GameNumber4.png",
+        "resources/UI/number/GameNumber5.png",
+        "resources/UI/number/GameNumber6.png",
+        "resources/UI/number/GameNumber7.png",
+        "resources/UI/number/GameNumber8.png",
+        "resources/UI/number/GameNumber9.png"
+    };
 
     // 文字
     TextureManager::getInstance()->LoadTexture("resources/UI/ResultUI1.png");
@@ -37,29 +57,26 @@ void ResultUI::Initialize()
     // 撃破数を読み込む
     NumberOfDefeats = GameScoreManager::GetInstance()->GetDefeatCount();
 
-    ResultUI = std::make_unique<Sprite>();
-    ResultUI->Initialize("resources/UI/ResultUI1.png");
-    ResultUI->SetPosition(Vector2(WinApp::KClientWidth / 2.0f, WinApp::KClientHeight / 8.0f * 1.0f));
-    ResultUI->SetAnchorPoint(Vector2(0.5f, 0.5f));
+    ResultUI_ = std::make_unique<Sprite>();
+    ResultUI_->Initialize("resources/UI/ResultUI1.png");
+    ResultUI_->SetPosition(Vector2(WinApp::KClientWidth / 2.0f, WinApp::KClientHeight / 8.0f * 1.0f));
+    ResultUI_->SetAnchorPoint(Vector2(0.5f, 0.5f));
 
-    Defeats = std::make_unique<Sprite>();
-    Defeats->Initialize("resources/UI/ResultUI2.png");
-    Defeats->SetPosition(Vector2(WinApp::KClientWidth / 3.0f, WinApp::KClientHeight / 2.0f)); // 中心位置
-    Defeats->SetAnchorPoint(Vector2(0.5f, 0.5f));
+    Defeats_ = std::make_unique<Sprite>();
+    Defeats_->Initialize("resources/UI/ResultUI2.png");
+    Defeats_->SetPosition(Vector2(WinApp::KClientWidth / 3.0f, WinApp::KClientHeight / 2.0f)); // 中心位置
+    Defeats_->SetAnchorPoint(Vector2(0.5f, 0.5f));
 
-    SelectUI = std::make_unique<Sprite>();
-    SelectUI->Initialize("resources/UI/ResultUI3.png");
-    SelectUI->SetPosition(Vector2(WinApp::KClientWidth / 2.0f, WinApp::KClientHeight / 8.0f * 7.0f)); // 中心位置
-    SelectUI->SetAnchorPoint(Vector2(0.5f, 0.5f));
+    SelectUI_ = std::make_unique<Sprite>();
+    SelectUI_->Initialize("resources/UI/ResultUI3.png");
+    SelectUI_->SetPosition(Vector2(WinApp::KClientWidth / 2.0f, WinApp::KClientHeight / 8.0f * 7.0f)); // 中心位置
+    SelectUI_->SetAnchorPoint(Vector2(0.5f, 0.5f));
 
-    ResultUIBaseSize_ = ResultUI->GetSize();
-    DefeatsBaseSize_ = Defeats->GetSize();
+    ResultUIBaseSize_ = ResultUI_->GetSize();
+    DefeatsBaseSize_ = Defeats_->GetSize();
 
-    isUIDraw = false;
-
+    isUIDraw_ = false;
     SetNumber();
-
-    nowChoice = State::kSceneChange;
 }
 
 void ResultUI::Update()
@@ -67,40 +84,15 @@ void ResultUI::Update()
     auto* input = Input::GetInstance();
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
 
-    switch (nowChoice) {
-    case ResultUI::State::kSceneChange:
-        if (SpriteDrawTimer <= 0.0f) {
-            isUIDraw = true;
-            nowChoice = State::kResultUpdateNow;
-        } else {
-            SpriteDrawTimer -= deltaTime;
-        }
-        break;
-    case ResultUI::State::kResultUpdateNow:
-        ResultUIUpdate(); // 文字をモニターみたいな起動の更新
-        NumberUpdate(); // 数字変動
-        skipUpdate(); // 演出スキップ
-
-        if (isAllAnimationEnd) {
-            nowChoice = State::kResult;
-        }
-        break;
-    case ResultUI::State::kResult:
-
-        if (input->TriggerKey(DIK_RETURN)) {
-            isSelectOrder = true;
-        }
-
-        break;
-    case ResultUI::State::kReturnSelect:
-        break;
+    if (isUIDraw_ && !isAllAnimationEnd_) {
+        ResultUIUpdate(deltaTime);
+        NumberUpdate(deltaTime);
     }
 
-    ResultUI->Update();
-    Defeats->Update();
-    SelectUI->Update();
+    ResultUI_->Update();
+    Defeats_->Update();
+    SelectUI_->Update();
 
-    // 撃破数スプライトの更新
     for (auto& sprite : DefeatsNumber_) {
         if (sprite) {
             sprite->Update();
@@ -113,33 +105,49 @@ void ResultUI::Update()
     }
 }
 
-void ResultUI::Draw()
-{
-}
-
 void ResultUI::SpritDraw()
 {
-    if (isUIDraw) {
-        ResultUI->Draw();
-        Defeats->Draw();
+    if (!isUIDraw_) {
+        return;
+    }
 
-        if (isNumberAnimationEnd) {
-            for (auto& sprite : DefeatsNumber_) {
-                if (sprite) {
-                    sprite->Draw();
-                }
+    ResultUI_->Draw();
+    Defeats_->Draw();
+
+    if (isNumberAnimationEnd_) {
+        for (auto& sprite : DefeatsNumber_) {
+            if (sprite) {
+                sprite->Draw();
             }
-
-            SelectUI->Draw(); // 案内ステージ選択UI
-        } else {
-            // ダミー数字を描画
-            for (auto& sprite : animationDefeatsNumber_) {
-                if (sprite) {
-                    sprite->Draw();
-                }
+        }
+        SelectUI_->Draw(); // ステージセレクト
+    } else {
+        for (auto& sprite : animationDefeatsNumber_) {
+            if (sprite) {
+                sprite->Draw(); // ダミー演出
             }
         }
     }
+}
+
+void ResultUI::StartAnimation()
+{
+    isUIDraw_ = true;
+    animatonUITimer_ = kAnimatonUIDuration_;
+    numberAnimationTimer_ = 2.0f;
+    isUIAnimationEnd_ = false;
+    isNumberAnimationEnd_ = false;
+    isAllAnimationEnd_ = false;
+}
+
+void ResultUI::SkipAnimation()
+{
+    isAllAnimationEnd_ = true;
+    isNumberAnimationEnd_ = true;
+    isUIAnimationEnd_ = true;
+
+    ResultUI_->SetSize(ResultUIBaseSize_);
+    Defeats_->SetSize(DefeatsBaseSize_);
 }
 
 void ResultUI::SetNumber()
@@ -198,76 +206,54 @@ void ResultUI::maxEnemies()
     }
 }
 
-void ResultUI::ResultUIUpdate()
+void ResultUI::ResultUIUpdate(float deltaTime)
 {
     // 早期リターン
-    if (isUIAnimationEnd) {
+    if (isUIAnimationEnd_) {
         return;
     }
 
-    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    AnimatonUI -= deltaTime;
-    float t = std::clamp(1.0f - (AnimatonUI / kAnimatonUI), 0.0f, 1.0f);
+    animatonUITimer_ -= deltaTime;
+    float t = std::clamp(1.0f - (animatonUITimer_ / kAnimatonUIDuration_), 0.0f, 1.0f);
     if (t >= 1.0f) {
-        isUIAnimationEnd = true;
+        isUIAnimationEnd_ = true;
     }
 
-    float ResultUISizeY = ResultUIBaseSize_.y * t;
-    float DefeatsSizeY = DefeatsBaseSize_.y * t;
-
-    ResultUI->SetSize({ ResultUIBaseSize_.x, ResultUISizeY });
-    Defeats->SetSize({ DefeatsBaseSize_.x, DefeatsSizeY });
+    ResultUI_->SetSize({ ResultUIBaseSize_.x, ResultUIBaseSize_.y * t });
+    Defeats_->SetSize({ DefeatsBaseSize_.x, DefeatsBaseSize_.y * t });
 }
 
-void ResultUI::NumberUpdate()
+void ResultUI::NumberUpdate(float deltaTime)
 {
     // 早期リターン
-    if (isNumberAnimationEnd) {
+    if (isNumberAnimationEnd_) {
         return;
     }
 
-    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    numberAnimationTimer -= deltaTime;
+    numberAnimationTimer_ -= deltaTime;
 
     // 両方完了済みなら終わり
-    if (numberAnimationTimer <= 0.0f) {
-        isNumberAnimationEnd = true;
+    if (numberAnimationTimer_ <= 0.0f) {
+        isNumberAnimationEnd_ = true;
     }
-    if (isNumberAnimationEnd && isUIAnimationEnd) {
-        isAllAnimationEnd = true;
+    if (isNumberAnimationEnd_ && isUIAnimationEnd_) {
+        isAllAnimationEnd_ = true;
     }
 
     // アニメーション用のスプライトをコロコロ変える
-    if (!isNumberAnimationEnd) {
+    if (!isNumberAnimationEnd_) {
         std::uniform_int_distribution<int> dist(0, 9);
 
-        if (numberAnimationTimer <= 1.5f) {
+        if (numberAnimationTimer_ <= 1.5f) {
             animationDefeatsNumber_[0]->SetTexture(numberList_[digits[0]], false);
         } else {
             animationDefeatsNumber_[0]->SetTexture(numberList_[dist(randomEngine)], false);
         }
-        if (numberAnimationTimer <= 1.0f) {
+        if (numberAnimationTimer_ <= 1.0f) {
             animationDefeatsNumber_[1]->SetTexture(numberList_[digits[1]], false);
         } else {
             animationDefeatsNumber_[1]->SetTexture(numberList_[dist(randomEngine)], false);
         }
         animationDefeatsNumber_[2]->SetTexture(numberList_[dist(randomEngine)], false); // 位置の位は終わるまでランダム
-    }
-}
-
-void ResultUI::skipUpdate()
-{
-    // 押した場合即刻リザルト表記
-    auto* input = Input::GetInstance();
-    if (input->TriggerKey(DIK_RETURN)) {
-        nowChoice = State::kResult;
-        isAllAnimationEnd = true;
-        isNumberAnimationEnd = true;
-        isUIAnimationEnd = true;
-
-        // スプライトを戻す
-        ResultUI->SetSize(ResultUIBaseSize_);
-        Defeats->SetSize(DefeatsBaseSize_);
-        // ランダムを描画しないフラグ設定
     }
 }

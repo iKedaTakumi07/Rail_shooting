@@ -298,6 +298,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Game\Loder\StageDataEditor.cpp" />
     <ClCompile Include="Game\Player\PlayerManager.cpp" />
     <ClCompile Include="Game\Particle\player\shockWaveParticle.cpp" />
+    <ClCompile Include="Game\UI\Result\ResultObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\Particle.PS.hlsl">
@@ -716,6 +717,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\Particle\SortieChargeParticle.h" />
     <ClInclude Include="Game\Loder\StageDataEditor.h" />
     <ClInclude Include="Game\Particle\player\shockWaveParticle.h" />
+    <ClInclude Include="Game\UI\Result\ResultObject.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">

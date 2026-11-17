@@ -73,6 +73,54 @@ float Lerp(float start, float end, float t)
     return start + t * (end - start);
 }
 
+Vector3 Slerp(const Vector3& start, const Vector3& end, float t)
+{
+    // 内積
+    float dot = start.x * end.x + start.y * end.y + start.z * end.z;
+
+    // 内積がマイナスなら反転
+    Vector3 targetEnd = end;
+    if (dot < 0.0f) {
+        dot = -dot;
+        targetEnd.x = -end.x;
+        targetEnd.y = -end.y;
+        targetEnd.z = -end.z;
+    }
+
+    // ゼロ除算対策
+    if (dot > 0.9995f) {
+        Vector3 result = {
+            start.x + t * (targetEnd.x - start.x),
+            start.y + t * (targetEnd.y - start.y),
+            start.z + t * (targetEnd.z - start.z),
+
+        };
+
+        // 正規化
+        float len = std::sqrt(result.x * result.x + result.y * result.y + result.z * result.z);
+        if (len > 0.0f) {
+            result.x /= len;
+            result.y /= len;
+            result.z /= len;
+        }
+        return result;
+    }
+
+    // 計算
+    float theta = std::acos(dot);
+    float sinTheta = std::sin(theta);
+
+    float scale0 = std::sin((1.0f - t) * theta) / sinTheta;
+    float scale1 = std::sin(t * theta) / sinTheta;
+
+    return {
+        scale0 * start.x + scale1 * targetEnd.x,
+        scale0 * start.y + scale1 * targetEnd.y,
+        scale0 * start.z + scale1 * targetEnd.z,
+
+    };
+}
+
 Vector4 Slerp(const Vector4& start, const Vector4& end, float t)
 {
     // 内積

@@ -56,6 +56,7 @@ public:
 
     // set
     void SetDefaultCamera(Camera* camera) { this->Camera_ = camera; }
+    void ParticleGroupClrea() { groups_.clear(); } // 全削除
 
     // パーティクルグループの作成
     void CreateParticleGroup(
