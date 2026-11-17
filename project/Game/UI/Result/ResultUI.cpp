@@ -21,34 +21,17 @@ void ResultUI::Initialize()
     randomEngine = std::mt19937(seedGenerator());
 
     // Listに溜めて特定の処理でアップする仕様追加後直す
-    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber0.png");
-    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber1.png");
-    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber2.png");
-    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber3.png");
-    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber4.png");
-    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber5.png");
-    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber6.png");
-    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber7.png");
-    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber8.png");
-    TextureManager::getInstance()->LoadTexture("resources/UI/number/GameNumber9.png");
+    for (int i = 0; i < 10; ++i) {
+        numberList_[i] = "resources/UI/number/GameNumber" + std::to_string(i) + ".png";
+        TextureManager::getInstance()->LoadTexture(numberList_[i]);
+    }
+    TextureManager::getInstance()->FlushUploads();
 
-    numberList_ = {
-        "resources/UI/number/GameNumber0.png",
-        "resources/UI/number/GameNumber1.png",
-        "resources/UI/number/GameNumber2.png",
-        "resources/UI/number/GameNumber3.png",
-        "resources/UI/number/GameNumber4.png",
-        "resources/UI/number/GameNumber5.png",
-        "resources/UI/number/GameNumber6.png",
-        "resources/UI/number/GameNumber7.png",
-        "resources/UI/number/GameNumber8.png",
-        "resources/UI/number/GameNumber9.png"
-    };
-
-    // 文字
     TextureManager::getInstance()->LoadTexture("resources/UI/ResultUI1.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/ResultUI2.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/ResultUI3.png");
+
+    TextureManager::getInstance()->FlushUploads();
 
     // ステージの敵の数を調べる
     PopEnemyFilePath_ = stageDataLoad::GetInstance()->GetEnemyPopData();

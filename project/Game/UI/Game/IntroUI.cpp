@@ -11,6 +11,7 @@ void IntroUI::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/UI/intro/IntroStage2.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/intro/IntroMission.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/black1x1.png");
+    TextureManager::getInstance()->FlushUploads();
 
     int i = stageDataLoad::GetInstance()->GetloadNumber();
 

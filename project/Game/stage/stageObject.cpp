@@ -9,6 +9,8 @@
 void stageObject::Initialize(const std::string& patan, const Vector3& pos, const Vector3& scale)
 {
     TextureManager::getInstance()->LoadTexture("resources/stage/stageCube.png");
+    TextureManager::getInstance()->FlushUploads();
+
     ModelManager::GetInstance()->LoadModel("stage/stageCube1.obj");
     ModelManager::GetInstance()->LoadModel("stage/stageObjectCube.obj");
 

@@ -39,6 +39,7 @@ private:
 
     // 脱出演出用パラメータ
     Vector3 escapeStartCameraPos_ { 0.0f, 0.0f, 0.0f };
+    Vector3 escapeStartCameraOffset_ { 0.0f, 0.0f, 0.0f };
     Vector3 escapeBasePlayerPos_ { 0.0f, 0.0f, 0.0f };
 
     // カメラ

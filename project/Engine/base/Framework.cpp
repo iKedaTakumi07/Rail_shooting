@@ -101,7 +101,7 @@ void Framework::Initialize()
     GPUParticleManager::getInstance()->Initialize(dxCommon.get(), srvManager.get());
     GPUParticleManager::getInstance()->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());
 
-    PostProcess::GetInstance()->Initialize(dxCommon.get());
+    PostProcess::GetInstance()->Initialize(dxCommon.get(), srvManager.get());
     PostProcess::GetInstance()->SetsrvHandle(offscreenSurface->GetSRVHandle());
     PostProcess::GetInstance()->SetDepthSrvHandle(offscreenSurface->GetDepthSRVHandle());
     PostProcess::GetInstance()->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());

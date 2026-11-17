@@ -10,6 +10,8 @@
 void TitleFloating::Initialize()
 {
     TextureManager::getInstance()->LoadTexture("resources/player/1x1white.png");
+    TextureManager::getInstance()->FlushUploads();
+
     ModelManager::GetInstance()->LoadModel("player/testPlayer.obj");
 
     pattern_ = State::kIntro;

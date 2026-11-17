@@ -33,6 +33,7 @@ void Player::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/player/ChargeReticle.png");
     TextureManager::getInstance()->LoadTexture("resources/player/playerHpUI2.png");
     TextureManager::getInstance()->LoadTexture("resources/player/playerHpUI3.png");
+    TextureManager::getInstance()->FlushUploads();
 
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
 

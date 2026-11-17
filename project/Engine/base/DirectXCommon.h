@@ -35,14 +35,17 @@ public:
     // テクスチャリソースの生成
     Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureResource(const DirectX::TexMetadata& metadata);
     // テクスチャデータの転送
-    Microsoft::WRL::ComPtr<ID3D12Resource> UploadTextureData(const Microsoft::WRL::ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImages);
+    void UploadTextureData(const Microsoft::WRL::ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImages);
+
+    void FlushTextureUploads();
 
     // 初期化
     void Initialize();
 
     void PreDraw();
-
     void PostDraw();
+
+    void ExecuteCommandListAndWait();
     void FlushCommandQueue();
 
     // getter
@@ -82,10 +85,18 @@ private:
     // コマンドアロケータを生成する
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
 
+    void UploadBufferInitialize();
+    static constexpr uint64_t kUploadBufferSize_ = 32 * 1024 * 1024;
+    Microsoft::WRL::ComPtr<ID3D12Resource> uploadBuffer_;
+    uint64_t uploadBufferOffset_ = 0;
+    bool hasPendingUploads_ = false;
+    // 32MB超の超巨大テクスチャ用フォールバック一時保持リスト
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> fallbackIntermediateResources_;
+
     void swapChainInitialize();
     // スワップチェーンを生成する
     Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain;
-    DXGI_SWAP_CHAIN_DESC1 swapChainDesc {};
+    DXGI_SWAP_CHAIN_DESC1 swapChainDesc { };
 
     void DepthBufferInitialize();
     // Resourceの設定
@@ -102,7 +113,7 @@ private:
     void rtvInitialize();
     // SwapChainResource
     std::array<Microsoft::WRL::ComPtr<ID3D12Resource>, 2> swapChainResources;
-    D3D12_RENDER_TARGET_VIEW_DESC rtvDesc {};
+    D3D12_RENDER_TARGET_VIEW_DESC rtvDesc { };
 
     // ディスクリプタテーブル用の数
     static inline const int kMaxRTVCount = 16;
@@ -123,11 +134,11 @@ private:
 
     void viewportInitialize();
     // びゅーポート
-    D3D12_VIEWPORT viewport {};
+    D3D12_VIEWPORT viewport { };
 
     void scissorRectInitialize();
     // シザー矩形
-    D3D12_RECT scissorRect {};
+    D3D12_RECT scissorRect { };
 
     void dxcCompilerInitialize();
     // dxcCompilerを初期化

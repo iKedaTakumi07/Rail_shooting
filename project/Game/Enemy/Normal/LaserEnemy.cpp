@@ -19,6 +19,7 @@
 void LaserEnemy::Initialize(Vector3 pos)
 {
     TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
+    TextureManager::getInstance()->FlushUploads();
     ModelManager::GetInstance()->LoadModel("test/test.obj");
 
     fromPointObject3d = std::make_unique<Object3d>();

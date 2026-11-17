@@ -23,6 +23,7 @@ LaserBeamBullet::~LaserBeamBullet()
 void LaserBeamBullet::Initialize(Vector3 pos, const Vector3& rotation)
 {
     TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
+    TextureManager::getInstance()->FlushUploads();
     ModelManager::GetInstance()->LoadModel("test/enemytest.obj");
 
     object3d = std::make_unique<Object3d>();

@@ -1,6 +1,6 @@
 #pragma once
-#include "StringUtility.h"
 #include "../externals/DirectXTex/DirectXTex.h"
+#include "StringUtility.h"
 #include <d3d12.h>
 #include <memory>
 #include <string>
@@ -31,6 +31,9 @@ public:
 
     // テクスチャファイルの読み込み
     void LoadTexture(const std::string& filePath);
+
+    // まとめてアップロード
+    void FlushUploads();
 
     // SRVインデクスの開始番号
     uint32_t GetTextureIndexByFilePath(const std::string& filePath);

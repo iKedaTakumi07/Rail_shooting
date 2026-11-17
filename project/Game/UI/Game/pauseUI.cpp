@@ -10,6 +10,7 @@ void pauseUI::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/UI/PauseUI2.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/PauseUI3.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/PauseUI4.png");
+    TextureManager::getInstance()->FlushUploads();
 
     PauseUI1 = std::make_unique<Sprite>();
     PauseUI1->Initialize("resources/UI/PauseUI1.png");

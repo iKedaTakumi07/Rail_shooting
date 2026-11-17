@@ -14,6 +14,7 @@
 void FixedEnemy::Initialize(Vector3 pos)
 {
     TextureManager::getInstance()->LoadTexture("resources/baseEnemy/FixedEnemy.png");
+    TextureManager::getInstance()->FlushUploads();
     ModelManager::GetInstance()->LoadModel("baseEnemy/FixedEnemy.obj");
 
     fixedEnemyObject3d = std::make_unique<Object3d>();

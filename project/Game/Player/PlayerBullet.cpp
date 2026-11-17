@@ -22,6 +22,8 @@ PlayerBullet::~PlayerBullet()
 void PlayerBullet::Initialize(Camera* camera, const Vector3& position, const Vector3& rotation)
 {
     TextureManager::getInstance()->LoadTexture("resources/test/uvChecker.png");
+    TextureManager::getInstance()->FlushUploads();
+
     ModelManager::GetInstance()->LoadModel("test/test.obj");
 
     object3d = std::make_unique<Object3d>();

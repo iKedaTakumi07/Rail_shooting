@@ -16,6 +16,7 @@ using json = nlohmann::json;
 void stageObjectManager::Initialize(const std::string& filePath, Player* player)
 {
     TextureManager::getInstance()->LoadTexture("resources/stage/stageGraunod.png");
+    TextureManager::getInstance()->FlushUploads();
     ModelManager::GetInstance()->LoadModel("stage/stageGraunod.obj");
 
     PopObjFilePath_ = filePath;
@@ -36,7 +37,6 @@ void stageObjectManager::Update()
         }
     }
 
-   
     stageObjects_.erase(std::remove_if(stageObjects_.begin(), stageObjects_.end(), [&](const std::unique_ptr<stageObject>& obj) {
         if (player_) {
             float zDiff = obj->GetAllAABB().wholeBox.max.z - player_->GetTranslate().z;

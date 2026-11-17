@@ -20,9 +20,12 @@ PostProcess* PostProcess::GetInstance()
     return instance.get();
 }
 
-void PostProcess::Initialize(DirectXCommon* dxcommon)
+void PostProcess::Initialize(DirectXCommon* dxcommon, SrvManager* srvManager)
 {
+    assert(dxcommon != nullptr);
+    assert(srvManager != nullptr);
     dxCommon_ = dxcommon;
+    srvManager_ = srvManager;
 
     graphicsPipelineInitialize(dxCommon_);
 
@@ -30,6 +33,7 @@ void PostProcess::Initialize(DirectXCommon* dxcommon)
 
     AddMaskTexture("resources/noise0.png");
     AddMaskTexture("resources/noise1.png");
+    TextureManager::getInstance()->FlushUploads(); // ここはしゃあないのでそのままアップロード
 
     // 最初は0番目のテクスチャを選択状態にする
     maskTextureFilePath_ = maskTexturePaths_[selectedMaskIndex_];
@@ -653,6 +657,7 @@ void PostProcess::AddMaskTexture(const std::string& filePath)
     if (it == maskTexturePaths_.end()) {
         // 1. TextureManagerでテクスチャを読み込む（GPUへの書き込み）
         TextureManager::getInstance()->LoadTexture(filePath);
+        TextureManager::getInstance()->FlushUploads();
 
         // 2. ImGuiなどの選択リスト（std::vector）にパスを書き込む
         maskTexturePaths_.push_back(filePath);

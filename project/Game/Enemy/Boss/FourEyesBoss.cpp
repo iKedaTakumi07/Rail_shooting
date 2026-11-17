@@ -31,6 +31,8 @@ void FourEyesBoss::Initialize(Vector3 pos)
     TextureManager::getInstance()->LoadTexture("resources/EnemyUI/bossHpBar.png");
     TextureManager::getInstance()->LoadTexture("resources/EnemyUI/bossHpTank.png");
     TextureManager::getInstance()->LoadTexture("resources/EnemyUI/WARNING.png");
+    TextureManager::getInstance()->FlushUploads();
+
     ModelManager::GetInstance()->LoadModel("baseEnemy/bossEnemy.obj");
 
     object3d = std::make_unique<Object3d>();

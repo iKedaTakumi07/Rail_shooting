@@ -8,6 +8,7 @@ void clearUI::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/UI/MissionCompleted2.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/MissionCompleted3.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/MissionCompleted4.png");
+    TextureManager::getInstance()->FlushUploads();
 
     MissionCompletedSprite1 = std::make_unique<Sprite>();
     MissionCompletedSprite1->Initialize("resources/UI/MissionCompleted1.png");

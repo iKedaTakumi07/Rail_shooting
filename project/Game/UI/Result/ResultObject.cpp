@@ -9,6 +9,8 @@
 void ResultObject::Initialize()
 {
     TextureManager::getInstance()->LoadTexture("resources/player/1x1white.png");
+    TextureManager::getInstance()->FlushUploads();
+
     ModelManager::GetInstance()->LoadModel("player/Player.obj");
 
     playerObject3d_ = std::make_unique<Object3d>();
@@ -54,7 +56,7 @@ void ResultObject::StartEscape()
     escapeTimer_ = 0.0f;
     escapeBasePlayerPos_ = transform_.translate;
     if (camera_) {
-        escapeStartCameraPos_ = camera_->GetTranslate();
+        escapeStartCameraOffset_ = escapeStartCameraPos_ - transform_.translate;
     }
 }
 
@@ -92,45 +94,48 @@ void ResultObject::EscapeUpdate(float deltaTime)
 {
     escapeTimer_ += deltaTime;
     Vector3 PrePos = transform_.translate;
+    constexpr float kRotateDuration = 0.6f;
+    constexpr float kBaseClimbAngle = 0.35f;
 
     // 後方にカメラを映す
-    if (escapeTimer_ < 0.6f) {
-        float t = escapeTimer_ / 0.6f;
+    if (escapeTimer_ < kRotateDuration) {
+        float t = std::clamp(escapeTimer_ / kRotateDuration, 0.0f, 1.0f);
         float easeT = EaseInQuad(t);
 
         // 機体の更新
         transform_.translate.z += (speed_.z * 0.5f) * deltaTime;
-        transform_.rotate.x = -0.35f * easeT;
+        transform_.rotate.x = -kBaseClimbAngle * easeT;
 
         if (camera_) {
             // 機体後方へ移動
             Vector3 targetCameraPos = {
                 transform_.translate.x,
                 transform_.translate.y - 1.0f,
-                transform_.translate.z - 35.0f
+                transform_.translate.z - 15.0f
             };
 
-            Vector3 CameraPos = Slerp(escapeStartCameraPos_, targetCameraPos, easeT);
+            Vector3 CameraPos = Lerp(escapeStartCameraPos_, targetCameraPos, easeT);
             camera_->SetTranslate(CameraPos);
 
-            Vector3 toPlayer = {
-                transform_.translate.x - targetCameraPos.x,
-                transform_.translate.y - targetCameraPos.y,
-                transform_.translate.z - targetCameraPos.z
-            };
+            Vector3 toPlayer = transform_.translate - CameraPos;
 
             float yaw = std::atan2(toPlayer.x, toPlayer.z);
             float hypotXZ = std::hypot(toPlayer.x, toPlayer.z);
             float pitch = std::atan2(-toPlayer.y, hypotXZ);
-            camera_->SetRotate({ pitch, -yaw, 0.0f });
+            camera_->SetRotate({ pitch, yaw, 0.0f });
         }
     } else { // 高速移動
-        float boostTime = escapeTimer_ - 0.6f;
+        float boostTime = escapeTimer_ - kRotateDuration;
         float accel = 300.0f * boostTime;
+        float moveSpeed = speed_.z + accel;
 
         // 角度を上げてY/Z急上昇離脱
-        transform_.translate.y += std::sin(0.35f) * (speed_.z + accel) * deltaTime;
-        transform_.translate.z += std::sin(0.35f) * (speed_.z + accel) * deltaTime;
+        float climbRate = std::clamp(boostTime / 0.8f, 0.0f, 1.0f);
+        float climbAngle = kBaseClimbAngle + 0.30f * climbRate;
+        transform_.rotate.x = -climbAngle;
+
+        transform_.translate.y += std::sin(climbAngle) * moveSpeed * deltaTime;
+        transform_.translate.z += std::cos(climbAngle) * moveSpeed * deltaTime;
 
         // カメラは追尾停止
         if (camera_) {
@@ -138,8 +143,11 @@ void ResultObject::EscapeUpdate(float deltaTime)
             Vector3 toPlayer = transform_.translate - cameraPos;
             float yaw = std::atan2(toPlayer.x, toPlayer.z);
             float hypotXZ = std::hypot(toPlayer.x, toPlayer.z);
-            float pitch = std::atan2(-toPlayer.y, hypotXZ);
-            camera_->SetRotate({ pitch, yaw, 0.0f });
+            float targetPitch = std::atan2(-toPlayer.y, hypotXZ);
+
+            Vector3 currentRot = camera_->GetRotate();
+            float dampedPitch = currentRot.x + (targetPitch - currentRot.x) * std::clamp(2.0f * deltaTime, 0.0f, 1.0f);
+            camera_->SetRotate({ dampedPitch, yaw, 0.0f });
         }
     }
 

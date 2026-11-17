@@ -484,6 +484,7 @@ void CPUParticleManager::CreateParticleGroup(const std::string name, const std::
 
     // テクスチャ読み込み
     TextureManager::getInstance()->LoadTexture(textureFilePath);
+    TextureManager::getInstance()->FlushUploads();
 
     // SRVインデクス取得
     uint32_t textureSrvIndex = TextureManager::getInstance()->GetSrvIndex(textureFilePath);

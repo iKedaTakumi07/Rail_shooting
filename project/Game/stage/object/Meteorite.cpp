@@ -10,6 +10,8 @@
 void Meteorite::Initialize()
 {
     TextureManager::getInstance()->LoadTexture("resources/skydone/meteorite.png");
+    TextureManager::getInstance()->FlushUploads();
+
     ModelManager::GetInstance()->LoadModel("skydone/metrorite.obj");
 
     std::random_device seedGenerator;

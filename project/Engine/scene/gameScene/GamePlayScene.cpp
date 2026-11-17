@@ -67,6 +67,7 @@ void GamePlayScene::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/uvChecker.png");
     TextureManager::getInstance()->LoadTexture("resources/monsterBall.png");
     TextureManager::getInstance()->LoadTexture("resources/rostock_laage_airport_4k.dds");
+    TextureManager::getInstance()->FlushUploads();
 
     skydox = std::make_unique<Skybox>();
     skydox->Initialize("resources/rostock_laage_airport_4k.dds");

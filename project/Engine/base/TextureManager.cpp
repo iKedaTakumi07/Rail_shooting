@@ -95,9 +95,14 @@ void TextureManager::LoadTexture(const std::string& filePath)
     // SRVの生成
     srvManager->CreateSRVforTexture2D(textureData.srvIndex, textureData.resource.Get(), textureData.metadata, UINT(textureData.metadata.mipLevels));
 
-    Microsoft::WRL::ComPtr<ID3D12Resource> intermediateResource = dxCommon->UploadTextureData(textureData.resource, mipImages);
+    dxCommon->UploadTextureData(textureData.resource, mipImages);
+}
 
-    /*UploadTextureData内に転送確定後に解放処理しているためいらないはず*/
+void TextureManager::FlushUploads()
+{
+    if (dxCommon) {
+        dxCommon->FlushTextureUploads();
+    }
 }
 
 uint32_t TextureManager::GetTextureIndexByFilePath(const std::string& filePath)

@@ -23,6 +23,8 @@ using json = nlohmann::json;
 void EnemyManager::Initialize(Player* player, const std::string& filePath)
 {
     TextureManager::getInstance()->LoadTexture("resources/baseEnemy/FixedEnemy.png");
+    TextureManager::getInstance()->FlushUploads();
+
     ModelManager::GetInstance()->LoadModel("baseEnemy/FixedEnemy.obj");
 
     player_ = player;
