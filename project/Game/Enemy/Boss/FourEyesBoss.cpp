@@ -70,8 +70,7 @@ void FourEyesBoss::Initialize(Vector3 pos)
     ResetPrevPosition(transform_.translate);
 
     hasTriggeredHalfHpSpecial_ = false;
-    isSpecialAttacking_ = false;
-    specialState_ = SpecialState::kNone;
+    currentSpecialState_ = nullptr;
     isStaggeredFiring_ = false;
 }
 
@@ -94,15 +93,12 @@ void FourEyesBoss::Update()
     float hpRate = GetHpRate();
     if (!hasTriggeredHalfHpSpecial_ && hpRate <= 0.5f) {
         hasTriggeredHalfHpSpecial_ = true;
-        isSpecialAttacking_ = true;
-        specialState_ = SpecialState::kReturnToCenter;
-        specialTimer_ = 0.0f;
-        specialStartPos_ = transform_.translate;
+        ChangeSpecialState(std::make_unique<BossReturnToCenterState>());
         isStaggeredFiring_ = false; // 通常時差攻撃を中断
     }
 
-    // 2. 特殊フェーズ処理（割り込み）
-    if (isSpecialAttacking_) {
+    // 特殊フェーズ処理
+    if (currentSpecialState_) {
         UpdateSpecialAttack(deltaTime);
         UIUpdate();
         object3d->Update();
@@ -347,6 +343,7 @@ void FourEyesBoss::StartDeathProduction()
     isDeadMoveCompletion_ = false;
     deadPos_ = transform_.translate;
     deathTimer = 0.0f;
+    currentSpecialState_.reset();
 }
 
 void FourEyesBoss::UpdateDeathProduction(float deltaTime)
@@ -386,6 +383,68 @@ void FourEyesBoss::UpdateDeathProduction(float deltaTime)
     object3d->SetTranslate(transform_.translate);
     object3d->SetRotate(transform_.rotate);
     object3d->Update();
+}
+
+void FourEyesBoss::ChangeSpecialState(std::unique_ptr<IBossSpecialState> nextState)
+{
+    if (currentSpecialState_) {
+        currentSpecialState_->Exit(*this);
+    }
+    currentSpecialState_ = std::move(nextState);
+    if (currentSpecialState_) {
+        currentSpecialState_->Enter(*this);
+    }
+}
+
+void FourEyesBoss::OnSpecialAttackFinished()
+{
+    if (currentSpecialState_) {
+        currentSpecialState_->Exit(*this);
+        currentSpecialState_.reset();
+    }
+    interval = maxInterval; // タイマーリセット
+    moveTimer_ = 0.0f;
+    ResetPrevPosition(transform_.translate);
+}
+
+Vector3 FourEyesBoss::GetSpecialTargetCenter() const
+{
+    float camZ = camera_ ? camera_->GetTranslate().z : (transform_.translate.z - offsetPosZ);
+    return { centerPos_.x, centerPos_.y, camZ + offsetPosZ };
+}
+
+void FourEyesBoss::SetSpecialPosition(const Vector3& pos)
+{
+    transform_.translate = pos;
+    if (object3d) {
+        object3d->SetTranslate(transform_.translate);
+    }
+}
+
+void FourEyesBoss::FireMinigunFromNextPart(size_t& partIndex)
+{
+    for (size_t i = 0; i < parts_.size(); ++i) {
+        size_t targetIdx = (partIndex + i) % parts_.size();
+
+        if (parts_[targetIdx].hp > 0) {
+            const auto& part = parts_[targetIdx];
+
+            auto bullet = std::make_unique<TargetBullet>();
+            Vector3 pos = {
+                transform_.translate.x + part.muzzleOffset.x,
+                transform_.translate.y + part.muzzleOffset.y,
+                transform_.translate.z + part.muzzleOffset.z
+            };
+            bullet->Initialize(pos, transform_.rotate);
+            if (player_) {
+                bullet->SetTargetPosition(player_->GetTranslate());
+            }
+            AddBullet(std::move(bullet));
+
+            partIndex = (targetIdx + 1) % parts_.size();
+            break; // 1発発射したらループを抜ける
+        }
+    }
 }
 
 void FourEyesBoss::FireFourWayBullets()
@@ -522,86 +581,8 @@ void FourEyesBoss::partsDamage(Collider* other)
 
 void FourEyesBoss::UpdateSpecialAttack(float deltaTime)
 {
-    specialTimer_ += deltaTime;
-
-    Vector3 camPos = camera_->GetTranslate();
-    Vector3 targetCenter = { centerPos_.x, centerPos_.y, camPos.z + offsetPosZ };
-
-    switch (specialState_) {
-    case SpecialState::kReturnToCenter: {
-        // 1.0秒かけて画面中央へ戻る
-        constexpr float kReturnDuration = 1.0f;
-        float t = std::clamp(specialTimer_ / kReturnDuration, 0.0f, 1.0f);
-
-        transform_.translate.x = std::lerp(specialStartPos_.x, targetCenter.x, t);
-        transform_.translate.y = std::lerp(specialStartPos_.y, targetCenter.y, t);
-        transform_.translate.z = targetCenter.z;
-
-        object3d->SetTranslate(transform_.translate);
-
-        if (t >= 1.0f) {
-            specialState_ = SpecialState::kMinigunFire;
-            specialTimer_ = 0.0f;
-            minigunIntervalTimer_ = 0.0f;
-            currentMinigunPartIndex_ = 0;
-        }
-        break;
-    }
-    case SpecialState::kMinigunFire: {
-        transform_.translate = targetCenter;
-        object3d->SetTranslate(transform_.translate);
-
-        minigunIntervalTimer_ -= deltaTime;
-        if (minigunIntervalTimer_ <= 0.0f) {
-
-            for (size_t i = 0; i < parts_.size(); ++i) {
-                size_t targetIdx = (currentMinigunPartIndex_ + i) % parts_.size();
-
-                if (parts_[targetIdx].hp > 0) {
-                    const auto& part = parts_[targetIdx];
-
-                    auto bullet = std::make_unique<TargetBullet>();
-                    Vector3 pos = {
-                        transform_.translate.x + part.muzzleOffset.x,
-                        transform_.translate.y + part.muzzleOffset.y,
-                        transform_.translate.z + part.muzzleOffset.z
-                    };
-                    bullet->Initialize(pos, transform_.rotate);
-                    if (player_) {
-                        bullet->SetTargetPosition(player_->GetTranslate());
-                    }
-                    AddBullet(std::move(bullet));
-
-                    currentMinigunPartIndex_ = (targetIdx + 1) % parts_.size();
-                    break; // 1発発射したらループを抜ける
-                }
-            }
-
-            minigunIntervalTimer_ = 0.08f;
-        }
-
-        if (specialTimer_ >= 3.0f) {
-            specialState_ = SpecialState::kStunned;
-            specialTimer_ = 0.0f;
-        }
-        break;
-    }
-    case SpecialState::kStunned: {
-        // 3.0秒間、完全停止（盛大な隙）
-        transform_.translate = targetCenter;
-        object3d->SetTranslate(transform_.translate);
-
-        if (specialTimer_ >= 3.0f) {
-            isSpecialAttacking_ = false;
-            specialState_ = SpecialState::kNone;
-            interval = maxInterval; // タイマーリセット
-            moveTimer_ = 0.0f;
-            ResetPrevPosition(transform_.translate);
-        }
-        break;
-    }
-    default:
-        break;
+    if (currentSpecialState_) {
+        currentSpecialState_->Update(*this, deltaTime);
     }
 
     if (player_) {
@@ -678,9 +659,10 @@ void FourEyesBoss::ExecuteLaserFire()
     size_t idxA = 0;
     size_t idxB = 1;
     if (activePositions.size() > 2) {
-        idxA = std::rand() % activePositions.size();
+        std::uniform_int_distribution<size_t> dist(0, activePositions.size() - 1);
+        idxA = dist(randomEngine);
         do {
-            idxB = std::rand() % activePositions.size();
+            idxB = dist(randomEngine);
         } while (idxA == idxB);
     }
 
