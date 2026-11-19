@@ -160,6 +160,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\scene\gameState\GamePlayState.cpp" />
     <ClCompile Include="Game\Particle\ExplosionParticle.cpp" />
     <ClCompile Include="Game\UI\Game\GameOverUI.cpp" />
     <ClCompile Include="Game\Particle\blackSmokeParticle.cpp" />
@@ -300,6 +301,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Game\Player\PlayerManager.cpp" />
     <ClCompile Include="Game\Particle\player\shockWaveParticle.cpp" />
     <ClCompile Include="Game\UI\Result\ResultObject.cpp" />
+    <ClCompile Include="Game\Player\PlayerState.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\Particle.PS.hlsl">
@@ -574,6 +576,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\scene\gameState\GamePlayState.h" />
     <ClInclude Include="Game\Particle\ExplosionParticle.h" />
     <ClInclude Include="Game\UI\Game\GameOverUI.h" />
     <ClInclude Include="Game\Particle\blackSmokeParticle.h" />
@@ -694,6 +697,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Game\UI\Game\IntroUI.h" />
     <ClInclude Include="Game\Player\PlayerManager.h" />
     <ClInclude Include="Game\Enemy\Boss\FourEyesBossState.h" />
+    <ClInclude Include="Game\Player\PlayerState.h" />
     <ClInclude Include="resources\nlohmann\json.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

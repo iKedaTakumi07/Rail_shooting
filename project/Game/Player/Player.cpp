@@ -37,9 +37,6 @@ void Player::Initialize()
 
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
 
-    isClear = false;
-    isIntro = true;
-
     playerObject3d = std::make_unique<Object3d>();
     playerObject3d->Initialize();
 
@@ -81,6 +78,26 @@ void Player::Initialize()
     explosionParticle_->Initialize();
 
     ResetPrevPosition(basetransform_.translate);
+
+    ChangeState(std::make_unique<PlayerIntroState>());
+}
+
+void Player::ChangeState(std::unique_ptr<IPlayerState> nextState)
+{
+    if (currentState_) {
+        currentState_->Exit(*this);
+    }
+    currentState_ = std::move(nextState);
+    if (currentState_) {
+        currentState_->Enter(*this);
+    }
+}
+
+void Player::SetisClear(bool num)
+{
+    if (num) {
+        ChangeState(std::make_unique<PlayerClearState>());
+    }
 }
 
 void Player::Update()
@@ -89,140 +106,30 @@ void Player::Update()
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
     UpdatePrevPosition(basetransform_.translate);
 
-    // 爆発したのなら煙エフェクトのみ
-    if (isExplosion) {
-        UpdateExplosion();
-        return;
+    if (currentState_) {
+        currentState_->Update(*this, deltaTime);
     }
-
-    if (!isDead_) {
-        // 無敵時間の処理
-        if (isinvincible) {
-            invincibleTime -= deltaTime;
-            const float kBlinkInterval = 0.1f; // 点滅周期
-
-            if (std::fmod(invincibleTime, kBlinkInterval * 2.0f) > kBlinkInterval) {
-                playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 0.5f));
-            } else {
-                playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            }
-
-            if (invincibleTime <= 0.0f) {
-                isinvincible = false;
-                playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-            }
-        }
-
-        MoveUpdate();
-        BulletUpdate();
-        ReticleUpdate();
-    } else {
-        UpdateDead();
-    }
-
-    for (auto it = afterImages_.begin(); it != afterImages_.end();) {
-        it->currentLifeTime += deltaTime;
-        if (it->currentLifeTime >= it->maxLifeTime) {
-            it = afterImages_.erase(it);
-        } else {
-            float progress = it->currentLifeTime / it->maxLifeTime;
-            float currentAlpha = it->alpha * (1.0f - progress);
-
-            if (it->object3d) {
-                it->AfterImageModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, currentAlpha));
-                it->object3d->Update();
-            }
-            ++it;
-        }
-    }
-
-    playerPowerUnitLaser_->NewParticle(PrePos_, basetransform_, kPowerUnitPos);
-
-    playerObject3d->SetTranslate(transform_.translate);
-    playerObject3d->SetRotate(transform_.rotate);
-
-    playerObject3d->Update();
-    playerObject3d->DrawImGui("Player");
-
-    UIUpdate();
 }
 
 void Player::UpdateIntro(float progress)
 {
-    if (progress >= 1.0f) {
-        isIntro = false;
+    camera_ = CameraManager::GetInstance()->GetActiveCamera();
+    if (auto* introState = dynamic_cast<PlayerIntroState*>(currentState_.get())) {
+        introState->UpdateWithProgress(*this, progress);
     }
-
-    PrePos_ = basetransform_.translate;
-
-    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    idleTimer_ += deltaTime;
-
-    // 入力を無視し、レール座標にそのまま追従
-    basetransform_.translate = railBasePos_;
-
-    constexpr float kIntroStartProgress = 0.2f;
-    constexpr float kIntroEndProgress = 0.4f;
-    constexpr float kCameraBehindOffsetZ = -30.0f;
-
-    float zOffset = 0.0f;
-
-    if (progress < kIntroStartProgress) {
-
-        zOffset = kCameraBehindOffsetZ;
-    } else if (progress < kIntroEndProgress) {
-
-        float subProgress = (progress - kIntroStartProgress) / (kIntroEndProgress - kIntroStartProgress);
-        subProgress = std::clamp(subProgress, 0.0f, 1.0f);
-
-        float easeT = 1.0f - std::pow(1.0f - subProgress, 3.0f);
-
-        zOffset = kCameraBehindOffsetZ * (1.0f - easeT);
-    } else {
-
-        zOffset = 0.0f;
-    }
-
-    basetransform_.translate.z += zOffset;
-
-    float length = 0.0f; // 横上下移動しないので0.0f固定
-
-    HoverUpdate(length); // 揺れ処理のみ適用
-    ReticleUpdate();
-
-    playerPowerUnitLaser_->NewParticle(PrePos_, transform_, kPowerUnitPos);
-
-    playerObject3d->SetTranslate(transform_.translate);
-    playerObject3d->SetRotate(transform_.rotate);
-    playerObject3d->Update();
-    UIUpdate();
 }
 
 void Player::UpdateClear()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    idleTimer_ += deltaTime;
-
-    // 奥に進みながら上昇 (数値は要調整)
-    basetransform_.translate.z += 40.0f * deltaTime;
-    basetransform_.translate.y += 15.0f * deltaTime;
-
-    float length = 0.0f; // 横上下移動しないので0.0f固定
-
-    HoverUpdate(length);
-    BulletUpdate();
-
-    // 前の角度から戻すため
-    transform_.rotate = { 0.0f, 0.0f, 0.0f };
-
-    playerObject3d->SetTranslate(transform_.translate);
-    playerObject3d->SetRotate(transform_.rotate);
-    playerObject3d->Update();
+    if (currentState_) {
+        currentState_->Update(*this, deltaTime);
+    }
 }
 
 void Player::Draw()
 {
-    if (!isExplosion) {
+    if (!currentState_ || currentState_->ShouldDrawModel()) {
         playerObject3d->Draw();
     }
 
@@ -239,7 +146,7 @@ void Player::Draw()
 
 void Player::SpritDraw()
 {
-    if (isClear || isIntro) {
+    if (currentState_ && !currentState_->ShouldDrawHud()) {
         return;
     }
 
@@ -250,10 +157,8 @@ void Player::SpritDraw()
         ChargeReticleSprite->Draw();
     }
 
-    if (!isClear && !isIntro) {
-        ShortReticleSprite->Draw();
-        LongReticleSprite->Draw();
-    }
+    ShortReticleSprite->Draw();
+    LongReticleSprite->Draw();
 }
 
 AllAABB Player::GetAllAABB() const
@@ -285,58 +190,197 @@ AllOBB Player::GetDodgeOBB() const
 
 void Player::OnCollision(Collider* other)
 {
-    // 無敵状態はスルー
-    if (isinvincible || isClear)
-        return;
+    if (currentState_) {
+        currentState_->OnCollision(*this, other);
+    }
+}
 
-    // 死亡中は即爆状態
-    if (isDead_) {
-        if (other->GetCollisionGroup() == CollisionGroup::kStageObject) {
-            isExplosion = true;
-            explosionInitialize();
-        }
-        return;
+void Player::UpdateInvincibleBlink(float remainingTime)
+{
+    const float kBlinkInterval = 0.1f; // 点滅周期
+    if (std::fmod(remainingTime, kBlinkInterval * 2.0f) > kBlinkInterval) {
+        playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 0.5f));
+    } else {
+        playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+    }
+}
+
+void Player::ResetMaterialColor()
+{
+    if (playerModel) {
+        playerModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+    }
+}
+
+void Player::ExecuteIntroStep(float progress)
+{
+    PrePos_ = basetransform_.translate;
+
+    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
+    idleTimer_ += deltaTime;
+
+    basetransform_.translate = railBasePos_;
+
+    constexpr float kIntroStartProgress = 0.2f;
+    constexpr float kIntroEndProgress = 0.4f;
+    constexpr float kCameraBehindOffsetZ = -30.0f;
+
+    float zOffset = 0.0f;
+    if (progress < kIntroStartProgress) {
+        zOffset = kCameraBehindOffsetZ;
+    } else if (progress < kIntroEndProgress) {
+        float subProgress = (progress - kIntroStartProgress) / (kIntroEndProgress - kIntroStartProgress);
+        subProgress = std::clamp(subProgress, 0.0f, 1.0f);
+        float easeT = 1.0f - std::pow(1.0f - subProgress, 3.0f);
+        zOffset = kCameraBehindOffsetZ * (1.0f - easeT);
     }
 
-    // 当たったもの次第で分岐
+    basetransform_.translate.z += zOffset;
+
+    HoverUpdate(0.0f);
+    ReticleUpdate();
+
+    playerPowerUnitLaser_->NewParticle(PrePos_, transform_, kPowerUnitPos);
+
+    playerObject3d->SetTranslate(transform_.translate);
+    playerObject3d->SetRotate(transform_.rotate);
+    playerObject3d->Update();
+    UIUpdate();
+}
+
+void Player::ExecuteActiveControlStep(float deltaTime)
+{
+    (void)deltaTime;
+    MoveUpdate();
+    BulletUpdate();
+    ReticleUpdate();
+}
+
+void Player::ExecuteCommonAliveStep(float deltaTime)
+{
+    for (auto it = afterImages_.begin(); it != afterImages_.end();) {
+        it->currentLifeTime += deltaTime;
+        if (it->currentLifeTime >= it->maxLifeTime) {
+            it = afterImages_.erase(it);
+        } else {
+            float progress = it->currentLifeTime / it->maxLifeTime;
+            float currentAlpha = it->alpha * (1.0f - progress);
+
+            if (it->object3d) {
+                it->AfterImageModel->SetMaterialColor(Vector4(1.0f, 1.0f, 1.0f, currentAlpha));
+                it->object3d->Update();
+            }
+            ++it;
+        }
+    }
+
+    playerPowerUnitLaser_->NewParticle(PrePos_, basetransform_, kPowerUnitPos);
+
+    playerObject3d->SetTranslate(transform_.translate);
+    playerObject3d->SetRotate(transform_.rotate);
+
+    playerObject3d->Update();
+    playerObject3d->DrawImGui("Player");
+
+    UIUpdate();
+}
+
+void Player::ExecuteClearStep(float deltaTime)
+{
+    idleTimer_ += deltaTime;
+
+    basetransform_.translate.z += 40.0f * deltaTime;
+    basetransform_.translate.y += 15.0f * deltaTime;
+
+    HoverUpdate(0.0f);
+
+    // クリア中は新規発射せず既存の弾のみ更新
+    for (auto& bullet_ : playerBullets_) {
+        bullet_->Update(deltaTime);
+    }
+    std::erase_if(playerBullets_, [](const std::unique_ptr<PlayerBullet>& bullet) {
+        return bullet->IsDead();
+    });
+
+    transform_.rotate = { 0.0f, 0.0f, 0.0f };
+
+    playerObject3d->SetTranslate(transform_.translate);
+    playerObject3d->SetRotate(transform_.rotate);
+    playerObject3d->Update();
+}
+
+void Player::HandleActiveCollision(Collider* other)
+{
     if (other->GetCollisionGroup() == CollisionGroup::kEnemyBullet || other->GetCollisionGroup() == CollisionGroup::kEnemy) {
-        int damege = other->GetDamage();
-        hp_ -= damege;
-
+        hp_ -= other->GetDamage();
         hasInstantCharge_ = false;
 
-        // 死んだら墜落状態
         if (hp_ <= 0) {
-            isDead_ = true;
-            DeadInitialize();
+            ChangeState(std::make_unique<PlayerDeadState>());
             return;
         }
 
-        // 無敵時間のフラグ実行
-        isinvincible = true;
-        invincibleTime = kInvincibleTime;
+        ChangeState(std::make_unique<PlayerInvincibleState>());
     } else if (other->GetCollisionGroup() == CollisionGroup::kStageObject) {
-        int damege = other->GetDamage();
-        hp_ -= damege;
-
-        // 無敵時間のフラグ実行
-        isinvincible = true;
-        invincibleTime = kInvincibleTime;
-
+        hp_ -= other->GetDamage();
         hasInstantCharge_ = false;
 
         if (hp_ <= 0) {
-            // 即爆発
-            isExplosion = true;
-            isDead_ = true;
-            explosionInitialize();
-
+            ChangeState(std::make_unique<PlayerExplosionState>());
             return;
         }
 
-        // 押し出し処理
         ColliderUpdate(other);
+        ChangeState(std::make_unique<PlayerInvincibleState>());
     }
+}
+
+void Player::DeadInitialize()
+{
+    ExplosionTimer = kExplosionTimer;
+
+    deadAngularVelocity_.x = 3.0f;
+    deadAngularVelocity_.y = 2.0f;
+    deadAngularVelocity_.z = 5.0f;
+
+    velocity_.z = kCharacterSpeed * 0.8f;
+    velocity_.y = 0.0f;
+}
+
+bool Player::UpdateDeadStep(float deltaTime)
+{
+    ExplosionTimer -= deltaTime;
+    if (ExplosionTimer <= 0.0f) {
+        return true; // 爆発ステートへ遷移する合図
+    }
+
+    constexpr float kGravity = 15.0f;
+    velocity_.y -= kGravity * deltaTime;
+
+    localPos_.x += (lastDir.x * kAcceleration + velocity_.x) * 0.5f;
+    localPos_.y += velocity_.y * deltaTime;
+
+    basetransform_.translate.x = railBasePos_.x + localPos_.x;
+    basetransform_.translate.y = railBasePos_.y + localPos_.y;
+    basetransform_.translate.z = railBasePos_.z + localPos_.z;
+
+    basetransform_.rotate.x += deadAngularVelocity_.x * deltaTime;
+    basetransform_.rotate.y += deadAngularVelocity_.y * deltaTime;
+    basetransform_.rotate.z += deadAngularVelocity_.z * deltaTime;
+
+    transform_.translate = basetransform_.translate;
+    transform_.rotate = basetransform_.rotate;
+
+    blackSmokeParticle_->NewParticle(basetransform_);
+
+    for (auto& bullet : playerBullets_) {
+        bullet->Update(deltaTime);
+    }
+    std::erase_if(playerBullets_, [](const std::unique_ptr<PlayerBullet>& bullet) {
+        return bullet->IsDead();
+    });
+
+    return false;
 }
 
 void Player::SetInstantCharge(bool enable)
@@ -557,14 +601,6 @@ void Player::ReticleUpdate()
 void Player::BulletUpdate()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
-
-    // クリア状態奈なら射撃不可
-    if (isClear) {
-        for (auto& bullet_ : playerBullets_) {
-            bullet_->Update(deltaTime);
-        };
-        return;
-    }
 
     // バクとる
     Vector3 forwardDir;
@@ -860,64 +896,6 @@ void Player::ColliderUpdate(Collider* other)
             basetransform_.translate.y = railBasePos_.y + localPos_.y;
         }
     }
-}
-
-void Player::DeadInitialize()
-{
-    // 念のための初期か
-    ExplosionTimer = kExplosionTimer;
-
-    deadAngularVelocity_.x = 3.0f; // Pitch回転
-    deadAngularVelocity_.y = 2.0f; // Yaw回転
-    deadAngularVelocity_.z = 5.0f; // Roll回転
-
-    velocity_.z = kCharacterSpeed * 0.8f;
-    velocity_.y = 0.0f;
-}
-
-void Player::UpdateDead()
-{
-    float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
-
-    // 2秒以上落下する場合は途中で爆発
-    ExplosionTimer -= deltaTime;
-    if (ExplosionTimer <= 0.0f) {
-        isExplosion = true;
-    }
-
-    // 最後の入力方向に墜落
-    constexpr float kGravity = 15.0f;
-    velocity_.y -= kGravity * deltaTime;
-
-    // 指定方向に加速
-    localPos_.x += (lastDir.x * kAcceleration + velocity_.x) * 0.5f;
-    localPos_.y += velocity_.y * deltaTime;
-
-    // クランプ制限を撤廃して上限なしで進む
-    basetransform_.translate.x = railBasePos_.x + localPos_.x;
-    basetransform_.translate.y = railBasePos_.y + localPos_.y;
-    basetransform_.translate.z = railBasePos_.z + localPos_.z;
-
-    // レール座標を加算
-    basetransform_.rotate.x += deadAngularVelocity_.x * deltaTime;
-    basetransform_.rotate.y += deadAngularVelocity_.y * deltaTime;
-    basetransform_.rotate.z += deadAngularVelocity_.z * deltaTime;
-
-    float maxTheoreticalSpeed = kAcceleration / (1.0f - kFriction);
-
-    // 機体の回転量
-    // 最後の入力方向に回転し続ける
-    transform_.translate = basetransform_.translate;
-    transform_.rotate = basetransform_.rotate;
-
-    blackSmokeParticle_->NewParticle(basetransform_);
-
-    for (auto& bullet : playerBullets_) {
-        bullet->Update(deltaTime);
-    }
-    std::erase_if(playerBullets_, [](const std::unique_ptr<PlayerBullet>& bullet) {
-        return bullet->IsDead();
-    });
 }
 
 void Player::explosionInitialize()

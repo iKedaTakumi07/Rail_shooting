@@ -13,6 +13,7 @@
 #include "../Particle/PlayerPowerUnitLaser.h"
 #include "../Particle/blackSmokeParticle.h"
 #include "PlayerBullet.h"
+#include "PlayerState.h"
 #include <numbers>
 #include <vector>
 class EnemyManager;
@@ -53,22 +54,38 @@ public:
     CollisionGroup GetCollisionGroup() const override { return CollisionGroup::kPlayer; }
     int GetDamage() const override { return damage_; }
 
-    bool IsDead() const { return isDead_; }
-    bool IsExplosion() const { return isExplosion; }
+    bool IsDead() const { return currentState_ && currentState_->IsDeadState(); }
+    bool IsExplosion() const { return currentState_ && currentState_->IsExplosionState(); }
+    bool IsInvincible() const { return currentState_ && currentState_->IsInvincibleState(); }
 
     // set
     void SetBasePosition(const Vector3& pos) { railBasePos_ = pos; }
     void SetEnemyManager(EnemyManager* enemyManager) { enemyManager_ = enemyManager; }
-    void SetisClear(bool num) { isClear = num; }
+    void SetisClear(bool num);
 
     // その他
     void OnCollision(Collider* other) override;
     bool HasInstantCharge() const { return hasInstantCharge_; }
     void SetInstantCharge(bool enable);
 
-    bool IsInvincible() const { return isinvincible; } // 無敵状態ゲッター
-
     void CreateAfterImage(); // 残像生成
+
+public:
+    void ChangeState(std::unique_ptr<IPlayerState> nextState);
+    float GetInvincibleDuration() const { return kInvincibleTime; }
+    void UpdateInvincibleBlink(float remainingTime);
+    void ResetMaterialColor();
+
+    void ExecuteIntroStep(float progress);
+    void ExecuteActiveControlStep(float deltaTime);
+    void ExecuteCommonAliveStep(float deltaTime);
+    void ExecuteClearStep(float deltaTime);
+    void HandleActiveCollision(Collider* other);
+
+    void DeadInitialize();
+    bool UpdateDeadStep(float deltaTime);
+    void explosionInitialize();
+    void UpdateExplosion();
 
 private:
     // 更新系列
@@ -87,13 +104,6 @@ private:
     // 押し出し処理
     void ColliderUpdate(Collider* other);
 
-    // 死亡演出
-    void DeadInitialize();
-    void UpdateDead();
-
-    void explosionInitialize();
-    void UpdateExplosion();
-
 private:
     // 座標
     Transform transform_ = { { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } }; // モデル座標
@@ -107,11 +117,8 @@ private:
     static constexpr Vector3 kModelExtents = { 2.8f, 0.6f, 2.3f }; // objの大きさ
     static constexpr Vector3 kPowerUnitPos = { 0.0f, 0.05f, -0.75f }; // 動力射出位置
 
-    // クリアフラグ(無敵当)
-    bool isClear = false;
-    bool isIntro = false;
-    bool isDead_ = false; // 死んでいるか
-    bool isExplosion = false; // 機体が爆破下か
+    // ステートパターン
+    std::unique_ptr<IPlayerState> currentState_ = nullptr;
 
     float ExplosionTimer = 2.0f;
     const float kExplosionTimer = 2.0f;
@@ -126,8 +133,6 @@ private:
 
     // 被弾時の無敵時間
     const float kInvincibleTime = 1.0f;
-    float invincibleTime = 1.0f;
-    bool isinvincible = false;
 
     // 移動系パラメータ,移動速度
     Vector3 velocity_ = { 0.0f, 0.0f, 0.0f };
