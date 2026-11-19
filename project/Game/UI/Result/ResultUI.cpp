@@ -31,7 +31,7 @@ void ResultUI::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/UI/ResultUI2.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/ResultUI3.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/ResultWindow.png"); // 500*620のサイズ
-    TextureManager::getInstance()->LoadTexture("resources/UI/ResultWindow.png"); // 64*64のサイズ
+    TextureManager::getInstance()->LoadTexture("resources/UI/medal.png"); // 64*64のサイズ
 
     TextureManager::getInstance()->FlushUploads();
 
@@ -39,8 +39,9 @@ void ResultUI::Initialize()
     PopEnemyFilePath_ = stageDataLoad::GetInstance()->GetEnemyPopData();
     maxEnemies();
 
-    // 撃破数を読み込む
-    NumberOfDefeats = GameScoreManager::GetInstance()->GetDefeatCount();
+    // 撃破点/最大Hit数を読み込む
+    NumberOfDefeats = GameScoreManager::GetInstance()->GetTotalScore();
+    maxHitCount_ = GameScoreManager::GetInstance()->GetMaxHitCount();
 
     ResultUI_ = std::make_unique<Sprite>();
     ResultUI_->Initialize("resources/UI/ResultUI1.png");
@@ -88,6 +89,16 @@ void ResultUI::Update()
             sprite->Update();
         }
     }
+    for (auto& sprite : maxHitNumber_) {
+        if (sprite) {
+            sprite->Update();
+        }
+    }
+    for (auto& sprite : animationMaxHitNumber_) {
+        if (sprite) {
+            sprite->Update();
+        }
+    }
 }
 
 void ResultUI::SpritDraw()
@@ -105,11 +116,21 @@ void ResultUI::SpritDraw()
                 sprite->Draw();
             }
         }
+        for (auto& sprite : maxHitNumber_) {
+            if (sprite) {
+                sprite->Draw();
+            }
+        }
         SelectUI_->Draw(); // ステージセレクト
     } else {
         for (auto& sprite : animationDefeatsNumber_) {
             if (sprite) {
                 sprite->Draw(); // ダミー演出
+            }
+        }
+        for (auto& sprite : animationMaxHitNumber_) {
+            if (sprite) {
+                sprite->Draw();
             }
         }
     }
@@ -137,18 +158,25 @@ void ResultUI::SkipAnimation()
 
 void ResultUI::SetNumber()
 {
-
-    // 100以上かどうか(カンスト999)
+    // 1000以上かどうか(カンスト999)
     int tempDefeats = std::clamp(NumberOfDefeats, 0, 999);
     digits[0] = tempDefeats / 100; // 百の位
     digits[1] = (tempDefeats / 10) % 10; // 十の位
     digits[2] = tempDefeats % 10; // 一の位
 
+    // 最大HIT数
+    int tempMaxHit = std::clamp(maxHitCount_, 0, 999);
+    maxHitDigits[0] = tempMaxHit / 100;
+    maxHitDigits[1] = (tempMaxHit / 10) % 10;
+    maxHitDigits[2] = tempMaxHit % 10;
+
     // 文字のスペース
     float startX = WinApp::KClientWidth / 2.0f;
     float startY = WinApp::KClientHeight / 2.0f;
+    float maxHitStartY = startY + 100.0f;
     float spriteSpacing = 64.0f;
 
+    // 撃破点
     for (size_t i = 0; i < DefeatsNumber_.size(); ++i) {
         DefeatsNumber_[i] = std::make_unique<Sprite>();
         DefeatsNumber_[i]->Initialize(numberList_[digits[i]]);
@@ -167,6 +195,21 @@ void ResultUI::SetNumber()
         Vector2 pos(startX + (i * spriteSpacing), startY);
         animationDefeatsNumber_[i]->SetPosition(pos);
         animationDefeatsNumber_[i]->SetAnchorPoint(Vector2(0.5f, 0.5f));
+    }
+
+    // 最大HIT
+    for (size_t i = 0; i < maxHitNumber_.size(); ++i) {
+        maxHitNumber_[i] = std::make_unique<Sprite>();
+        maxHitNumber_[i]->Initialize(numberList_[maxHitDigits[i]]);
+        maxHitNumber_[i]->SetPosition(Vector2(startX + (i * spriteSpacing), maxHitStartY));
+        maxHitNumber_[i]->SetAnchorPoint(Vector2(0.5f, 0.5f));
+    }
+
+    for (size_t i = 0; i < animationMaxHitNumber_.size(); ++i) {
+        animationMaxHitNumber_[i] = std::make_unique<Sprite>();
+        animationMaxHitNumber_[i]->Initialize(numberList_[maxHitDigits[i]]);
+        animationMaxHitNumber_[i]->SetPosition(Vector2(startX + (i * spriteSpacing), maxHitStartY));
+        animationMaxHitNumber_[i]->SetAnchorPoint(Vector2(0.5f, 0.5f));
     }
 }
 
@@ -240,5 +283,18 @@ void ResultUI::NumberUpdate(float deltaTime)
             animationDefeatsNumber_[1]->SetTexture(numberList_[dist(randomEngine)], false);
         }
         animationDefeatsNumber_[2]->SetTexture(numberList_[dist(randomEngine)], false); // 位置の位は終わるまでランダム
+
+        // 最大HIT
+        if (numberAnimationTimer_ <= 1.5f) {
+            animationMaxHitNumber_[0]->SetTexture(numberList_[maxHitDigits[0]], false);
+        } else {
+            animationMaxHitNumber_[0]->SetTexture(numberList_[dist(randomEngine)], false);
+        }
+        if (numberAnimationTimer_ <= 1.0f) {
+            animationMaxHitNumber_[1]->SetTexture(numberList_[maxHitDigits[1]], false);
+        } else {
+            animationMaxHitNumber_[1]->SetTexture(numberList_[dist(randomEngine)], false);
+        }
+        animationMaxHitNumber_[2]->SetTexture(numberList_[dist(randomEngine)], false);
     }
 }

@@ -31,6 +31,7 @@ public:
     void SetMove(Vector3 num) override { num; }
     void SetbasePos(Vector3 num) override { centerPos_ = num; } // 中心位置
     void SetHp(int num) override;
+    void SetScore(int num) override { Score_ = num; };
 
     float GetHpRate() const override { return static_cast<float>(currentHp_) / maxHp_; }
     int GetCurrentPhase() const override { return currentPhase_; }
@@ -44,6 +45,7 @@ public:
     bool GetIsAvile_() override { return isAvile_; }
     bool GetIsDead() override { return isDead_; }
     Vector3 GetTranslate() override { return transform_.translate; }
+    int GetScore() override { return Score_; }
 
 public:
     void StartAppearance() override;
@@ -96,6 +98,7 @@ private:
     Vector3 centerPos_ = { 0.0f }; // 中心位置
 
     int dameg_ = 5;
+    int Score_ = 1;
 
     bool isAvile_ = true; // 存在しているか
     bool isDead_ = false; // 死んでいるか

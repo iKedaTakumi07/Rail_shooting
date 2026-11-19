@@ -20,15 +20,15 @@ public:
 
     void Update();
 
-    void OnEnemyDefeated();
+    void OnEnemyDefeated(int baseScore);
 
     /// <summary>
     /// 撃破数の加算
     /// </summary>
-    void AddDefeatCount(int count = 1);
+    void AddDefeatCount(int count = kBaseKillScore);
 
     /// <summary>
-    /// [追加] 勲章データのJSONファイルを読み込む
+    /// 勲章データのJSONファイルを読み込む
     /// </summary>
     /// <param name="filePath">medalData.json のパス</param>
     /// <returns>読み込み成功時 true</returns>
@@ -39,7 +39,9 @@ public:
     int GetCurrentStageId() const { return currentStageId_; }
 
     int GetDefeatCount() const { return defeatCount_; }
+    int GetTotalScore() const { return totalScore_; }
     int GetSimultaneousKillCount() const { return simultaneousKillCount_; }
+    int GetMaxHitCount() const { return maxHitCount_; }
     int GetComboGraceFrames() const { return comboGraceFrames_; }
 
     int GetMedalLine(int stageId) const;
@@ -54,7 +56,8 @@ private:
 private:
     static std::unique_ptr<GameScoreManager> instance_;
 
-    int defeatCount_ = 0;
+    int defeatCount_ = 0; // 撃破数
+    int totalScore_ = 0; // 撃破点及びボーナス点
 
     // 加算ライン
 
@@ -63,6 +66,7 @@ private:
     static constexpr int kMultiKillBonus = 1; // 同時撃破時の追加ボーナス係数
     int comboGraceFrames_ = 0; // 残り猶予フレーム
     int simultaneousKillCount_ = 0; // 猶予内の連続同時撃破数
+    int maxHitCount_ = 0;
 
     // 各ステ―ジの勲章ライン
     std::unordered_map<int, int> medalLines_;

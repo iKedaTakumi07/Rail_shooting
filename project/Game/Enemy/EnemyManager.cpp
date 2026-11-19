@@ -37,6 +37,8 @@ void EnemyManager::Initialize(Player* player, const std::string& filePath)
 
 void EnemyManager::Update()
 {
+    GameScoreManager::GetInstance()->Update();
+
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
     Vector3 pos = player_->GetTranslate();
 
@@ -45,9 +47,6 @@ void EnemyManager::Update()
         currentSpawnIndex_++;
     }
 
-    // このフレームないで倒された敵
-    int frameDefeatCount = 0;
-
     for (auto& enemy : enemies_) {
         // 敵更新
         enemy->Update();
@@ -55,7 +54,7 @@ void EnemyManager::Update()
         if (enemy->GetIsDead()) {
             uint32_t enemyId = enemy->GetId();
             if (countedDeadEnemyIds_.insert(enemyId).second) {
-                ++frameDefeatCount;
+                GameScoreManager::GetInstance()->OnEnemyDefeated(enemy->GetScore());
             }
         }
     }
@@ -87,6 +86,7 @@ void EnemyManager::ReloadJson(const std::string& filePath)
     }
 
     enemies_.clear();
+    countedDeadEnemyIds_.clear();
     LoadJsonPopData();
 
     // 進行中のプレイヤー位置に合わせてスポンインデックスをスキップ同期
@@ -152,6 +152,9 @@ void EnemyManager::LoadJsonPopData()
                 popData.popPosition = { 0.0f, 0.0f, 40.0f };
             }
 
+            int defaultScore = (popData.enemyPopType == "FourEyesBoss") ? 50 : 1;
+            popData.score = enemyData.value("score", defaultScore);
+
             popData.useBullet = enemyData.value("UseBullet", "TargetBullet");
 
             // 追尾弾のみ
@@ -211,6 +214,7 @@ void EnemyManager::PopEnemyCheck(const EnemyPopData& data)
         newEnemy->SetTargetPlayer(player_);
         newEnemy->SetMove(data.moveDirection);
         newEnemy->SetHp(data.hp);
+        newEnemy->SetScore(data.score);
         // ID割り当て
         newEnemy->SetId(nextEnemyId_++);
         // 今後弾を追加したなら変更

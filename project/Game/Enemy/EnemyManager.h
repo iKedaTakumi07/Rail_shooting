@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 class baseEnemy;
@@ -14,6 +15,7 @@ struct EnemyPopData {
     Vector3 popPosition; // 出現場所
     std::string useBullet; // 使う弾の種類
     int hp; // 体力
+    int score; // 敵の点数
 
     // 動く系のみ
     Vector3 moveDirection; // 進行方向

@@ -26,10 +26,12 @@ public:
     bool GetIsAvile_() override { return isAvile_; }
     bool GetIsDead() override { return isDead_; }
     Vector3 GetTranslate() override { return transform_.translate; }
+    int GetScore() override { return Score_; }
 
     // set関数
     void SetTargetPlayer(Player* target) override { player_ = target; }
     void SetIsDead(bool num) { isDead_ = num; }
+    void SetScore(int num) override { Score_ = num; };
     void SetMove(Vector3 num) override { move = num; }
     void SetbasePos(Vector3 num) override { basePos = num; } // 折り返し地点の中心位置
     void SetUseBullet(int num) override { useBullet = num; }
@@ -57,6 +59,7 @@ private:
 
     int health_ = 5; // 体力(jsonで設定予定)
     int dameg_ = 3;
+    int Score_ = 1;
 
     float interval = 3.0f; // 弾を発射する間隔
     static inline const float maxInterval = 3.0f; // 間隔

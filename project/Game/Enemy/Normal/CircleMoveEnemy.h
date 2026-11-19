@@ -31,10 +31,11 @@ public:
     void SetIsDead(bool num) { isDead_ = num; }
     void SetMove(Vector3 num) override { num; }
     void SetbasePos(Vector3 num) override { centerPos_ = num; } // 中心位置
-
+    void SetScore(int num) override { Score_ = num; };
     void SetUseBullet(int num) override { useBullet = num; }
     void SetHomingPower(float num) override { homingPower = num; }
     void SetHp(int num) override { health_ = num; }
+    int GetScore() override { return Score_; }
 
 private:
     void BulletUpdate();
@@ -57,6 +58,7 @@ private:
 
     int health_ = 5; // 体力(jsonで設定予定)
     int dameg_ = 3;
+    int Score_ = 1;
 
     float interval = 3.0f; // 弾を発射する間隔
     static inline const float maxInterval = 3.0f; // 間隔
