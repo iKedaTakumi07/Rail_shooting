@@ -16,6 +16,7 @@ using json = nlohmann::json;
 void stageObjectManager::Initialize(const std::string& filePath, Player* player)
 {
     TextureManager::getInstance()->LoadTexture("resources/stage/stageGraunod.png");
+    TextureManager::getInstance()->FlushUploads();
     ModelManager::GetInstance()->LoadModel("stage/stageGraunod.obj");
 
     PopObjFilePath_ = filePath;
@@ -36,7 +37,6 @@ void stageObjectManager::Update()
         }
     }
 
-    const float kDespawnDistance = -50.0f; // 破棄する基準となるプレイヤーからの相対距離
     stageObjects_.erase(std::remove_if(stageObjects_.begin(), stageObjects_.end(), [&](const std::unique_ptr<stageObject>& obj) {
         if (player_) {
             float zDiff = obj->GetAllAABB().wholeBox.max.z - player_->GetTranslate().z;
@@ -75,11 +75,12 @@ void stageObjectManager::Draw()
 
 void stageObjectManager::LoadJsonPopData(const std::string& filePath)
 {
-    std::ifstream file(PopObjFilePath_);
+    const std::string& targetPath = filePath.empty() ? PopObjFilePath_ : filePath;
+    std::ifstream file(targetPath);
     if (!file.is_open())
         return;
 
-    json data; 
+    json data;
     try {
         file >> data;
     } catch (const json::parse_error& e) {
@@ -171,6 +172,9 @@ void stageObjectManager::ReloadJson(const std::string& filePath)
     if (player_) {
         float currentZ = player_->GetTranslate().z;
         while (currentSpawnIndex_ < popDatas_.size() && popDatas_[currentSpawnIndex_].spawn_Z <= currentZ) {
+            if (popDatas_[currentSpawnIndex_].popPosition.z - currentZ >= kDespawnDistance) {
+                PopEnemyCheck(popDatas_[currentSpawnIndex_]);
+            }
             currentSpawnIndex_++;
         }
     }

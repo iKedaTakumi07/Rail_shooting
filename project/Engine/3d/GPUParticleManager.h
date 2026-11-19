@@ -56,6 +56,7 @@ public:
 
     // set
     void SetDefaultCamera(Camera* camera) { this->Camera_ = camera; }
+    void ParticleGroupClrea(); // 全削除
 
     // パーティクルグループの作成
     void CreateParticleGroup(
@@ -164,6 +165,8 @@ private:
     // コンテナ
     std::unordered_map<std::string, GPUParticleGroup> groups_;
     std::vector<GPUEmitterInstance> emitters_;
+
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> deferredReleaseResources_;
     std::unordered_map<ParticleMeshType, std::unique_ptr<IParticleMesh>> meshes_; // メッシュコンテナ (Plane, Ring, Cylinder)
 
     // ブレンドモード

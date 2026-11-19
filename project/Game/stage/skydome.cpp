@@ -9,6 +9,8 @@
 void skydome::Initialize()
 {
     TextureManager::getInstance()->LoadTexture("resources/skydone/sky_sphere.png");
+    TextureManager::getInstance()->FlushUploads();
+
     ModelManager::GetInstance()->LoadModel("skydone/skydome.obj");
 
     camera_ = CameraManager::GetInstance()->GetActiveCamera();

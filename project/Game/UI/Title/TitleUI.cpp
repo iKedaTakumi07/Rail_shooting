@@ -11,6 +11,7 @@ void TitleUI::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/UI/Title/titleSelectEnd.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/Title/titleSelectStart.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/Title/Title.png");
+    TextureManager::getInstance()->FlushUploads();
 
     TitleScene_ = std::make_unique<Sprite>();
     TitleScene_->Initialize("resources/UI/Title/Title.png");

@@ -26,6 +26,7 @@ public:
     void OnCollision(Collider* other) override;
     int GetDamage() const override { return dameg_; }
     bool GetIsAvile_() override { return isAvile_; }
+    bool GetIsDead() override { return isDead_; }
     Vector3 GetTranslate() override { return transform_.translate; }
 
     // set関数
@@ -62,6 +63,4 @@ private:
 
     bool isAvile_ = true; // 存在しているか
     bool isDead_ = false; // 死んでいるか
-    bool isRanAway_ = false;
-    float RanAwayOffset_ = 30.0f;
 };

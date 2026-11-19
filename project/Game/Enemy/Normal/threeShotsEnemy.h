@@ -26,6 +26,7 @@ public:
     void OnCollision(Collider* other) override;
     int GetDamage() const override { return dameg_; }
     bool GetIsAvile_() override { return isAvile_; }
+    bool GetIsDead() override { return isDead_; }
     Vector3 GetTranslate() override { return transform_.translate; }
 
     // set関数

@@ -10,10 +10,11 @@ void GameOverUI::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/UI/Game/GameOverUI.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/Game/RetirementUI.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/Game/RetryUI.png");
+    TextureManager::getInstance()->FlushUploads();
 
     GameOver = std::make_unique<Sprite>();
     GameOver->Initialize("resources/UI/Game/GameOverUI.png");
-    GameOver->SetPosition(Vector2(WinApp::KClientWidth / 2.0f, WinApp::KClientHeight /8.0f * 3.0f));
+    GameOver->SetPosition(Vector2(WinApp::KClientWidth / 2.0f, WinApp::KClientHeight / 8.0f * 3.0f));
     GameOver->SetAnchorPoint(Vector2(0.5f, 0.5f));
 
     RetirementUI = std::make_unique<Sprite>();
@@ -228,7 +229,6 @@ void GameOverUI::UIUpdaate(float deltaTime)
 
     float easedT = EaseOutCubic(t);
 
-    
     Vector2 pos;
     pos.x = baseGameOverPos.x;
     pos.y = Lerp(baseGameOverPos.y, endGameOverPos.y, easedT);

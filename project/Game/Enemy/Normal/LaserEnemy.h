@@ -27,6 +27,7 @@ public:
     void OnCollision(Collider* other) override;
     int GetDamage() const override { return dameg_; }
     bool GetIsAvile_() override { return allIsAvile_; }
+    bool GetIsDead() override { return allIsDead_; }
     Vector3 GetTranslate() override { return FromPointTransform_.translate; }
     std::vector<Vector3> GetTargetPositions() override; // ホーミング用の座標渡し
 

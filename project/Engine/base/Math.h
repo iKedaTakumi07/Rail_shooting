@@ -368,6 +368,8 @@ Vector4 Lerp(const Vector4& start, const Vector4& end, float t);
 
 float Lerp(float start, float end, float t);
 
+Vector3 Slerp(const Vector3& start, const Vector3& end, float t);
+
 Vector4 Slerp(const Vector4& start, const Vector4& end, float t);
 
 Matrix4x4 MakeIdentity4x4();

@@ -29,6 +29,7 @@ void SelectUIObject::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/stage/Lab.png");
     TextureManager::getInstance()->LoadTexture("resources/stage/1x1white.png");
     TextureManager::getInstance()->LoadTexture("resources/stage/test.png");
+    TextureManager::getInstance()->FlushUploads();
 
     ModelManager::GetInstance()->LoadModel("player/Player.obj");
     ModelManager::GetInstance()->LoadModel("skydone/Selectskydome.obj");

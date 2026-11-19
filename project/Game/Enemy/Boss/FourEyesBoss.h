@@ -1,6 +1,7 @@
 #pragma once
 #include "../../OnCollison/Collider.h"
-#include "../base/baseBossEnemy.h "
+#include "../base/baseBossEnemy.h"
+#include "FourEyesBossState.h"
 #include <memory>
 #include <numbers>
 #include <random>
@@ -41,6 +42,7 @@ public:
     void OnCollision(Collider* other) override;
     int GetDamage() const override { return dameg_; }
     bool GetIsAvile_() override { return isAvile_; }
+    bool GetIsDead() override { return isDead_; }
     Vector3 GetTranslate() override { return transform_.translate; }
 
 public:
@@ -50,6 +52,13 @@ public:
 
     void StartDeathProduction() override;
     void UpdateDeathProduction(float deltaTime) override;
+
+public:
+    void ChangeSpecialState(std::unique_ptr<IBossSpecialState> nextState);
+    void OnSpecialAttackFinished();
+    Vector3 GetSpecialTargetCenter() const;
+    void SetSpecialPosition(const Vector3& pos);
+    void FireMinigunFromNextPart(size_t& partIndex);
 
 private:
     void FireFourWayBullets();
@@ -62,14 +71,6 @@ private:
     void ExecuteLaserFire();
 
 private:
-    // 必殺技ステートパターン
-    enum class SpecialState {
-        kNone,
-        kReturnToCenter, // 画面中央への復帰移動
-        kMinigunFire, // 3秒間のミニガン連射
-        kStunned // 3秒間の棒立ち（大隙）
-    };
-
     Camera* camera_ = nullptr; // カメラ(ポインタ)
     Player* player_ = nullptr;
 
@@ -126,12 +127,7 @@ private:
 
     // HP50%以下（1回限定）ミニガン＆隙状態用
     bool hasTriggeredHalfHpSpecial_ = false;
-    bool isSpecialAttacking_ = false;
-    SpecialState specialState_ = SpecialState::kNone;
-    float specialTimer_ = 0.0f;
-    float minigunIntervalTimer_ = 0.0f;
-    Vector3 specialStartPos_ = { 0.0f, 0.0f, 0.0f };
-    size_t currentMinigunPartIndex_ = 0;
+    std::unique_ptr<IBossSpecialState> currentSpecialState_ = nullptr;
 
     std::mt19937 randomEngine;
 };

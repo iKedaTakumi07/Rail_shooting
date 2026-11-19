@@ -14,6 +14,7 @@
 void FixedEnemy::Initialize(Vector3 pos)
 {
     TextureManager::getInstance()->LoadTexture("resources/baseEnemy/FixedEnemy.png");
+    TextureManager::getInstance()->FlushUploads();
     ModelManager::GetInstance()->LoadModel("baseEnemy/FixedEnemy.obj");
 
     fixedEnemyObject3d = std::make_unique<Object3d>();
@@ -36,12 +37,12 @@ void FixedEnemy::Update()
 {
     camera_ = CameraManager::GetInstance()->GetActiveCamera();
     UpdatePrevPosition(transform_.translate);
+    if (transform_.translate.z <= camera_->GetTranslate().z) {
+        // カメラの真後ろにいるので消去
+        isAvile_ = false;
+    }
 
     BulletUpdate();
-    if (isRanAway_) {
-        WithdrawalUpdate();
-        return;
-    }
 
     fixedEnemyObject3d->SetTranslate(transform_.translate);
     fixedEnemyObject3d->SetRotate(transform_.rotate);
@@ -149,22 +150,4 @@ void FixedEnemy::BulletUpdate()
 
 void FixedEnemy::WithdrawalUpdate()
 {
-    float DeltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    // 逃げる
-    const float AwaySpeedX = 15.0f;
-    const float AwaySpeedY = 30.0f;
-
-    if (transform_.translate.x <= 0.0f) {
-        transform_.translate.x -= AwaySpeedX * DeltaTime;
-    } else {
-        transform_.translate.x += AwaySpeedX * DeltaTime;
-    }
-    transform_.translate.y += AwaySpeedY * DeltaTime;
-
-    if (transform_.translate.y >= 40.0f) {
-        isAvile_ = false;
-    }
-    fixedEnemyObject3d->SetTranslate(transform_.translate);
-    fixedEnemyObject3d->SetRotate(transform_.rotate);
-    fixedEnemyObject3d->Update();
 }

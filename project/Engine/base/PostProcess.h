@@ -5,6 +5,7 @@
 #include <memory>
 class Camera;
 class OffscreenSurface;
+class SrvManager;
 
 class PostProcess {
 public:
@@ -91,7 +92,7 @@ public:
     static PostProcess* GetInstance();
 
     // 初期化
-    void Initialize(DirectXCommon* dxcommon);
+    void Initialize(DirectXCommon* dxcommon, SrvManager* srvManager);
 
     // 更新
     void Update();
@@ -280,6 +281,8 @@ private:
     void graphicsPipelineInitialize(DirectXCommon* dxcommon);
 
     DirectXCommon* dxCommon_ = nullptr;
+    SrvManager* srvManager_ = nullptr;
+
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature = nullptr;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> graphicsPipelineState = nullptr;
 

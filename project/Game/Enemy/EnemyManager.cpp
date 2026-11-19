@@ -23,11 +23,14 @@ using json = nlohmann::json;
 void EnemyManager::Initialize(Player* player, const std::string& filePath)
 {
     TextureManager::getInstance()->LoadTexture("resources/baseEnemy/FixedEnemy.png");
+    TextureManager::getInstance()->FlushUploads();
+
     ModelManager::GetInstance()->LoadModel("baseEnemy/FixedEnemy.obj");
 
     player_ = player;
     PopEnemyFilePath_ = filePath;
     currentSpawnIndex_ = 0;
+    countedDeadEnemyIds_.clear();
 
     LoadJsonPopData();
 }
@@ -42,12 +45,18 @@ void EnemyManager::Update()
         currentSpawnIndex_++;
     }
 
+    // このフレームないで倒された敵
+    int frameDefeatCount = 0;
+
     for (auto& enemy : enemies_) {
         // 敵更新
         enemy->Update();
         // スコア加算
-        if (!enemy->GetIsAvile_()) {
-            GameScoreManager::GetInstance()->AddDefeatCount(1);
+        if (enemy->GetIsDead()) {
+            uint32_t enemyId = enemy->GetId();
+            if (countedDeadEnemyIds_.insert(enemyId).second) {
+                ++frameDefeatCount;
+            }
         }
     }
 
@@ -85,6 +94,9 @@ void EnemyManager::ReloadJson(const std::string& filePath)
     if (player_) {
         float currentZ = player_->GetTranslate().z;
         while (currentSpawnIndex_ < popDatas_.size() && popDatas_[currentSpawnIndex_].spawn_Z <= currentZ) {
+            if (popDatas_[currentSpawnIndex_].popPosition.z >= currentZ) {
+                PopEnemyCheck(popDatas_[currentSpawnIndex_]);
+            }
             currentSpawnIndex_++;
         }
     }
@@ -112,7 +124,7 @@ void EnemyManager::LoadJsonPopData()
     if (!file.is_open())
         return;
 
-    json data; 
+    json data;
     try {
         file >> data;
     } catch (const json::parse_error& e) {

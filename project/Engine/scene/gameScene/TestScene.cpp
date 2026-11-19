@@ -62,6 +62,7 @@ void TestScene::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/simpleSkin/uvChecker.png");
     TextureManager::getInstance()->LoadTexture("resources/human/white.png");
     TextureManager::getInstance()->LoadTexture("resources/circle2.png");
+    TextureManager::getInstance()->FlushUploads();
 
     ModelManager::GetInstance()->LoadModel("axis.obj");
     ModelManager::GetInstance()->LoadModel("terrain.obj");

@@ -73,8 +73,7 @@ void GPUParticleManager::Update()
                 // 次フレームで削除
                 emitter.emitDurationTimer = -1.0f;
             }
-        }
-        else if (emitter.autoEmit) {
+        } else if (emitter.autoEmit) {
             // オート射出
             emitter.mappedData->frequencyTime += deltaTime;
             if (emitter.mappedData->frequency <= emitter.mappedData->frequencyTime) {
@@ -83,14 +82,12 @@ void GPUParticleManager::Update()
             } else {
                 emitter.mappedData->emit = 0;
             }
-        }
-        else {
+        } else {
             // 単発射出処理
             if (emitter.emitDurationTimer == 0.0f && emitter.mappedData->emit == 1) {
                 // 生成状態を維持し、次フレームで消去させる
                 emitter.emitDurationTimer = -1.0f;
-            }
-            else if (emitter.emitDurationTimer < 0.0f) {
+            } else if (emitter.emitDurationTimer < 0.0f) {
                 // 次フレームで射出したなら削除
                 emitter.mappedData->emit = 0; // emit止め
                 emitter.emitDurationTimer = 0.0f; // 待機状態に戻す
@@ -156,6 +153,33 @@ void GPUParticleManager::Draw()
     }
 }
 
+void GPUParticleManager::ParticleGroupClrea()
+{
+    for (auto& [name, group] : groups_) {
+        if (group.materialResource) {
+            deferredReleaseResources_.push_back(std::move(group.materialResource));
+        }
+        if (group.particleResource) {
+            deferredReleaseResources_.push_back(std::move(group.particleResource));
+        }
+        if (group.freeCounterResource) {
+            deferredReleaseResources_.push_back(std::move(group.freeCounterResource));
+        }
+        if (group.freeListResource) {
+            deferredReleaseResources_.push_back(std::move(group.freeListResource));
+        }
+    }
+    for (auto& emitter : emitters_) {
+        if (emitter.bufferResource) {
+            deferredReleaseResources_.push_back(std::move(emitter.bufferResource));
+        }
+    }
+
+    groups_.clear();
+    emitters_.clear();
+    emitters_.clear();
+}
+
 void GPUParticleManager::CreateParticleGroup(const std::string& name, const std::string& textureFilePath, ParticleMeshType meshType, BlendMode blendMode, const Vector4& color)
 {
     if (groups_.find(name) != groups_.end()) {
@@ -163,6 +187,8 @@ void GPUParticleManager::CreateParticleGroup(const std::string& name, const std:
     }
 
     TextureManager::getInstance()->LoadTexture(textureFilePath);
+    TextureManager::getInstance()->FlushUploads();
+
     uint32_t texIndex = TextureManager::getInstance()->GetSrvIndex(textureFilePath);
     assert(texIndex != 0 && "Texture SrvIndex returned 0. Ensure the file path is correct and loaded.");
 

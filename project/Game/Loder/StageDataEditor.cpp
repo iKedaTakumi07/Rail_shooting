@@ -209,6 +209,9 @@ void StageDataEditor::DrawEnemyEditor()
 
     if (ImGui::Button("Load JSON##Enemy")) {
         LoadEnemyJson(pathBuffer);
+        if (isEnemyJsonLoaded_ && enemyManager_) {
+            enemyManager_->ReloadJson(pathBuffer);
+        }
     }
     ImGui::SameLine();
     if (ImGui::Button("Save JSON##Enemy")) {
@@ -339,6 +342,9 @@ void StageDataEditor::DrawObjectEditor()
 
     if (ImGui::Button("Load JSON##Object")) {
         LoadObjectJson(pathBuffer);
+        if (isObjectJsonLoaded_ && stageObjManager_) {
+            stageObjManager_->ReloadJson(pathBuffer);
+        }
     }
     ImGui::SameLine();
     if (ImGui::Button("Save JSON##Object")) {

@@ -67,6 +67,7 @@ void GamePlayScene::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/uvChecker.png");
     TextureManager::getInstance()->LoadTexture("resources/monsterBall.png");
     TextureManager::getInstance()->LoadTexture("resources/rostock_laage_airport_4k.dds");
+    TextureManager::getInstance()->FlushUploads();
 
     skydox = std::make_unique<Skybox>();
     skydox->Initialize("resources/rostock_laage_airport_4k.dds");
@@ -111,14 +112,14 @@ void GamePlayScene::Initialize()
     gameOverUI_ = std::make_unique<GameOverUI>();
     gameOverUI_->Initialize();
 
-    sceneState_ = SceneState::kIntro;
-    clearTimer_ = 0.0f;
-
     skydome_ = std::make_unique<skydome>();
     skydome_->Initialize();
 
     stageDataEditor_ = std::make_unique<StageDataEditor>();
     stageDataEditor_->Initialize(enemyManager_.get(), stageObject_.get(), StageManager_.get());
+
+    pausedState_.reset();
+    ChangeState(std::make_unique<IntroState>());
 
     // 音がうるさいので停止中
     // Audio::GetInstance()->Play(fanfare);
@@ -137,8 +138,8 @@ void GamePlayScene::Update()
 #ifdef USE_IMGUI
     // リリース版使用不可
     if (input->TriggerKey(DIK_T)) {
-        isSceneFinished_ = true;
-        SceneManager::GetInstance()->ChangeScene("TITLE");
+        FinishAndChangeScene("TITLE");
+        return;
     }
 
     if (input->TriggerKey(DIK_P)) {
@@ -154,212 +155,8 @@ void GamePlayScene::Update()
 
     skydome_->Update();
 
-    switch (sceneState_) {
-    case GamePlayScene::SceneState::kIntro: {
-
-        StageManager_->Update();
-        Vector3 railPos = StageManager_->CalcRailPosition(); // 現在のレーる位置を取得
-
-        PauseUI_->Update();
-        if (PauseUI_->GetPause()) {
-            introUI_->SetiskPause(true);
-            PreState_ = sceneState_;
-            sceneState_ = SceneState::kPause;
-        }
-
-        Player* player = playerManager_->GetPlayer();
-        player->SetBasePosition(railPos);
-
-        // 進行速度の5秒分
-        float currentZ = StageManager_->GetCurrentZ();
-        float progress = (currentZ - (-100.0f)) / 100.0f;
-
-        if (progress >= 1.0f) {
-            progress = 1.0f;
-            sceneState_ = SceneState::kPlay;
-            introUI_->SetIntroEnd(true);
-        }
-
-        playerManager_->UpdateIntro(progress); // 操作不能
-        cameraController_->UpdateIntro(railPos);
-        introUI_->Update(progress);
-
-        enemyManager_->Update();
-        stageObject_->Update();
-
-        break;
-    }
-    case GamePlayScene::SceneState::kPlay: {
-        // ステージ振興
-        StageManager_->Update();
-        Vector3 railPos = StageManager_->CalcRailPosition(); // 現在のレーる位置を取得
-
-        PauseUI_->Update();
-        if (PauseUI_->GetPause()) {
-            PreState_ = sceneState_;
-            sceneState_ = SceneState::kPause;
-        }
-
-        Player* player = playerManager_->GetPlayer();
-        player->SetBasePosition(railPos);
-        playerManager_->Update();
-
-        if (player->IsExplosion()) {
-            sceneState_ = SceneState::kGameOver;
-            gameOverUI_->Start(true);
-            break;
-        } else if (player->IsDead()) {
-            sceneState_ = SceneState::kDead;
-            gameOverUI_->Start(false);
-            break;
-        }
-
-        cameraController_->Update(railPos);
-
-        enemyManager_->Update();
-        stageObject_->Update();
-
-        // 当たり判定一括
-        collisionManager_->Clear();
-        playerManager_->RegisterColliders(collisionManager_.get());
-
-        for (auto& enemy : enemyManager_->GetEnemyes()) {
-            collisionManager_->AddCollider(enemy.get());
-            for (auto& enemyBullet : enemy->GetBullets()) {
-                collisionManager_->AddCollider(enemyBullet.get());
-            }
-        }
-        for (auto& stageObj : stageObject_->GetstageObjects()) {
-            collisionManager_->AddCollider(stageObj.get());
-        }
-
-        collisionManager_->CheckAllCollisions();
-
-        // 終了条件
-        if (enemyManager_->IsAllEnemiesCleared() && StageManager_->IsReachedEnd()) {
-            sceneState_ = SceneState::kClear;
-            player->SetisClear(true);
-            clearTimer_ = 0.0f;
-        }
-
-        break;
-    }
-    case GamePlayScene::SceneState::kDead: {
-        Player* player = playerManager_->GetPlayer();
-        StageManager_->Update();
-        Vector3 railPos = StageManager_->CalcRailPosition();
-
-        player->SetBasePosition(railPos);
-        playerManager_->Update();
-
-        gameOverUI_->Update(deltaTime);
-
-        if (player->IsExplosion()) {
-            gameOverUI_->ClearExplosionTrigger();
-            sceneState_ = SceneState::kGameOver;
-            break;
-        }
-
-        cameraController_->UpdateDead(railPos);
-
-        enemyManager_->Update();
-        stageObject_->Update();
-
-        // 当たり判定(敵の攻撃では爆発しない予定)
-        collisionManager_->Clear();
-        playerManager_->RegisterColliders(collisionManager_.get());
-        for (auto& enemy : enemyManager_->GetEnemyes()) {
-            collisionManager_->AddCollider(enemy.get());
-            for (auto& enemyBullet : enemy->GetBullets()) {
-                collisionManager_->AddCollider(enemyBullet.get());
-            }
-        }
-        for (auto& stageObj : stageObject_->GetstageObjects()) {
-            collisionManager_->AddCollider(stageObj.get());
-        }
-        collisionManager_->AddCollider(stageObject_.get());
-
-        collisionManager_->CheckAllCollisions();
-        break;
-    }
-    case GamePlayScene::SceneState::kGameOver: {
-
-        playerManager_->Update();
-        enemyManager_->Update();
-        stageObject_->Update();
-
-        gameOverUI_->Update(deltaTime);
-
-        // UI更新
-        if (gameOverUI_->IsInteractive() && gameOverUI_->IsSelected()) {
-            if (gameOverUI_->GetSelectedOption() == GameOverUI::SelectOption::kRetry) {
-                // リトライ：ゲームプレイ再読み込み
-                isSceneFinished_ = true;
-                SceneManager::GetInstance()->ChangeScene("GAMEPLAY");
-            } else {
-                // 諦める：ステージ選択へ遷移
-                isSceneFinished_ = true;
-                SceneManager::GetInstance()->ChangeScene("SELECT");
-            }
-        }
-
-        break;
-    }
-    case GamePlayScene::SceneState::kClear: {
-
-        clearTimer_ += deltaTime;
-
-        playerManager_->UpdateClear();
-
-        if (clearTimer_ >= 4.0f && Transition_->GetState() == SceneTransition::State::None) {
-            Transition_->Start(SceneTransition::State::Out, 1.0f);
-        }
-
-        Transition_->Update(deltaTime);
-
-        stageObject_->ClearUpdate();
-        ClearUI_->Update(clearTimer_);
-
-        // 5秒経過後にリザルト画面へ移行
-        if (clearTimer_ >= 5.0f) {
-            isSceneFinished_ = true;
-            SceneManager::GetInstance()->ChangeScene("RESULT");
-        }
-        break;
-    }
-    case GamePlayScene::SceneState::kPause: {
-        float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
-        // 時間を止める
-        PauseUI_->Update();
-
-        if (PauseUI_->GetResetOrder()) {
-            if (!isChange && !isReset) {
-                isReset = true;
-                isSceneFinished_ = true;
-                SceneManager::GetInstance()->ChangeScene("GAMEPLAY");
-            }
-        }
-
-        if (PauseUI_->GetSelectOrder()) {
-            if (!isChange && !isReset) {
-                isChange = true;
-                Transition_->Start(SceneTransition::State::Out, 0.5f);
-            }
-
-            ChangeTimer -= deltaTime;
-            if (ChangeTimer <= 0.0f) {
-                isSceneFinished_ = true;
-                SceneManager::GetInstance()->ChangeScene("SELECT");
-            }
-        }
-
-        if (!PauseUI_->GetPause() && !isChange && !isReset) {
-            sceneState_ = PreState_;
-            introUI_->SetiskPause(false);
-            PreState_ = SceneState::knull;
-        }
-        break;
-    }
+    if (currentState_) {
+        currentState_->Update(*this, deltaTime);
     }
 }
 
@@ -372,16 +169,16 @@ void GamePlayScene::Draw()
     // モデルデータ
     //
     skydome_->Draw();
+    stageObject_->Draw();
+
     playerManager_->Draw();
     enemyManager_->Draw();
-
-    stageObject_->Draw();
 
 #ifdef USE_IMGUI
     // リリース版使用不可
     Object3dCommon::GetInstance()->PreLineObjectDraw();
-    if (sceneState_ == SceneState::kPlay) {
-        collisionManager_->DrawDebug(CameraManager::GetInstance()->GetActiveCamera());
+    if (currentState_) {
+        currentState_->DrawDebug(*this);
     }
 
 #endif // DEBUG
@@ -402,7 +199,66 @@ void GamePlayScene::Draw()
     ClearUI_->SpritDraw();
     PauseUI_->SpritDraw();
 
-    if (sceneState_ == SceneState::kGameOver) {
-        gameOverUI_->SpritDraw();
+    if (currentState_) {
+        currentState_->DrawSprite(*this);
     }
+}
+
+void GamePlayScene::ChangeState(std::unique_ptr<IGamePlayState> nextState)
+{
+    if (currentState_) {
+        currentState_->Exit(*this);
+    }
+    currentState_ = std::move(nextState);
+    if (currentState_) {
+        currentState_->Enter(*this);
+    }
+}
+
+void GamePlayScene::PushPauseState()
+{
+    if (currentState_) {
+        currentState_->OnPause(*this);
+        pausedState_ = std::move(currentState_);
+    }
+    currentState_ = std::make_unique<PauseState>();
+    currentState_->Enter(*this);
+}
+
+void GamePlayScene::PopPauseState()
+{
+    if (currentState_) {
+        currentState_->Exit(*this);
+    }
+    if (pausedState_) {
+        currentState_ = std::move(pausedState_);
+        currentState_->OnResume(*this);
+    }
+}
+
+void GamePlayScene::FinishAndChangeScene(const std::string& nextSceneName)
+{
+    isSceneFinished_ = true;
+    SceneManager::GetInstance()->ChangeScene(nextSceneName);
+}
+
+void GamePlayScene::UpdateCollisions(bool includeStageObjectRoot)
+{
+    collisionManager_->Clear();
+    playerManager_->RegisterColliders(collisionManager_.get());
+
+    for (auto& enemy : enemyManager_->GetEnemyes()) {
+        collisionManager_->AddCollider(enemy.get());
+        for (auto& enemyBullet : enemy->GetBullets()) {
+            collisionManager_->AddCollider(enemyBullet.get());
+        }
+    }
+    for (auto& stageObj : stageObject_->GetstageObjects()) {
+        collisionManager_->AddCollider(stageObj.get());
+    }
+    if (includeStageObjectRoot) {
+        collisionManager_->AddCollider(stageObject_.get());
+    }
+
+    collisionManager_->CheckAllCollisions();
 }

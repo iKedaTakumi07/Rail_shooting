@@ -17,6 +17,7 @@ void stageSelectUI::Initialize(SelectUIObject* selectObject)
     TextureManager::getInstance()->LoadTexture("resources/UI/SelectUIStage1.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/SelectUIStage2.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/SelectUI1.png");
+    TextureManager::getInstance()->FlushUploads();
 
     transition_ = std::make_unique<SceneTransition>();
     transition_->Initialize("resources/noise5.png");

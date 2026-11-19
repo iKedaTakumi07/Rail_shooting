@@ -75,29 +75,29 @@ void PlayerPowerUnitLaser::NewParticle(const Vector3& prePos, const Transform& e
     targetTransform.rotate = { targetRotateX, targetRotateY, targetRotateZ };
 
     float outerRadius = 0.24f;
-    targetTransform.scale = { outerRadius, outerRadius, length * 0.4f };
+    targetTransform.scale = { outerRadius, outerRadius, length };
 
     laserfireParam.SetRotate(targetTransform.rotate);
     laserfireParam.SetScale(targetTransform.scale);
-    laserfireParam.SetEndScale({ outerRadius * 0.4f, outerRadius * 0.4f, length * 0.4f });
+    laserfireParam.SetEndScale({ outerRadius * 0.4f, outerRadius * 0.4f, length });
 
     laserfireParam.SetStartColor(Vector4(1.0f, 1.0f, 1.0f, 0.3f));
     laserfireParam.SetEndColor(Vector4(1.0f, 1.0f, 1.0f, 0.0f));
     laserfireParam.SetVelocity({ 0.0f, 0.0f, 0.0f });
-    laserfireParam.SetLifeTime(0.08f);
+    laserfireParam.SetLifeTime(0.01f);
 
     CPUParticleManager::getInstance()->Emit("PowerUintLaser", targetTransform, 1, laserfireParam);
 
     float innerRadius = 0.12f;
-    targetTransform.scale = { innerRadius, innerRadius, length * 0.45f };
+    targetTransform.scale = { innerRadius, innerRadius, length };
 
     laserfireParam.SetRotate(targetTransform.rotate);
     laserfireParam.SetScale(targetTransform.scale);
-    laserfireParam.SetEndScale({ innerRadius * 0.2f, innerRadius * 0.2f, length * 0.45f });
+    laserfireParam.SetEndScale({ innerRadius * 0.2f, innerRadius * 0.2f, length });
     laserfireParam.SetStartColor(Vector4(1.0f, 0.5f, 0.0f, 0.9f));
     laserfireParam.SetEndColor(Vector4(1.0f, 0.1f, 0.0f, 0.0f));
     laserfireParam.SetVelocity({ 0.0f, 0.0f, 0.0f });
-    laserfireParam.SetLifeTime(0.08f);
+    laserfireParam.SetLifeTime(0.01f);
 
     CPUParticleManager::getInstance()->Emit("PowerUintLaser", targetTransform, 1, laserfireParam);
 
