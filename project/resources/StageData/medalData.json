@@ -1,0 +1,12 @@
+{
+    "medalData" :[
+        {
+            "stage_id" :1,
+            "medalLine" : 140
+        },{
+              "stage_id" :2,
+            "medalLine" : 190
+        }
+
+    ]
+}

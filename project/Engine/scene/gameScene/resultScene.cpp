@@ -84,6 +84,13 @@ void resultScene::Update()
         break;
     case resultScene::State::kResultUpdateNow:
         // 演出スキップ入力
+        if (input->IsControllerConnected()) {
+            if (input->TriggerButton(XINPUT_GAMEPAD_A)) {
+                ResultUI_->SkipAnimation();
+                state_ = State::kResultWait;
+            }
+        }
+
         if (input->TriggerKey(DIK_RETURN)) {
             ResultUI_->SkipAnimation();
             state_ = State::kResultWait;
@@ -93,6 +100,15 @@ void resultScene::Update()
 
         break;
     case resultScene::State::kResultWait:
+
+         if (input->IsControllerConnected()) {
+            if (input->TriggerButton(XINPUT_GAMEPAD_A)) {
+                 ResultUI_->SetVisible(false); // 脱出演出の邪魔にならないようUIを非表示化
+                 resultObject_->StartEscape(); // 機体・カメラの脱出シークエンス開始
+                 state_ = State::kPlanetEscape;
+            }
+        }
+
         // リザルト確認完了後、Enterで惑星脱出演出へ移行
         if (input->TriggerKey(DIK_RETURN)) {
             ResultUI_->SetVisible(false); // 脱出演出の邪魔にならないようUIを非表示化

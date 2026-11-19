@@ -56,6 +56,7 @@ void ResultObject::StartEscape()
     escapeTimer_ = 0.0f;
     escapeBasePlayerPos_ = transform_.translate;
     if (camera_) {
+        escapeStartCameraPos_ = camera_->GetTranslate();
         escapeStartCameraOffset_ = escapeStartCameraPos_ - transform_.translate;
     }
 }
@@ -71,9 +72,11 @@ void ResultObject::ResultUpdate(float deltaTime)
     // カメラの更新
     if (camera_) {
         angle_ += angleSpeed_ * deltaTime;
-        if (angle_ >= std::numbers::pi * 2.0f) {
-            angle_ -= 6.283185f;
+        constexpr float kTwoPi = std::numbers::pi_v<float> * 2.0f;
+        if (angle_ >= kTwoPi) {
+            angle_ -= kTwoPi;
         }
+
         // プレイヤーを中心に斜め上から映す
         Vector3 cameraPos;
         cameraPos.x = transform_.translate.x + radius_ * std::cos(angle_);
@@ -92,13 +95,14 @@ void ResultObject::ResultUpdate(float deltaTime)
 
 void ResultObject::EscapeUpdate(float deltaTime)
 {
+    float prevTimer = escapeTimer_;
     escapeTimer_ += deltaTime;
     Vector3 PrePos = transform_.translate;
     constexpr float kRotateDuration = 0.6f;
     constexpr float kBaseClimbAngle = 0.35f;
 
     // 後方にカメラを映す
-    if (escapeTimer_ < kRotateDuration) {
+    if (prevTimer < kRotateDuration) {
         float t = std::clamp(escapeTimer_ / kRotateDuration, 0.0f, 1.0f);
         float easeT = EaseInQuad(t);
 

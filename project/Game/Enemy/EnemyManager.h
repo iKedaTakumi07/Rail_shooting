@@ -58,4 +58,7 @@ private:
     std::vector<EnemyPopData> popDatas_; // 読み込んだデータ
 
     uint32_t nextEnemyId_ = 1; // 敵のIDカウンター
+
+    // スコア計上済みのリスト
+    std::unordered_set<uint32_t> countedDeadEnemyIds_;
 };

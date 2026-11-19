@@ -30,6 +30,7 @@ void EnemyManager::Initialize(Player* player, const std::string& filePath)
     player_ = player;
     PopEnemyFilePath_ = filePath;
     currentSpawnIndex_ = 0;
+    countedDeadEnemyIds_.clear();
 
     LoadJsonPopData();
 }
@@ -44,12 +45,18 @@ void EnemyManager::Update()
         currentSpawnIndex_++;
     }
 
+    // このフレームないで倒された敵
+    int frameDefeatCount = 0;
+
     for (auto& enemy : enemies_) {
         // 敵更新
         enemy->Update();
         // スコア加算
-        if (!enemy->GetIsAvile_()) {
-            GameScoreManager::GetInstance()->AddDefeatCount(1);
+        if (enemy->GetIsDead()) {
+            uint32_t enemyId = enemy->GetId();
+            if (countedDeadEnemyIds_.insert(enemyId).second) {
+                ++frameDefeatCount;
+            }
         }
     }
 

@@ -30,6 +30,8 @@ void ResultUI::Initialize()
     TextureManager::getInstance()->LoadTexture("resources/UI/ResultUI1.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/ResultUI2.png");
     TextureManager::getInstance()->LoadTexture("resources/UI/ResultUI3.png");
+    TextureManager::getInstance()->LoadTexture("resources/UI/ResultWindow.png"); // 500*620のサイズ
+    TextureManager::getInstance()->LoadTexture("resources/UI/ResultWindow.png"); // 64*64のサイズ
 
     TextureManager::getInstance()->FlushUploads();
 
