@@ -22,6 +22,7 @@ public:
 private:
     void SetNumber();
     void maxEnemies();
+    void WindowOpen(float deltaTime);
     void ResultUIUpdate(float deltaTime);
     void NumberUpdate(float deltaTime);
 
@@ -34,16 +35,28 @@ private:
     int maxHitCount_ = 0; // 最大hit数記録
 
     // UI(スプライト)
+
+    std::unique_ptr<Sprite> ResultWindowUI_;
+    std::unique_ptr<Sprite> maxHITUI_;
     std::unique_ptr<Sprite> ResultUI_;
     std::unique_ptr<Sprite> Defeats_;
     std::unique_ptr<Sprite> SelectUI_;
+    std::unique_ptr<Sprite> medalUI_;
+
+    Vector2 ResultWindowSize_ { 1.0f, 1.0f };
+    Vector2 maxHITBaseSize_ { 1.0f, 1.0f };
     Vector2 ResultUIBaseSize_ { 1.0f, 1.0f };
     Vector2 DefeatsBaseSize_ { 1.0f, 1.0f };
 
     float animatonUITimer_ = 0.5f;
     static constexpr float kAnimatonUIDuration_ = 0.5f;
+
+    float windowUITimer_ = 0.2f;
+    static constexpr float kwindowUIDuration_ = 0.2f;
+
     bool isUIDraw_ = false;
     bool isUIAnimationEnd_ = false;
+    bool isWindowAnimationEnd_ = false;
 
     std::array<std::unique_ptr<Sprite>, 3> maxNumber_; // トータル
     std::array<std::unique_ptr<Sprite>, 3> DefeatsNumber_; // 撃破数
