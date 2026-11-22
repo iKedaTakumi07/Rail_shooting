@@ -30,7 +30,6 @@ void EnemyManager::Initialize(Player* player, const std::string& filePath)
     player_ = player;
     PopEnemyFilePath_ = filePath;
     currentSpawnIndex_ = 0;
-    countedDeadEnemyIds_.clear();
 
     LoadJsonPopData();
 }
@@ -50,12 +49,11 @@ void EnemyManager::Update()
     for (auto& enemy : enemies_) {
         // 敵更新
         enemy->Update();
+
         // スコア加算
-        if (enemy->GetIsDead()) {
-            uint32_t enemyId = enemy->GetId();
-            if (countedDeadEnemyIds_.insert(enemyId).second) {
-                GameScoreManager::GetInstance()->OnEnemyDefeated(enemy->GetScore());
-            }
+        int defeatedCount = enemy->ConsumeDefeatCount();
+        for (int i = 0; i < defeatedCount; ++i) {
+            GameScoreManager::GetInstance()->OnEnemyDefeated(enemy->GetScore());
         }
     }
 
@@ -86,7 +84,7 @@ void EnemyManager::ReloadJson(const std::string& filePath)
     }
 
     enemies_.clear();
-    countedDeadEnemyIds_.clear();
+    GameScoreManager::GetInstance()->Reset();
     LoadJsonPopData();
 
     // 進行中のプレイヤー位置に合わせてスポンインデックスをスキップ同期

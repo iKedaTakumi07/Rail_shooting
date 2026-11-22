@@ -33,6 +33,8 @@ public:
     int GetScore() override { return Score_; }
     std::vector<Vector3> GetTargetPositions() override; // ホーミング用の座標渡し
 
+    int ConsumeDefeatCount() override;
+
     // set関数
     void SetTargetPlayer(Player* target) override { player_ = target; }
     void SetLastStopPos(Vector3 num) override { ToStopTransform_.translate = num; }
@@ -89,6 +91,10 @@ private:
 
     bool allIsAvile_ = true; // 両方存在しているか
     bool allIsDead_ = false; // 両方死んでいるか
+
+    bool fromScoreClaimed_ = false;
+    bool toScoreClaimed_ = false;
+    int pendingDefeatCount_ = 0;
 
     float RanAwayOffset_ = 30.0f;
 };

@@ -34,6 +34,15 @@ public:
     // 描画
     void DrawBullets() const;
 
+    virtual int ConsumeDefeatCount()
+    {
+        if (GetIsDead() && !isDefeatCounted_) {
+            isDefeatCounted_ = true;
+            return 1;
+        }
+        return 0;
+    }
+
 public:
     /* Set関数 */
     virtual void SetTargetPlayer(Player* target) { }; // 対象に向かわせる
@@ -59,4 +68,5 @@ private:
     // 弾
     std::vector<std::unique_ptr<baseEnemyBullet>> enemyBullet_;
     uint32_t id_ = 0;
+    bool isDefeatCounted_ = false;
 };
