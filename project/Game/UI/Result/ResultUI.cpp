@@ -20,7 +20,6 @@ void ResultUI::Initialize()
     std::random_device seedGenerator;
     randomEngine = std::mt19937(seedGenerator());
 
-    // Listに溜めて特定の処理でアップする仕様追加後直す
     for (int i = 0; i < 10; ++i) {
         numberList_[i] = "resources/UI/number/GameNumber" + std::to_string(i) + ".png";
         TextureManager::getInstance()->LoadTexture(numberList_[i]);

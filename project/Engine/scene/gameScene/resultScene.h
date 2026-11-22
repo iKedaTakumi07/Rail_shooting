@@ -1,6 +1,7 @@
 #pragma once
 #include "../../../Game/SceneTransition.h"
 #include "../base/BaseScene.h"
+#include "../gameState/ResultSceneState.h"
 #include <memory>
 
 class ResultObject;
@@ -25,25 +26,25 @@ public:
     // 描画
     void Draw() override;
 
-private:
-    enum class State {
-        kNull = -1,
-        kSceneChange, // シーンチェンジ中(スキップ不可)
-        kResultUpdateNow, // リザルト発表中(アニメーション,イージング等中)(スキップ可)
-        kResultWait, //  リザルト表記完了
-        kPlanetEscape, // 惑星からの脱出演出中（UI非表示・カメラ＆機体演出）
-        kReturnSelect, // ステージ選択移行
-    };
+public:
+    void ChangeState(std::unique_ptr<IResultSceneState> nextState);
+    void FinishAndChangeScene(const std::string& nextSceneName);
+
+    ResultObject* GetResultObject() const { return resultObject_.get(); }
+    ResultUI* GetResultUI() const { return ResultUI_.get(); }
+    SceneTransition* GetTransition() const { return Transition_.get(); }
 
 private:
-    State state_ = State::kSceneChange;
+    std::unique_ptr<IResultSceneState> currentState_ = nullptr;
 
     std::unique_ptr<ResultObject> resultObject_;
     std::unique_ptr<ResultUI> ResultUI_;
     std::unique_ptr<skydome> skydome_;
     std::unique_ptr<SceneTransition> Transition_;
 
-    float stateTimer_ = 1.0f;
+    
+
+    bool isSceneFinished_ = false;
 
     bool isChange = false;
 };
