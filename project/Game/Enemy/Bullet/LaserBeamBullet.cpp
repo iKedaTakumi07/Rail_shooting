@@ -101,6 +101,11 @@ void LaserBeamBullet::Update(float deltaTime)
     object3d->Update();
 }
 
+void LaserBeamBullet::UpdatePause()
+{
+    enemyLaserParticle_->NewParticle(FromPos_, ToPos_, transform_);
+}
+
 void LaserBeamBullet::Draw()
 {
     // object3d->Draw();

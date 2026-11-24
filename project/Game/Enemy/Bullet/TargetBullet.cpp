@@ -77,6 +77,11 @@ void TargetBullet::Update(float deltaTime)
     pointLight_.position = transform_.translate;
 }
 
+void TargetBullet::UpdatePause()
+{
+    laserParticle_->NewParticle(transform_);
+}
+
 void TargetBullet::Draw()
 {
     object3d->Draw();

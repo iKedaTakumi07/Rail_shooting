@@ -56,6 +56,11 @@ void threeShotsEnemy::Update()
     object3d->Update();
 }
 
+void threeShotsEnemy::UpdatePause()
+{
+    UpdatePauseBullet();
+}
+
 void threeShotsEnemy::Draw()
 {
     object3d->Draw();

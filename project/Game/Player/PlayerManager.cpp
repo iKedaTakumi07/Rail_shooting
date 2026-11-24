@@ -53,6 +53,11 @@ void PlayerManager::UpdateClear()
     }
 }
 
+void PlayerManager::UpdatePause()
+{
+    player_->UpdatePause();
+}
+
 void PlayerManager::Draw()
 {
     if (player_)

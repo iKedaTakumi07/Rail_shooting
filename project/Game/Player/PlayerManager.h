@@ -27,6 +27,7 @@ public:
     void Update();
     void UpdateIntro(float progress);
     void UpdateClear();
+    void UpdatePause();
     void Draw();
     void SpritDraw();
 

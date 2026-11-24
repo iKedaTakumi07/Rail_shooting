@@ -14,6 +14,7 @@ public:
     virtual void Initialize(Vector3 pos) = 0;
 
     virtual void Update() = 0;
+    virtual void UpdatePause() = 0;
 
     virtual void Draw() = 0;
 
@@ -30,6 +31,7 @@ public:
 
     // 弾の更新
     void UpdateBullets(float deltaTime, const Vector3& playerPos);
+    void UpdatePauseBullet();
 
     // 描画
     void DrawBullets() const;

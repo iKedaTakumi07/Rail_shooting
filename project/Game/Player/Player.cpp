@@ -127,6 +127,19 @@ void Player::UpdateClear()
     }
 }
 
+void Player::UpdatePause()
+{
+    camera_ = CameraManager::GetInstance()->GetActiveCamera();
+
+    for (auto& bullet : playerBullets_) {
+        bullet->UpdatePause();
+    }
+
+    if (playerPowerUnitLaser_) {
+        playerPowerUnitLaser_->NewParticle(PrePos_, transform_, kPowerUnitPos);
+    }
+}
+
 void Player::Draw()
 {
     if (!currentState_ || currentState_->ShouldDrawModel()) {
@@ -274,7 +287,7 @@ void Player::ExecuteCommonAliveStep(float deltaTime)
         }
     }
 
-    playerPowerUnitLaser_->NewParticle(PrePos_, basetransform_, kPowerUnitPos);
+    playerPowerUnitLaser_->NewParticle(PrePos_, transform_, kPowerUnitPos);
 
     playerObject3d->SetTranslate(transform_.translate);
     playerObject3d->SetRotate(transform_.rotate);

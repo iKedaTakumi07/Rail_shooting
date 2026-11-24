@@ -42,26 +42,25 @@ void ResultUpdateNow::Update(resultScene& scene, float deltaTime)
     (void)deltaTime;
     auto* input = Input::GetInstance();
     auto* ResultUI = scene.GetResultUI();
+    bool isSkipInput = false;
 
-    if (input->IsControllerConnected()) {
-        bool isSkipInput = false;
-        if (input->IsControllerConnected() && input->TriggerButton(XINPUT_GAMEPAD_A)) {
-            isSkipInput = true;
-        }
-        if (input->TriggerKey(DIK_RETURN)) {
-            isSkipInput = true;
-        }
+    if (input->IsControllerConnected() && input->TriggerButton(XINPUT_GAMEPAD_A)) {
+        isSkipInput = true;
+    }
 
-        if (isSkipInput) {
-            ResultUI->SkipAnimation();
-            scene.ChangeState(std::make_unique<ResultWait>());
-            return;
-        }
+    if (input->TriggerKey(DIK_RETURN)) {
+        isSkipInput = true;
+    }
 
-        if (ResultUI->IsAnimationEnd()) {
-            scene.ChangeState(std::make_unique<ResultWait>());
-            return;
-        }
+    if (isSkipInput) {
+        ResultUI->SkipAnimation();
+        scene.ChangeState(std::make_unique<ResultWait>());
+        return;
+    }
+
+    if (ResultUI->IsAnimationEnd()) {
+        scene.ChangeState(std::make_unique<ResultWait>());
+        return;
     }
 }
 

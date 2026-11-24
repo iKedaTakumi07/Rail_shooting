@@ -31,6 +31,7 @@ public:
     void Initialize(Player* player, const std::string& filePath);
 
     void Update();
+    void UpdatePause();
 
     void Draw();
 

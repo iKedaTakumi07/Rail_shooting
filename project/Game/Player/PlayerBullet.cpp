@@ -184,10 +184,26 @@ void PlayerBullet::Update(float deltaTime)
     laserParticle_->NewParticle(Pretransform_);
 }
 
+void PlayerBullet::UpdatePause()
+{
+    if (isShockWave || isDead_) {
+        return;
+    }
+    if (laserParticle_) {
+        laserParticle_->NewParticle(transform_);
+        laserParticle_->NewParticle(Pretransform_);
+    }
+}
+
 void PlayerBullet::Draw()
 {
     if (!isShockWave) {
         object3d->Draw();
+    }
+
+    if (laserParticle_) {
+        laserParticle_->NewParticle(transform_);
+        laserParticle_->NewParticle(Pretransform_);
     }
 }
 

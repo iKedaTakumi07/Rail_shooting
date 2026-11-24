@@ -1,7 +1,7 @@
 #include "baseEnemy.h"
 #include "../Bullet/LaserBeamBullet.h"
-#include <vector>
 #include "baseEnemyBullet.h"
+#include <vector>
 
 void baseEnemy::Initialize(Vector3 pos)
 {
@@ -38,6 +38,13 @@ void baseEnemy::UpdateBullets(float deltaTime, const Vector3& playerPos)
     std::erase_if(enemyBullet_, [](const std::unique_ptr<baseEnemyBullet>& bullet) {
         return bullet->GetIsDead();
     });
+}
+
+void baseEnemy::UpdatePauseBullet()
+{
+    for (auto& bullet : enemyBullet_) {
+        bullet->UpdatePause();
+    }
 }
 
 void baseEnemy::DrawBullets() const

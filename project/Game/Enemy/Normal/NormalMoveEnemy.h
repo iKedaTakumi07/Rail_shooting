@@ -13,7 +13,7 @@ public:
     void Initialize(Vector3 posh) override;
 
     void Update() override;
-
+    void UpdatePause() override;
     void Draw() override;
 
 public:

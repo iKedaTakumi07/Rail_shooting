@@ -76,6 +76,11 @@ void LaserEnemy::Update()
     toStopObject3d->Update();
 }
 
+void LaserEnemy::UpdatePause()
+{
+    UpdatePauseBullet();
+}
+
 void LaserEnemy::Draw()
 {
     if (fromIsAvile_) {

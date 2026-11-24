@@ -9,6 +9,7 @@ public:
     virtual void Initialize(Vector3 pos, const Vector3& rotation);
 
     virtual void Update(float deltaTime);
+    virtual void UpdatePause() = 0;
 
     virtual void Draw();
 

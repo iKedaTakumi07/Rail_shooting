@@ -16,12 +16,15 @@ struct BossPart {
     Vector3 aabbMinOffset; // 当たり判定 (AABB min) オフセット
     Vector3 aabbMaxOffset; // 当たり判定 (AABB max) オフセット
     int hp = 200; // 部位耐久力
+    bool isBroken = false;
 };
 
 class FourEyesBoss : public baseBossEnemy {
 public:
     void Initialize(Vector3 pos) override;
     void Update() override;
+    void UpdatePause() override;
+
     void Draw() override;
     void SpriteDraw() override;
 
@@ -72,13 +75,21 @@ private:
     void ExecuteStaggeredFire();
     void ExecuteLaserFire();
 
+    Vector3 GetPartMuzzleWorldPos(size_t partIndex) const;
+    void UpdateGunObjects();
+    void UpdateGun();
+
 private:
     Camera* camera_ = nullptr; // カメラ(ポインタ)
     Player* player_ = nullptr;
 
     // 3dモデル
-    std::unique_ptr<Model> model;
-    std::unique_ptr<Object3d> object3d;
+    std::unique_ptr<Model> mainBodyModel_;
+    std::unique_ptr<Model> gunModel_;
+    std::unique_ptr<Model> gunBrokenModel_;
+
+    std::unique_ptr<Object3d> mainBodyObject_;
+    std::array<std::unique_ptr<Object3d>, 4> gunObjects_;
 
     // UI(スプライト)
     std::unique_ptr<Sprite> BossMaxHpUI;

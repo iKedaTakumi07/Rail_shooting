@@ -22,6 +22,7 @@ public:
     void Initialize(Camera* camera, const Vector3& position, const Vector3& rotation);
 
     void Update(float deltaTime);
+    void UpdatePause();
 
     void Draw();
 

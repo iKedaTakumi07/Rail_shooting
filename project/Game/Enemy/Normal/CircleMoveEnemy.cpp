@@ -74,6 +74,11 @@ void CircleMoveEnemy::Update()
     object3d->Update();
 }
 
+void CircleMoveEnemy::UpdatePause()
+{
+    UpdatePauseBullet();
+}
+
 void CircleMoveEnemy::Draw()
 {
     object3d->Draw();

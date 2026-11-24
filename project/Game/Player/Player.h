@@ -33,9 +33,9 @@ public:
     void Initialize();
 
     void Update();
-
     void UpdateIntro(float progress);
     void UpdateClear();
+    void UpdatePause();
 
     void Draw();
 

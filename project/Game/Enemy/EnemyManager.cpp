@@ -63,6 +63,13 @@ void EnemyManager::Update()
     });
 }
 
+void EnemyManager::UpdatePause()
+{
+    for (auto& enemy : enemies_) {
+        enemy->UpdatePause();
+    }
+}
+
 void EnemyManager::Draw()
 {
     for (auto& enemy : enemies_) {

@@ -13,6 +13,7 @@ class CircleMoveEnemy : public baseEnemy {
 public:
     void Initialize(Vector3 pos) override;
     void Update() override;
+    void UpdatePause() override;
     void Draw() override;
 
 public:
