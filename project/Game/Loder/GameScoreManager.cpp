@@ -1,5 +1,6 @@
 #include "GameScoreManager.h"
 #include "../../resources/nlohmann/json.hpp"
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 
@@ -17,7 +18,12 @@ GameScoreManager* GameScoreManager::GetInstance()
 
 void GameScoreManager::Reset()
 {
+    // すべて初期化
     defeatCount_ = 0;
+    totalScore_ = 0;
+    comboGraceFrames_ = 0;
+    simultaneousKillCount_ = 0;
+    maxHitCount_ = 0;
 }
 
 void GameScoreManager::Update()
@@ -32,33 +38,35 @@ void GameScoreManager::Update()
     }
 }
 
-void GameScoreManager::OnEnemyDefeated()
+void GameScoreManager::OnEnemyDefeated(int baseScore)
 {
     if (comboGraceFrames_ > 0) {
-        // 猶予30F以内に追加撃破したため同時撃破カウント増加
+        // 猶予内に撃破した場合は同時撃破カウント増加
         ++simultaneousKillCount_;
     } else {
         // 新規撃破開始
         simultaneousKillCount_ = 1;
+        comboGraceFrames_ = kMaxComboGraceFrames;
     }
 
-    // タイマーを延長しない
+    // 最大hit数を更新
+    maxHitCount_ = (std::max)(maxHitCount_, simultaneousKillCount_);
+    // 撃破数のカウント
+    defeatCount_ += 1;
 
     // 基本撃破スコア加算
-    int totalAddScore = kBaseKillScore;
-
-    // 2体以上の同時撃破時はボーナスを加算（2体目:+1, 3体目:+2, ...）
+    int totalAddScore = baseScore;
     if (simultaneousKillCount_ >= 2) {
         int bonus = (simultaneousKillCount_ - 1) * kMultiKillBonus;
         totalAddScore += bonus;
     }
-
-    defeatCount_ += totalAddScore;
+    totalScore_ += totalAddScore;
 }
 
 void GameScoreManager::AddDefeatCount(int count)
 {
     defeatCount_ += count;
+    totalScore_ += count * kBaseKillScore;
 }
 
 bool GameScoreManager::LoadMedalData(const std::string& filePath)

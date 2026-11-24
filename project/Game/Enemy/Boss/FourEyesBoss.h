@@ -16,12 +16,15 @@ struct BossPart {
     Vector3 aabbMinOffset; // 当たり判定 (AABB min) オフセット
     Vector3 aabbMaxOffset; // 当たり判定 (AABB max) オフセット
     int hp = 200; // 部位耐久力
+    bool isBroken = false;
 };
 
 class FourEyesBoss : public baseBossEnemy {
 public:
     void Initialize(Vector3 pos) override;
     void Update() override;
+    void UpdatePause() override;
+
     void Draw() override;
     void SpriteDraw() override;
 
@@ -31,6 +34,7 @@ public:
     void SetMove(Vector3 num) override { num; }
     void SetbasePos(Vector3 num) override { centerPos_ = num; } // 中心位置
     void SetHp(int num) override;
+    void SetScore(int num) override { Score_ = num; };
 
     float GetHpRate() const override { return static_cast<float>(currentHp_) / maxHp_; }
     int GetCurrentPhase() const override { return currentPhase_; }
@@ -44,6 +48,7 @@ public:
     bool GetIsAvile_() override { return isAvile_; }
     bool GetIsDead() override { return isDead_; }
     Vector3 GetTranslate() override { return transform_.translate; }
+    int GetScore() override { return Score_; }
 
 public:
     void StartAppearance() override;
@@ -70,13 +75,21 @@ private:
     void ExecuteStaggeredFire();
     void ExecuteLaserFire();
 
+    Vector3 GetPartMuzzleWorldPos(size_t partIndex) const;
+    void UpdateGunObjects();
+    void UpdateGun();
+
 private:
     Camera* camera_ = nullptr; // カメラ(ポインタ)
     Player* player_ = nullptr;
 
     // 3dモデル
-    std::unique_ptr<Model> model;
-    std::unique_ptr<Object3d> object3d;
+    std::unique_ptr<Model> mainBodyModel_;
+    std::unique_ptr<Model> gunModel_;
+    std::unique_ptr<Model> gunBrokenModel_;
+
+    std::unique_ptr<Object3d> mainBodyObject_;
+    std::array<std::unique_ptr<Object3d>, 4> gunObjects_;
 
     // UI(スプライト)
     std::unique_ptr<Sprite> BossMaxHpUI;
@@ -96,6 +109,7 @@ private:
     Vector3 centerPos_ = { 0.0f }; // 中心位置
 
     int dameg_ = 5;
+    int Score_ = 1;
 
     bool isAvile_ = true; // 存在しているか
     bool isDead_ = false; // 死んでいるか

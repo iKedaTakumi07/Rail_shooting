@@ -14,6 +14,7 @@ public:
     virtual void Initialize(Vector3 pos) = 0;
 
     virtual void Update() = 0;
+    virtual void UpdatePause() = 0;
 
     virtual void Draw() = 0;
 
@@ -30,9 +31,19 @@ public:
 
     // 弾の更新
     void UpdateBullets(float deltaTime, const Vector3& playerPos);
+    void UpdatePauseBullet();
 
     // 描画
     void DrawBullets() const;
+
+    virtual int ConsumeDefeatCount()
+    {
+        if (GetIsDead() && !isDefeatCounted_) {
+            isDefeatCounted_ = true;
+            return 1;
+        }
+        return 0;
+    }
 
 public:
     /* Set関数 */
@@ -44,12 +55,14 @@ public:
     virtual void SetbasePos(Vector3 num) { }
     virtual void SetId(uint32_t id) { id_ = id; }
     virtual void SetLastStopPos(Vector3 num) { };
+    virtual void SetScore(int num) { };
 
     /* Get関数 */
     const std::vector<std::unique_ptr<baseEnemyBullet>>& GetBullets() const { return enemyBullet_; }
     virtual Vector3 GetTranslate() = 0;
     virtual bool GetIsAvile_() = 0;
     virtual bool GetIsDead() = 0;
+    virtual int GetScore() = 0;
     virtual uint32_t GetId() const { return id_; }
     virtual std::vector<Vector3> GetTargetPositions() { return { GetTranslate() }; }
 
@@ -57,4 +70,5 @@ private:
     // 弾
     std::vector<std::unique_ptr<baseEnemyBullet>> enemyBullet_;
     uint32_t id_ = 0;
+    bool isDefeatCounted_ = false;
 };

@@ -15,7 +15,7 @@ class threeShotsEnemy : public baseEnemy {
     void Initialize(Vector3 pos) override;
 
     void Update() override;
-
+    void UpdatePause() override;
     void Draw() override;
 
 public:
@@ -28,11 +28,13 @@ public:
     bool GetIsAvile_() override { return isAvile_; }
     bool GetIsDead() override { return isDead_; }
     Vector3 GetTranslate() override { return transform_.translate; }
+    int GetScore() override { return Score_; }
 
     // set関数
     void SetTargetPlayer(Player* target) override { player_ = target; }
     void SetIsDead(bool num) { isDead_ = num; }
     void SetUseBullet(int num) override { useBullet = num; }
+    void SetScore(int num) override { Score_ = num; };
     void SetHomingPower(float num) override { homingPower = num; }
     void SetHp(int num) override { health_ = num; }
 
@@ -58,6 +60,7 @@ private:
 
     int health_ = 5; // 体力(jsonで設定予定)
     int dameg_ = 5;
+    int Score_ = 1;
 
     float interval = 2.0f; // 弾を発射する間隔
     static inline const float maxInterval = 2.0f; // 間隔

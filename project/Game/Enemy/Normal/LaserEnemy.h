@@ -16,7 +16,7 @@ public:
     void Initialize(Vector3 pos) override;
 
     void Update() override;
-
+    void UpdatePause() override;
     void Draw() override;
 
 public:
@@ -28,8 +28,12 @@ public:
     int GetDamage() const override { return dameg_; }
     bool GetIsAvile_() override { return allIsAvile_; }
     bool GetIsDead() override { return allIsDead_; }
+    void SetScore(int num) override { Score_ = num; };
     Vector3 GetTranslate() override { return FromPointTransform_.translate; }
+    int GetScore() override { return Score_; }
     std::vector<Vector3> GetTargetPositions() override; // ホーミング用の座標渡し
+
+    int ConsumeDefeatCount() override;
 
     // set関数
     void SetTargetPlayer(Player* target) override { player_ = target; }
@@ -71,6 +75,7 @@ private:
     int starthealth_ = 6; // 体力
     int lasthealth_ = 6; // 体力
     int dameg_ = 5;
+    int Score_ = 1;
 
     // 削除予定 //
     Vector3 move = { 0.0f };
@@ -86,6 +91,10 @@ private:
 
     bool allIsAvile_ = true; // 両方存在しているか
     bool allIsDead_ = false; // 両方死んでいるか
+
+    bool fromScoreClaimed_ = false;
+    bool toScoreClaimed_ = false;
+    int pendingDefeatCount_ = 0;
 
     float RanAwayOffset_ = 30.0f;
 };

@@ -49,6 +49,11 @@ void FixedEnemy::Update()
     fixedEnemyObject3d->Update();
 }
 
+void FixedEnemy::UpdatePause()
+{
+    UpdatePauseBullet();
+}
+
 void FixedEnemy::Draw()
 {
     fixedEnemyObject3d->Draw();

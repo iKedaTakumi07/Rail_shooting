@@ -319,3 +319,5 @@ imgui.ini
 
 # DirectXTex Compiled Shaders
 **/DirectXTex/Shaders/Compiled/
+/PortfolioPipeline/PortfolioPipeline.ps1
+/PortfolioPipeline/requirements.txt

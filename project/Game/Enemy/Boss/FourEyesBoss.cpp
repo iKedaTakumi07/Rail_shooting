@@ -27,24 +27,42 @@ void FourEyesBoss::Initialize(Vector3 pos)
     std::random_device seedGenerator;
     randomEngine = std::mt19937(seedGenerator());
 
-    TextureManager::getInstance()->LoadTexture("resources/baseEnemy/uvChecker.png");
+    TextureManager::getInstance()->LoadTexture("resources/baseEnemy/FixedEnemy.png");
+    TextureManager::getInstance()->LoadTexture("resources/baseEnemy/bossEnemy.png");
+    TextureManager::getInstance()->LoadTexture("resources/baseEnemy/bossEnemyBrokenGun.png");
     TextureManager::getInstance()->LoadTexture("resources/EnemyUI/bossHpBar.png");
     TextureManager::getInstance()->LoadTexture("resources/EnemyUI/bossHpTank.png");
     TextureManager::getInstance()->LoadTexture("resources/EnemyUI/WARNING.png");
     TextureManager::getInstance()->FlushUploads();
 
     ModelManager::GetInstance()->LoadModel("baseEnemy/bossEnemy.obj");
+    ModelManager::GetInstance()->LoadModel("baseEnemy/bossEnemyGun.obj");
 
-    object3d = std::make_unique<Object3d>();
-    object3d->Initialize();
+    mainBodyModel_ = std::make_unique<Model>();
+    mainBodyModel_->Initialize("resources/baseEnemy", "bossEnemy.obj");
+
+    gunModel_ = std::make_unique<Model>();
+    gunModel_->Initialize("resources/baseEnemy", "bossEnemyGun.obj");
+
+    gunBrokenModel_ = std::make_unique<Model>();
+    gunBrokenModel_->Initialize("resources/baseEnemy", "bossEnemyGun.obj");
+    gunBrokenModel_->SetTextureFilePath("resources/baseEnemy/bossEnemyBrokenGun.png");
+
+    // 本体
+    mainBodyObject_ = std::make_unique<Object3d>();
+    mainBodyObject_->Initialize();
+    mainBodyObject_->SetModel(mainBodyModel_.get());
+    // model->SetEvnTexturefilePath(skydox->GetTextureFilePath()); // 反射が必要なら
+
+    // 銃
+    for (auto& gunObj : gunObjects_) {
+        gunObj = std::make_unique<Object3d>();
+        gunObj->Initialize();
+        gunObj->SetModel(gunModel_.get());
+    }
 
     isAvile_ = true;
     isDead_ = false;
-
-    model = std::make_unique<Model>();
-    model->Initialize("resources/baseEnemy", "bossEnemy.obj");
-    // model->SetEvnTexturefilePath(skydox->GetTextureFilePath()); // 反射が必要なら
-    object3d->SetModel(model.get());
 
     transform_.scale = { 1.0f, 1.0f, 1.0f };
     transform_.rotate = { 0.0f, 0.0f, 0.0f };
@@ -101,7 +119,9 @@ void FourEyesBoss::Update()
     if (currentSpecialState_) {
         UpdateSpecialAttack(deltaTime);
         UIUpdate();
-        object3d->Update();
+        UpdateGun();
+        mainBodyObject_->Update();
+        UpdateGunObjects();
         return;
     }
 
@@ -109,13 +129,24 @@ void FourEyesBoss::Update()
     MoveUpdate();
     FireFourWayBullets();
     UIUpdate();
+    UpdateGun();
 
-    object3d->Update();
+    mainBodyObject_->Update();
+    UpdateGunObjects();
+}
+
+void FourEyesBoss::UpdatePause()
+{
+    UpdatePauseBullet();
 }
 
 void FourEyesBoss::Draw()
 {
-    object3d->Draw();
+    mainBodyObject_->Draw();
+
+    for (size_t i = 0; i < gunObjects_.size(); ++i) {
+        gunObjects_[i]->Draw();
+    }
 
     DrawBullets();
 }
@@ -305,8 +336,9 @@ void FourEyesBoss::StartAppearance()
     transform_.translate.y = centerPos_.y + kStartOffsetY;
     transform_.rotate.y = kStartRotateY;
 
-    object3d->SetTranslate(transform_.translate);
-    object3d->SetRotate(transform_.rotate);
+    mainBodyObject_->SetTranslate(transform_.translate);
+    mainBodyObject_->SetRotate(transform_.rotate);
+    UpdateGunObjects();
 }
 
 void FourEyesBoss::UpdateAppearance(float deltaTime)
@@ -328,9 +360,10 @@ void FourEyesBoss::UpdateAppearance(float deltaTime)
     transform_.translate.z = pos.z;
 
     UIUpdate();
-    object3d->SetTranslate(transform_.translate);
-    object3d->SetRotate(transform_.rotate);
-    object3d->Update();
+    mainBodyObject_->SetTranslate(transform_.translate);
+    mainBodyObject_->SetRotate(transform_.rotate);
+    mainBodyObject_->Update();
+    UpdateGunObjects();
 
     if (appearanceTimer_ >= kAppearanceDuration) {
         isAppearing_ = false; // 演出終了
@@ -379,10 +412,12 @@ void FourEyesBoss::UpdateDeathProduction(float deltaTime)
     pos.z = pos.z + offsetPosZ;
     transform_.translate.z = pos.z;
 
-    object3d->SetScale(transform_.scale);
-    object3d->SetTranslate(transform_.translate);
-    object3d->SetRotate(transform_.rotate);
-    object3d->Update();
+    UpdateGun();
+    mainBodyObject_->SetScale(transform_.scale);
+    mainBodyObject_->SetTranslate(transform_.translate);
+    mainBodyObject_->SetRotate(transform_.rotate);
+    mainBodyObject_->Update();
+    UpdateGunObjects();
 }
 
 void FourEyesBoss::ChangeSpecialState(std::unique_ptr<IBossSpecialState> nextState)
@@ -416,8 +451,8 @@ Vector3 FourEyesBoss::GetSpecialTargetCenter() const
 void FourEyesBoss::SetSpecialPosition(const Vector3& pos)
 {
     transform_.translate = pos;
-    if (object3d) {
-        object3d->SetTranslate(transform_.translate);
+    if (mainBodyObject_) {
+        mainBodyObject_->SetTranslate(transform_.translate);
     }
 }
 
@@ -533,8 +568,8 @@ void FourEyesBoss::MoveUpdate()
     pos.z = pos.z + offsetPosZ;
     transform_.translate.z = pos.z;
 
-    object3d->SetTranslate(transform_.translate);
-    object3d->SetRotate(transform_.rotate);
+    mainBodyObject_->SetTranslate(transform_.translate);
+    mainBodyObject_->SetRotate(transform_.rotate);
 }
 
 void FourEyesBoss::UIUpdate()
@@ -670,4 +705,54 @@ void FourEyesBoss::ExecuteLaserFire()
     laser->Initialize(activePositions[idxA], { 0.0f, 0.0f, 0.0f });
     laser->SetPositions(activePositions[idxA], activePositions[idxB]);
     AddBullet(std::move(laser));
+}
+
+Vector3 FourEyesBoss::GetPartMuzzleWorldPos(size_t partIndex) const
+{
+    if (partIndex >= parts_.size()) {
+        return transform_.translate;
+    }
+
+    const Vector3& offset = parts_[partIndex].muzzleOffset;
+    Vector3 scaledOffset = {
+        offset.x * transform_.scale.x,
+        offset.y * transform_.scale.y,
+        offset.z * transform_.scale.z
+    };
+
+    Matrix4x4 rotX = MakeRotateXMatrix(transform_.rotate.x);
+    Matrix4x4 rotY = MakeRotateYMatrix(transform_.rotate.y);
+    Matrix4x4 rotZ = MakeRotateZMatrix(transform_.rotate.z);
+    Matrix4x4 rotMat = Multiply(rotX, Multiply(rotY, rotZ));
+
+    return {
+        transform_.translate.x + (scaledOffset.x * rotMat.m[0][0] + scaledOffset.y * rotMat.m[1][0] + scaledOffset.z * rotMat.m[2][0]),
+        transform_.translate.y + (scaledOffset.x * rotMat.m[0][1] + scaledOffset.y * rotMat.m[1][1] + scaledOffset.z * rotMat.m[2][1]),
+        transform_.translate.z + (scaledOffset.x * rotMat.m[0][2] + scaledOffset.y * rotMat.m[1][2] + scaledOffset.z * rotMat.m[2][2])
+    };
+}
+
+void FourEyesBoss::UpdateGunObjects()
+{
+    for (size_t i = 0; i < gunObjects_.size(); ++i) {
+        if (!gunObjects_[i]) {
+            continue;
+        }
+        gunObjects_[i]->SetScale(transform_.scale);
+        gunObjects_[i]->SetRotate(transform_.rotate);
+        gunObjects_[i]->SetTranslate(GetPartMuzzleWorldPos(i));
+        gunObjects_[i]->Update();
+    }
+}
+
+void FourEyesBoss::UpdateGun()
+{
+    for (size_t i = 0; i < gunObjects_.size(); ++i) {
+        if (!parts_[i].isBroken && parts_[i].hp <= 0) {
+            parts_[i].isBroken = true;
+            if (gunObjects_[i] && gunBrokenModel_) {
+                gunObjects_[i]->SetModel(gunBrokenModel_.get());
+            }
+        }
+    }
 }

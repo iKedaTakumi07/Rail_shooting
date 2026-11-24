@@ -49,6 +49,10 @@ void LaserEnemy::Initialize(Vector3 pos)
     allIsAvile_ = true; // 両方存在しているか
     allIsDead_ = false; // 両方死んでいるか
 
+    fromScoreClaimed_ = false;
+    toScoreClaimed_ = false;
+    pendingDefeatCount_ = 0;
+
     ResetPrevPosition(FromPointTransform_.translate);
 }
 
@@ -70,6 +74,11 @@ void LaserEnemy::Update()
     toStopObject3d->SetTranslate(ToStopTransform_.translate);
     toStopObject3d->SetRotate(ToStopTransform_.rotate);
     toStopObject3d->Update();
+}
+
+void LaserEnemy::UpdatePause()
+{
+    UpdatePauseBullet();
 }
 
 void LaserEnemy::Draw()
@@ -216,6 +225,13 @@ std::vector<Vector3> LaserEnemy::GetTargetPositions()
     return positions;
 }
 
+int LaserEnemy::ConsumeDefeatCount()
+{
+    int count = pendingDefeatCount_;
+    pendingDefeatCount_ = 0;
+    return count;
+}
+
 void LaserEnemy::BulletUpdate()
 {
     if (fromIsAvile_ && toIsAvile_) {
@@ -301,10 +317,18 @@ void LaserEnemy::partsDamage(Collider* other)
     if (starthealth_ <= 0) {
         fromIsDead_ = true;
         fromIsAvile_ = false;
+        if (!fromScoreClaimed_) {
+            fromScoreClaimed_ = true;
+            ++pendingDefeatCount_;
+        }
     }
     if (lasthealth_ <= 0) {
         toIsDead_ = true;
         toIsAvile_ = false;
+        if (!toScoreClaimed_) {
+            toScoreClaimed_ = true;
+            ++pendingDefeatCount_;
+        }
     }
     if (toIsDead_ && fromIsDead_) {
         allIsDead_ = true;

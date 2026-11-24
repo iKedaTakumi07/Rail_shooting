@@ -15,7 +15,7 @@ public:
     void Initialize(Vector3 pos) override;
 
     void Update() override;
-
+    void UpdatePause() override;
     void Draw() override;
 
 public:
@@ -27,7 +27,9 @@ public:
     int GetDamage() const override { return dameg_; }
     bool GetIsAvile_() override { return isAvile_; }
     bool GetIsDead() override { return isDead_; }
+    void SetScore(int num) override { Score_ = num; };
     Vector3 GetTranslate() override { return transform_.translate; }
+    int GetScore() override { return Score_; }
 
     // set関数
     void SetTargetPlayer(Player* target) override { player_ = target; }
@@ -57,6 +59,7 @@ private:
 
     int health_ = 5; // 体力(jsonで設定予定)
     int dameg_ = 5;
+    int Score_ = 1;
 
     float interval = 2.0f; // 弾を発射する間隔
     static inline const float maxInterval = 2.0f; // 間隔

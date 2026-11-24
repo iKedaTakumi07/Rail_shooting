@@ -136,9 +136,6 @@ void TestScene::Initialize()
     particleEmitter4->SetParam(fireParam);
     ParticleManager::getInstance()->SetGroupScrollSpeed("Cylinder", { 0.2f, 0.0f });*/
 
-    player_ = std::make_unique<Player>();
-    player_->Initialize();
-
     // hitParticle = std::make_unique<HitParticle>();
     // hitParticle->Initialize();
     // hitParticle->NewTransform();
@@ -302,8 +299,6 @@ void TestScene::Update()
     object3d->Update();
     object3d_2->Update();
 
-    player_->Update();
-
     // particleEmitter2->Update();
     // particleEmitter4->Update();
 
@@ -327,7 +322,6 @@ void TestScene::Draw()
 
     object3d->Draw();
     object3d_2->Draw();
-    player_->Draw();
 
 #ifdef USE_IMGUI
     Object3dCommon::GetInstance()->PreLineObjectDraw();

@@ -74,6 +74,11 @@ void NormalMoveEnemy::Update()
     object3d->Update();
 }
 
+void NormalMoveEnemy::UpdatePause()
+{
+    UpdatePauseBullet();
+}
+
 void NormalMoveEnemy::Draw()
 {
     object3d->Draw();

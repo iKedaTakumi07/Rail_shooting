@@ -79,6 +79,11 @@ void EnemyHomingBullet::Update(float deltaTime)
     particleTimer_ += deltaTime;
 }
 
+void EnemyHomingBullet::UpdatePause()
+{
+    laserParticle_->NewParticle(transform_);
+}
+
 void EnemyHomingBullet::Draw()
 {
     object3d->Draw();

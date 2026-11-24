@@ -190,6 +190,11 @@ void GameOverState::DrawSprite(GamePlayScene& scene)
 void PauseState::Update(GamePlayScene& scene, float deltaTime)
 {
     auto* pauseUI = scene.GetPauseUI();
+    auto* playerManager = scene.GetPlayerManager();
+    auto* enemyManager = scene.GetEnemyManager();
+
+    playerManager->UpdatePause();
+    enemyManager->UpdatePause();
     pauseUI->Update();
 
     if (pauseUI->GetResetOrder()) {

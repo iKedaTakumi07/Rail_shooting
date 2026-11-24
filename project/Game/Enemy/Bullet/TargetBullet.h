@@ -18,6 +18,7 @@ public:
     void Initialize(Vector3 pos, const Vector3& rotation) override;
 
     void Update(float deltaTime) override;
+    void UpdatePause() override;
 
     void Draw() override;
 

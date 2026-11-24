@@ -97,6 +97,10 @@ void StageDataEditor::SaveEnemyJson(const std::string& filePath)
                 orderedItem["pos"] = { { "x", 0.0f }, { "y", 0.0f }, { "z", 40.0f } };
             }
 
+            int defaultScore = (orderedItem["type"] == "FourEyesBoss") ? 50 : 1;
+            int currentScore = item.contains("score") ? item.value("score", defaultScore) : item.value("Score", defaultScore);
+            orderedItem["score"] = currentScore;
+
             orderedItem["UseBullet"] = item.value("UseBullet", "TargetBullet");
             if (orderedItem["UseBullet"] == "HomingBullet" && item.contains("homingPower")) {
                 orderedItem["homingPower"] = item.value("homingPower", 0.1f);
@@ -230,6 +234,7 @@ void StageDataEditor::DrawEnemyEditor()
             { { "type", "FixedEnemy" },
                 { "spawn_z", 0.0f },
                 { "pos", json::object({ { "x", 0.0f }, { "y", 0.0f }, { "z", 40.0f } }) },
+                { "score", 1 },
                 { "UseBullet", "TargetBullet" },
                 { "hp", 5 } });
         enemies.push_back(newEnemy);
@@ -254,8 +259,15 @@ void StageDataEditor::DrawEnemyEditor()
                 }
             }
             if (ImGui::Combo("Type", &currentTypeIdx, enemyTypes, IM_ARRAYSIZE(enemyTypes))) {
+                std::string prevType = currentType;
                 item["type"] = enemyTypes[currentTypeIdx];
                 currentType = enemyTypes[currentTypeIdx];
+
+                int prevDefaultScore = (prevType == "FourEyesBoss") ? 50 : 1;
+                int newDefaultScore = (currentType == "FourEyesBoss") ? 50 : 1;
+                if (item.value("score", prevDefaultScore) == prevDefaultScore) {
+                    item["score"] = newDefaultScore;
+                }
             }
 
             // Spawn Z
@@ -283,6 +295,13 @@ void StageDataEditor::DrawEnemyEditor()
             int hp = item.value("hp", 5);
             if (ImGui::InputInt("HP", &hp)) {
                 item["hp"] = hp;
+            }
+
+            // score
+            int defaultScore = (currentType == "FourEyesBoss") ? 50 : 1;
+            int score = item.contains("score") ? item.value("score", defaultScore) : item.value("Score", defaultScore);
+            if (ImGui::InputInt("Score", &score)) {
+                item["score"] = (std::max)(0, score);
             }
 
             // Bullet Type

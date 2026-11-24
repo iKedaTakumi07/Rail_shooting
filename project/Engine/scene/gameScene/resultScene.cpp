@@ -31,6 +31,7 @@
 #include "../../../Game/stage/skydome.h"
 #include "../../3d/CameraManager.h"
 #include "math.h"
+#include <utility>
 
 resultScene::resultScene()
 {
@@ -59,9 +60,7 @@ void resultScene::Initialize()
     skydome_ = std::make_unique<skydome>();
     skydome_->Initialize();
 
-    state_ = State::kSceneChange;
-    stateTimer_ = 1.0f;
-    Transition_->Start(SceneTransition::State::In, 1.0f);
+    ChangeState(std::make_unique<SceneChange>());
 }
 
 void resultScene::Finalize()
@@ -71,72 +70,19 @@ void resultScene::Finalize()
 void resultScene::Update()
 {
     float deltaTime = SceneManager::GetInstance()->GetDeltaTime();
-    auto* input = Input::GetInstance();
 
-    switch (state_) {
-    case resultScene::State::kSceneChange:
-        stateTimer_ -= deltaTime;
-        if (stateTimer_ <= 0.0f) {
-            state_ = State::kResultUpdateNow;
-            ResultUI_->StartAnimation();
-        }
-
-        break;
-    case resultScene::State::kResultUpdateNow:
-        // 演出スキップ入力
-        if (input->IsControllerConnected()) {
-            if (input->TriggerButton(XINPUT_GAMEPAD_A)) {
-                ResultUI_->SkipAnimation();
-                state_ = State::kResultWait;
-            }
-        }
-
-        if (input->TriggerKey(DIK_RETURN)) {
-            ResultUI_->SkipAnimation();
-            state_ = State::kResultWait;
-        } else if (ResultUI_->IsAnimationEnd()) {
-            state_ = State::kResultWait;
-        }
-
-        break;
-    case resultScene::State::kResultWait:
-
-         if (input->IsControllerConnected()) {
-            if (input->TriggerButton(XINPUT_GAMEPAD_A)) {
-                 ResultUI_->SetVisible(false); // 脱出演出の邪魔にならないようUIを非表示化
-                 resultObject_->StartEscape(); // 機体・カメラの脱出シークエンス開始
-                 state_ = State::kPlanetEscape;
-            }
-        }
-
-        // リザルト確認完了後、Enterで惑星脱出演出へ移行
-        if (input->TriggerKey(DIK_RETURN)) {
-            ResultUI_->SetVisible(false); // 脱出演出の邪魔にならないようUIを非表示化
-            resultObject_->StartEscape(); // 機体・カメラの脱出シークエンス開始
-            state_ = State::kPlanetEscape;
-        }
-        break;
-    case resultScene::State::kPlanetEscape:
-        // 脱出演出の完了を待機してからフェードアウト開始
-        if (resultObject_->IsEscapeFinished()) {
-            Transition_->Start(SceneTransition::State::Out, 1.0f);
-            stateTimer_ = 1.0f;
-            state_ = State::kReturnSelect;
-        }
-        break;
-    case resultScene::State::kReturnSelect:
-        stateTimer_ -= deltaTime;
-        if (stateTimer_ <= 0.0f) {
-            SceneManager::GetInstance()->ChangeScene("SELECT");
-            return;
-        }
-        break;
+    if (isSceneFinished_) {
+        return;
     }
 
     Transition_->Update(deltaTime);
     resultObject_->Update();
     ResultUI_->Update();
     skydome_->Update();
+
+    if (currentState_) {
+        currentState_->Update(*this, deltaTime);
+    }
 }
 
 void resultScene::Draw()
@@ -158,4 +104,21 @@ void resultScene::Draw()
 
     SpriteCommon::GetInstance()->PrepareSpriteDraw();
     ResultUI_->SpritDraw();
+}
+
+void resultScene::ChangeState(std::unique_ptr<IResultSceneState> nextState)
+{
+    if (currentState_) {
+        currentState_->Exit(*this);
+    }
+    currentState_ = std::move(nextState);
+    if (currentState_) {
+        currentState_->Enter(*this);
+    }
+}
+
+void resultScene::FinishAndChangeScene(const std::string& nextSceneName)
+{
+    isSceneFinished_ = true;
+    SceneManager::GetInstance()->ChangeScene(nextSceneName);
 }
